@@ -24,8 +24,44 @@ function loadRootEnv(): void {
 
 loadRootEnv();
 
+type RemotePatterns = NonNullable<
+  NonNullable<NextConfig['images']>['remotePatterns']
+>;
+
+/**
+ * `next/image` fetches only from hosts listed here, and an unlisted host is a
+ * runtime error rather than a degraded image.
+ *
+ * Derived from `R2_PUBLIC_BASE_URL` rather than hardcoded: the bucket differs
+ * per environment (dev buckets in preview, production buckets in production),
+ * and CI builds with no R2 at all. With the variable unset there are no remote
+ * patterns and `CmsImage` falls back to a plain `<img>`, which is what keeps
+ * that build working.
+ */
+function r2RemotePatterns(): RemotePatterns {
+  const base = process.env.R2_PUBLIC_BASE_URL;
+  if (!base) return [];
+
+  try {
+    const { protocol, hostname } = new URL(base);
+    if (protocol !== 'https:' && protocol !== 'http:') return [];
+
+    return [
+      {
+        protocol: protocol === 'https:' ? 'https' : 'http',
+        hostname,
+        pathname: '/**',
+      },
+    ];
+  } catch {
+    // A malformed URL is caught by the Zod schema at boot; don't fail the build here.
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  images: { remotePatterns: r2RemotePatterns() },
   // This repository maintains its own CLAUDE.md at the root; Next's generated
   // per-app copies are noise.
   agentRules: false,

@@ -54,6 +54,18 @@ const serverSchema = z.object({
   R2_PUBLIC_BUCKET: z.string().optional(),
   /** Public base URL the bucket is served from, e.g. https://cdn.softmato.com */
   R2_PUBLIC_BASE_URL: z.string().url().optional(),
+  /**
+   * S3 endpoint. Cloudflare prints it on the bucket page, so it is accepted
+   * here rather than silently ignored; when unset it is derived from the
+   * account id, which is the same string.
+   */
+  R2_ENDPOINT: z.string().url().optional(),
+  /**
+   * Payment proofs, invoice PDFs, client documents — Phase 3 onwards. Read by
+   * nothing yet, and deliberately outside the all-or-nothing group below: the
+   * public bucket must be usable before the private one exists.
+   */
+  R2_PRIVATE_BUCKET: z.string().optional(),
 });
 
 const publicSchema = z.object({

@@ -66,7 +66,7 @@ or set `USE_QUEUE=false` to call handlers in-process.
 COMPANY_NAME="Softmato Technology Pvt Ltd"
 COMPANY_PAN=
 COMPANY_ADDRESS=
-COMPANY_EMAIL=
+COMPANY_EMAIL=                # where contact enquiries are delivered
 COMPANY_PHONE=
 
 # ── Core ───────────────────────────────────────────────────
@@ -108,22 +108,38 @@ FONEPAY_QR_URL=
 FONEPAY_ENABLED=false
 
 # ── Storage (Cloudflare R2) ────────────────────────────────
+# All five of the public-bucket variables or none of them.
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
+R2_PUBLIC_BUCKET=softmato-data-public
+R2_PUBLIC_BASE_URL=           # https://pub-<hash>.r2.dev, or a custom domain
+
+# Optional. Derived from R2_ACCOUNT_ID when unset.
 R2_ENDPOINT=                  # https://<account_id>.r2.cloudflarestorage.com
-R2_BUCKET_PRIVATE=softmato-private
-R2_BUCKET_PUBLIC=softmato-public
-R2_PUBLIC_URL=
+# Phase 3 onwards. Presigned access only.
+R2_PRIVATE_BUCKET=softmato-data-private
 
 # ── Services ───────────────────────────────────────────────
 RESEND_API_KEY=
-EMAIL_FROM="Softmato <billing@softmato.com>"
+EMAIL_FROM="Softmato <no-reply@softmato.com>"
 SENTRY_DSN=
 ```
 
-Validate all of these with Zod at boot. A missing `ENCRYPTION_KEY` must fail at
-startup, not at the first login.
+Validate all of these with Zod at boot (`apps/web/lib/env.ts` — the schema
+there is the authority; this list follows it). A missing `ENCRYPTION_KEY` must
+fail at startup, not at the first login.
+
+Two groups are optional **as a group**, and half-set is an error at boot rather
+than a failure at the first use:
+
+- **R2** — `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+  `R2_PUBLIC_BUCKET`, `R2_PUBLIC_BASE_URL`. With none of them set, CMS image
+  fields stay plain URL inputs and uploading is simply unavailable.
+- **Email** — `RESEND_API_KEY`, `EMAIL_FROM`, `COMPANY_EMAIL`. With none of
+  them set, the contact form still writes every enquiry to the database and
+  only skips the notification. `EMAIL_FROM` must sit on a domain verified in
+  the Resend account, or the provider rejects the send.
 
 Never commit `.env*`. Keep `.env.example` current with every new variable.
 
@@ -133,13 +149,32 @@ Never commit `.env*`. Keep `.env.example` current with every new variable.
 
 Two R2 buckets. **Never one.**
 
-| Bucket             | Contents                                       | Access         |
-| ------------------ | ---------------------------------------------- | -------------- |
-| `softmato-private` | payment proofs, invoice PDFs, client documents | presigned only |
-| `softmato-public`  | CMS images, team photos, blog assets           | public URL     |
+| Bucket                  | Contents                                       | Access         |
+| ----------------------- | ---------------------------------------------- | -------------- |
+| `softmato-data-private` | payment proofs, invoice PDFs, client documents | presigned only |
+| `softmato-data-public`  | CMS images, team photos, blog assets           | public URL     |
 
 Payment proofs contain customer bank details and transaction references.
 Invoice PDFs contain customer data. Neither is ever publicly reachable.
+
+Inside each bucket, keys begin with the owner: `company/` today, and a SaaS
+product added later takes its own prefix — `saas-app-1/` — in the same two
+buckets. **A new product never gets a new pair of buckets.** The split that
+protects customer data is public-versus-private, and that is a property of the
+bucket. Making it a property of a path is how a proof ends up world-readable
+because someone mistyped a prefix. A separate bucket is warranted only when a
+product genuinely needs its own credentials or retention policy.
+
+```
+softmato-data-public/          softmato-data-private/
+└── company/                   └── company/
+    ├── images/     ← CMS          ├── proofs/      ← payment proofs
+    ├── logos/                     ├── invoices/    ← invoice PDFs
+    ├── assets/                    ├── documents/   ← client portal
+    └── documents/                 ├── contracts/
+                                   ├── reports/
+                                   └── backups/
+```
 
 ```
 Admin views a payment proof
@@ -152,11 +187,15 @@ Admin views a payment proof
 Key convention:
 
 ```
-proofs/{fiscal_year}/{transaction_id}/{uuid}.{ext}
-invoices/{fiscal_year}/{invoice_no}.pdf
-documents/{client_id}/{project_id}/{uuid}-{filename}
-cms/{uuid}-{slug}.{ext}            ← public bucket
+company/proofs/{fiscal_year}/{transaction_id}/{uuid}.{ext}
+company/invoices/{fiscal_year}/{invoice_no}.pdf
+company/documents/{client_id}/{project_id}/{uuid}-{filename}
+company/images/{uuid}-{slug}.{ext}          ← public bucket
 ```
+
+Built in `apps/web/lib/storage/object-key.ts`, never by concatenation at the
+call site. The slug is passed through a whitelist, so a filename cannot
+introduce a path segment or a `..`.
 
 Uploads: validate MIME by **magic bytes, not extension**; cap at 5 MB; strip
 EXIF from images. Never trust a client-declared content type.

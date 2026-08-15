@@ -1,0 +1,216 @@
+/**
+ * Every setting the platform reads, with its type, default and help text.
+ *
+ * **This file is the authority.** The database holds overrides; a key with no
+ * row uses the default below. That is what lets the app boot against an empty
+ * table, and what stops a stray row inventing a setting nothing reads.
+ *
+ * Adding one: add it here, read it through `getSettings()`, and never read
+ * `process.env` for something a founder should be able to change at 11pm
+ * without a deploy.
+ *
+ * Not settings, and never to be moved here: account codes, posting rules,
+ * period boundaries, provider credentials. A value that can change from a form
+ * must not be able to move posted money or authenticate anything.
+ */
+export type SettingKind =
+  'integer' | 'decimal' | 'boolean' | 'text' | 'email' | 'phone';
+
+export interface SettingDefinition {
+  key: string;
+  group: string;
+  label: string;
+  help: string;
+  kind: SettingKind;
+  default: string;
+  /** Inclusive bounds for numeric kinds. */
+  min?: number;
+  max?: number;
+  /** Shown after the input — 'days', 'NPR', '%'. */
+  unit?: string;
+}
+
+export const SETTING_GROUPS = [
+  'Billing',
+  'Support',
+  'Website',
+  'Company',
+] as const;
+
+export const SETTING_DEFINITIONS: SettingDefinition[] = [
+  /* ── Billing ────────────────────────────────────────────── */
+  {
+    key: 'billing.invoice_due_days',
+    group: 'Billing',
+    label: 'Invoice due in',
+    help: 'Days from issue until an invoice is due. Stated in the Terms of Service — change both together.',
+    kind: 'integer',
+    default: '15',
+    min: 0,
+    max: 180,
+    unit: 'days',
+  },
+  {
+    key: 'billing.grace_days',
+    group: 'Billing',
+    label: 'Grace period',
+    help: 'Days a subscription keeps working after its renewal invoice falls due, before suspension.',
+    kind: 'integer',
+    default: '7',
+    min: 0,
+    max: 90,
+    unit: 'days',
+  },
+  {
+    key: 'billing.suspended_retention_days',
+    group: 'Billing',
+    label: 'Keep data after suspension',
+    help: 'Days a suspended account keeps its data so a late payment restores it intact.',
+    kind: 'integer',
+    default: '90',
+    min: 7,
+    max: 730,
+    unit: 'days',
+  },
+  {
+    key: 'billing.refund_window_days',
+    group: 'Billing',
+    label: 'Refund window',
+    help: 'Days after a first subscription payment in which a full refund is given for any reason.',
+    kind: 'integer',
+    default: '7',
+    min: 0,
+    max: 90,
+    unit: 'days',
+  },
+  {
+    key: 'billing.refund_decision_working_days',
+    group: 'Billing',
+    label: 'Refund decision within',
+    help: 'Working days to decide a refund request. Promised in the Refund Policy.',
+    kind: 'integer',
+    default: '7',
+    min: 1,
+    max: 30,
+    unit: 'working days',
+  },
+  {
+    key: 'billing.vat_registered',
+    group: 'Billing',
+    label: 'VAT registered',
+    help: 'Off today: Softmato is PAN-registered only. Turn this on the day registration completes — it decides whether invoices carry VAT, and the Terms of Service say the same thing.',
+    kind: 'boolean',
+    default: 'false',
+  },
+  {
+    key: 'billing.vat_rate_percent',
+    group: 'Billing',
+    label: 'VAT rate',
+    help: 'Rate applied once VAT registration is on. Nepal is 13% at the time of writing.',
+    kind: 'decimal',
+    default: '13',
+    min: 0,
+    max: 100,
+    unit: '%',
+  },
+
+  /* ── Support ────────────────────────────────────────────── */
+  {
+    key: 'support.uptime_target_percent',
+    group: 'Support',
+    label: 'Uptime target',
+    help: 'Monthly availability promised in the SLA. Missing it costs service credits.',
+    kind: 'decimal',
+    default: '99.5',
+    min: 90,
+    max: 100,
+    unit: '%',
+  },
+  {
+    key: 'support.p1_response_minutes',
+    group: 'Support',
+    label: 'P1 response target',
+    help: 'Minutes to first response for a critical issue, at any hour of any day.',
+    kind: 'integer',
+    default: '60',
+    min: 5,
+    max: 1440,
+    unit: 'minutes',
+  },
+  {
+    key: 'support.p2_response_hours',
+    group: 'Support',
+    label: 'P2 response target',
+    help: 'Hours to first response for a major issue with no workaround.',
+    kind: 'integer',
+    default: '4',
+    min: 1,
+    max: 72,
+    unit: 'hours',
+  },
+
+  /* ── Website ────────────────────────────────────────────── */
+  {
+    key: 'website.contact_rate_limit_per_hour',
+    group: 'Website',
+    label: 'Contact form limit',
+    help: 'Submissions allowed from one visitor per hour before the form starts refusing.',
+    kind: 'integer',
+    default: '5',
+    min: 1,
+    max: 100,
+    unit: 'per hour',
+  },
+
+  /* ── Company ────────────────────────────────────────────── */
+  {
+    key: 'company.support_email',
+    group: 'Company',
+    label: 'Support email',
+    help: 'Where customers report problems. Printed in the SLA.',
+    kind: 'email',
+    default: '',
+  },
+  {
+    key: 'company.refunds_email',
+    group: 'Company',
+    label: 'Refunds email',
+    help: 'Where refund requests go. Printed in the Refund Policy.',
+    kind: 'email',
+    default: '',
+  },
+  {
+    key: 'company.abuse_email',
+    group: 'Company',
+    label: 'Abuse and security email',
+    help: 'Where abuse reports and vulnerability disclosures go. Printed in the Acceptable Use Policy.',
+    kind: 'email',
+    default: '',
+  },
+  {
+    key: 'company.phone',
+    group: 'Company',
+    label: 'Phone',
+    help: 'Shown on the contact page and on invoices.',
+    kind: 'phone',
+    default: '',
+  },
+  {
+    key: 'company.address',
+    group: 'Company',
+    label: 'Registered address',
+    help: 'As registered with the Office of the Company Registrar. Appears on invoices and in the policies.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'company.pan',
+    group: 'Company',
+    label: 'PAN',
+    help: 'Permanent Account Number. Required on every tax invoice.',
+    kind: 'text',
+    default: '',
+  },
+];
+
+export const SETTING_KEYS = SETTING_DEFINITIONS.map((d) => d.key);

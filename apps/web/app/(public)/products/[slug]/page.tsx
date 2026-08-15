@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { getProductPage, publishedSlugs } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
+import { CmsImageFill } from '@/components/public/cms-image';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
 
@@ -52,12 +53,19 @@ export default async function ProductPage({
       <Markdown>{product.body}</Markdown>
 
       {product.screenshotUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={product.screenshotUrl}
-          alt={`${product.title} screenshot`}
-          className="mt-8 rounded-lg border border-border"
-        />
+        /*
+         * Contained, not cropped: a screenshot with its edges cut off is a
+         * screenshot of nothing in particular. The frame reserves the space;
+         * a screenshot that is not 16:9 sits letterboxed inside it.
+         */
+        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-lg border border-border bg-muted">
+          <CmsImageFill
+            src={product.screenshotUrl}
+            alt={`${product.title} screenshot`}
+            sizes="(max-width: 768px) 100vw, 720px"
+            className="object-contain"
+          />
+        </div>
       ) : null}
     </article>
   );

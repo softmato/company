@@ -4,6 +4,7 @@ import { and, eq, gte, sql } from 'drizzle-orm';
 import { contactSubmissions, db } from '@softmato/db';
 
 import { env } from '@/lib/env';
+import { getSettings } from '@/lib/settings/queries';
 
 /**
  * Contact form rate limiting, in Postgres.
@@ -16,8 +17,11 @@ import { env } from '@/lib/env';
  * different problem with different latency requirements.
  */
 
-/** Submissions allowed from one address per window. */
-const LIMIT = 5;
+/**
+ * Submissions allowed from one address per window. The limit is a setting —
+ * a founder watching spam arrive should be able to tighten it from the panel
+ * at that moment, not wait for a deploy.
+ */
 const WINDOW_MS = 60 * 60 * 1000;
 
 /**
@@ -31,6 +35,8 @@ export function hashIp(ip: string): string {
 
 export async function isRateLimited(ipHash: string): Promise<boolean> {
   const since = new Date(Date.now() - WINDOW_MS);
+  const settings = await getSettings();
+  const limit = settings.number('website.contact_rate_limit_per_hour');
 
   const [row] = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -42,5 +48,5 @@ export async function isRateLimited(ipHash: string): Promise<boolean> {
       ),
     );
 
-  return (row?.count ?? 0) >= LIMIT;
+  return (row?.count ?? 0) >= limit;
 }

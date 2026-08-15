@@ -1,5 +1,18 @@
+import type { ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+import { headingId } from '@/lib/cms/headings';
+
+/** The visible text of a rendered node, for building an anchor from it. */
+function nodeText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(nodeText).join('');
+  if (node && typeof node === 'object' && 'props' in node) {
+    return nodeText((node.props as { children?: ReactNode }).children);
+  }
+  return '';
+}
 
 /**
  * Renders a CMS body.
@@ -12,14 +25,45 @@ import remarkGfm from 'remark-gfm';
  * Element styling lives here rather than in a global stylesheet, so the tokens
  * in globals.css stay the single source and page-level prose cannot drift.
  */
-export function Markdown({ children }: { children: string }) {
+export function Markdown({
+  children,
+  anchors = false,
+}: {
+  children: string;
+  /**
+   * Give every `##` an id so a table of contents can link to it. The ids match
+   * `extractHeadings`, which walks the same source in the same order.
+   */
+  anchors?: boolean;
+}) {
+  const seen = new Set<string>();
+
+  function anchorFor(node: ReactNode): string | undefined {
+    if (!anchors) return undefined;
+
+    const base = headingId(nodeText(node));
+    let id = base;
+    for (let n = 2; seen.has(id); n += 1) id = `${base}-${n}`;
+    seen.add(id);
+
+    return id;
+  }
+
   return (
     <div className="max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: (props) => <h2 className="headline mt-8 text-xl" {...props} />,
-          h2: (props) => <h2 className="headline mt-8 text-xl" {...props} />,
+          h2: ({ children: heading, ...props }) => (
+            <h2
+              id={anchorFor(heading)}
+              className="headline mt-10 scroll-mt-24 text-xl"
+              {...props}
+            >
+              {heading}
+            </h2>
+          ),
           h3: (props) => (
             <h3 className="mt-6 text-base font-medium" {...props} />
           ),

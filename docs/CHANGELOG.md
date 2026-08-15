@@ -33,7 +33,41 @@ this file tracks what was delivered.
   `robots.txt` that blocks indexing entirely outside production.
 - Image fields in the CMS accept an upload to the public R2 bucket as well as a
   pasted URL. Where R2 is not configured they remain plain URL fields, so the
-  editors work without it.
+  editors work without it. Verified against the real bucket: an image uploads,
+  is served from the public URL with the content type detected from its bytes,
+  and comes back byte-identical.
+- Object keys are built in one module and begin with the owner —
+  `company/images/…` today, so a SaaS product added later takes its own prefix
+  in the same two buckets instead of a third bucket.
+- Outbound email has a home: one Resend client, one send path that never
+  throws, and templates that render to HTML and plain text without touching
+  the network. The contact notification is the first of them.
+- **Settings.** The operational numbers a founder should never need a deploy to
+  change — invoice terms, grace period, refund window, VAT registration and
+  rate, uptime target, support response targets, the contact-form limit, and
+  the company's own contact details — are editable at `/admin/settings` and
+  take effect on the next request. What settings exist is defined in code; the
+  database holds only overrides, so an empty table is a working platform.
+  Account codes, posting rules and provider credentials are deliberately not
+  settings: a value editable from a form must not be able to move posted money.
+- Real draft copy for the whole public site — home, about, services, products,
+  team, careers, contact, three service pages, both product pages, and a first
+  blog post — written from the product documentation rather than as
+  placeholder. All draft, nothing published, no invented facts.
+- Six legal documents — terms, privacy, refunds, SLA, acceptable use, cookies
+  — written as drafts for a Nepali software company and loaded into the CMS so
+  a founder edits them in the admin panel rather than starting from a blank
+  box. They cite the Individual Privacy Act 2075, the Consumer Protection Act
+  2075 and the Electronic Transactions Act 2063, and they say plainly what a
+  Nepali payment platform can and cannot do. All draft, all unreviewed, each
+  carrying a notice that says so.
+- A legal document page now carries an "on this page" index built from its own
+  headings, and links to the other policies. Long documents are read by people
+  hunting one clause.
+- Team photos, blog covers and product screenshots are optimised by
+  `next/image` when they come from our own bucket, and fall back to a plain
+  image tag for any other host. Covers and screenshots sit in fixed frames, so
+  the page no longer reflows when an image finishes loading.
 
 ### Fixed
 
@@ -59,8 +93,11 @@ this file tracks what was delivered.
 - Uploaded images are identified by magic bytes, never by filename or the
   client-declared content type, and capped at 5 MB. A PDF or an HTML file
   renamed to `.png` is rejected, and the stored object key cannot escape the
-  `cms/` prefix. R2 must be fully configured or not at all — a partial
-  configuration fails at boot rather than at the first upload.
+  `company/images/` prefix. R2 must be fully configured or not at all — a
+  partial configuration fails at boot rather than at the first upload.
+- Every value in an outgoing email is HTML-escaped. A contact enquiry is
+  written by a stranger and mailed from our own domain, so markup in a name or
+  a message is shown as text rather than rendered as a link.
 
 ### Migration
 

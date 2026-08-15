@@ -123,24 +123,3 @@ export function validationMessage(reason: ValidationFailure['reason']): string {
       return 'That file is empty.';
   }
 }
-
-/**
- * `cms/{uuid}-{slug}.{ext}` in the public bucket (docs/ENVIRONMENT.md §3).
- *
- * The uuid is what makes the key unguessable and collision-free; the slug is
- * only there so a human reading a bucket listing can tell what a file is.
- */
-export function cmsObjectKey(
-  slug: string,
-  extension: string,
-  uuid: string,
-): string {
-  const safeSlug =
-    slug
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 60) || 'image';
-
-  return `cms/${uuid}-${safeSlug}.${extension}`;
-}

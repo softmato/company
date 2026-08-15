@@ -1,9 +1,16 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { getLegalDocument, publishedSlugs } from '@/lib/cms/public-queries';
+import {
+  getLegalDocument,
+  listPublishedLegalDocuments,
+  publishedSlugs,
+} from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
+import { extractHeadings } from '@/lib/cms/headings';
 import { formatBsWithAd } from '@/lib/format/date';
+import { LegalToc } from '@/components/public/legal-toc';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
 
@@ -29,9 +36,14 @@ export default async function LegalDocumentPage({
 
   if (!doc) notFound();
 
+  const headings = extractHeadings(doc.body);
+  const others = (await listPublishedLegalDocuments()).filter(
+    (other) => other.slug !== doc.slug,
+  );
+
   return (
-    <article>
-      <PageHeader title={doc.title} />
+    <article className="mx-auto max-w-3xl">
+      <PageHeader eyebrow="Legal" title={doc.title} />
 
       {/*
        * Version and effective date are stated on the page, not just stored.
@@ -44,7 +56,33 @@ export default async function LegalDocumentPage({
           : ''}
       </p>
 
-      <Markdown>{doc.body}</Markdown>
+      <LegalToc headings={headings} />
+
+      <Markdown anchors>{doc.body}</Markdown>
+
+      {others.length > 0 ? (
+        <nav
+          aria-label="Other policies"
+          className="section-frame mt-12 rounded-lg p-5"
+        >
+          <p className="eyebrow text-xs text-muted-foreground">
+            Other policies
+          </p>
+
+          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {others.map((other) => (
+              <li key={other.slug}>
+                <Link
+                  href={`/legal/${other.slug}`}
+                  className="text-primary underline-offset-2 hover:underline"
+                >
+                  {other.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </article>
   );
 }

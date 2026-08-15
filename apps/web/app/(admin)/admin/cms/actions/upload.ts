@@ -4,10 +4,10 @@ import { randomUUID } from 'node:crypto';
 
 import { recordAudit } from '@/lib/audit';
 import {
-  cmsObjectKey,
   validateImage,
   validationMessage,
 } from '@/lib/storage/image-validation';
+import { cmsImageKey } from '@/lib/storage/object-key';
 import { putCmsObject, r2Configured } from '@/lib/storage/r2';
 
 import { requireAdmin } from './shared';
@@ -52,7 +52,7 @@ export async function uploadCmsImage(
     return { ok: false, message: validationMessage(validation.reason) };
   }
 
-  const key = cmsObjectKey(
+  const key = cmsImageKey(
     String(form.get('slug') ?? file.name),
     validation.extension,
     randomUUID(),

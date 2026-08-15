@@ -1,10 +1,11 @@
 import type { TeamMember } from '@softmato/db';
 
+import { CmsImage } from '@/components/public/cms-image';
+
 /**
- * Photos are plain `<img>` rather than `next/image`: the URLs point at the R2
- * public bucket, which is not in `next.config.ts` remotePatterns. Switch to
- * `next/image` when that bucket is configured, not before — an unconfigured
- * host makes the build fail rather than degrade.
+ * Photos are a fixed 80px circle, so they carry their intrinsic size and need
+ * no frame. A photo pasted from outside our bucket falls back to a plain
+ * `<img>` inside `CmsImage`.
  */
 export function TeamGrid({ members }: { members: TeamMember[] }) {
   if (members.length === 0) {
@@ -20,10 +21,12 @@ export function TeamGrid({ members }: { members: TeamMember[] }) {
       {members.map((member) => (
         <li key={member.id} className="section-frame rounded-lg p-5">
           {member.photoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <CmsImage
               src={member.photoUrl}
               alt=""
+              width={80}
+              height={80}
+              sizes="80px"
               className="mb-4 h-20 w-20 rounded-full object-cover"
             />
           ) : null}

@@ -9,11 +9,11 @@
 import { describe, expect, test } from 'vitest';
 
 import {
-  cmsObjectKey,
   detectImage,
   MAX_UPLOAD_BYTES,
   validateImage,
 } from '@/lib/storage/image-validation';
+import { CMS_IMAGE_PREFIX, cmsImageKey } from '@/lib/storage/object-key';
 
 const bytes = (...values: number[]) => new Uint8Array(values);
 
@@ -99,30 +99,38 @@ describe('validateImage', () => {
   });
 });
 
-describe('cmsObjectKey', () => {
+describe('cmsImageKey', () => {
   const uuid = '0f9c2b1a-1111-2222-3333-444455556666';
 
   test('follows the documented layout', () => {
-    expect(cmsObjectKey('team-photo', 'png', uuid)).toBe(
-      `cms/${uuid}-team-photo.png`,
+    expect(cmsImageKey('team-photo', 'png', uuid)).toBe(
+      `company/images/${uuid}-team-photo.png`,
     );
   });
 
   test('slugifies anything unusual in the name', () => {
-    expect(cmsObjectKey('Ram Bahadur (2026)!', 'jpg', uuid)).toBe(
-      `cms/${uuid}-ram-bahadur-2026.jpg`,
+    expect(cmsImageKey('Ram Bahadur (2026)!', 'jpg', uuid)).toBe(
+      `${CMS_IMAGE_PREFIX}/${uuid}-ram-bahadur-2026.jpg`,
     );
   });
 
   test('a name that slugifies to nothing still produces a valid key', () => {
-    expect(cmsObjectKey('???', 'png', uuid)).toBe(`cms/${uuid}-image.png`);
+    expect(cmsImageKey('???', 'png', uuid)).toBe(
+      `${CMS_IMAGE_PREFIX}/${uuid}-image.png`,
+    );
   });
 
-  test('a path traversal attempt cannot escape the cms prefix', () => {
-    const key = cmsObjectKey('../../etc/passwd', 'png', uuid);
+  test('a path traversal attempt cannot escape the image prefix', () => {
+    const key = cmsImageKey('../../etc/passwd', 'png', uuid);
 
-    expect(key.startsWith('cms/')).toBe(true);
+    expect(key.startsWith(`${CMS_IMAGE_PREFIX}/`)).toBe(true);
     expect(key).not.toContain('..');
     expect(key).not.toContain('/etc/');
+  });
+
+  test('a name cannot introduce a second path segment', () => {
+    const key = cmsImageKey('logos/evil', 'png', uuid);
+
+    expect(key.split('/')).toHaveLength(3);
   });
 });

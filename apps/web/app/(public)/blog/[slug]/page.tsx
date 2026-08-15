@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getPost, publishedSlugs } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
 import { formatBsWithAd } from '@/lib/format/date';
+import { CmsImageFill } from '@/components/public/cms-image';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
 
@@ -40,12 +41,20 @@ export default async function BlogPostPage({
       />
 
       {post.coverImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.coverImageUrl}
-          alt=""
-          className="mt-8 rounded-lg border border-border"
-        />
+        /*
+         * A 16:9 frame, so the space is reserved before the image arrives and
+         * the article text below it does not jump. A cover is decorative, so
+         * cropping to the ratio is the right trade; a screenshot is not, which
+         * is why the product page contains its image instead.
+         */
+        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-lg border border-border">
+          <CmsImageFill
+            src={post.coverImageUrl}
+            alt=""
+            sizes="(max-width: 768px) 100vw, 720px"
+            className="object-cover"
+          />
+        </div>
       ) : null}
 
       <Markdown>{post.body}</Markdown>

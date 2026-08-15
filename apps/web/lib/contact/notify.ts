@@ -1,64 +1,31 @@
 import 'server-only';
-import { Resend } from 'resend';
 
 import { env } from '@/lib/env';
+import { sendEmail, NOT_CONFIGURED } from '@/lib/email/send';
+import type { SendResult } from '@/lib/email/send';
+import { contactEnquiryEmail } from '@/lib/email/templates/contact-enquiry';
+import type { ContactEnquiry } from '@/lib/email/templates/contact-enquiry';
 
 /**
  * Emails a contact enquiry to the company.
  *
- * **Never throws.** The submission is already saved by the time this runs, and
- * an enquiry that reached the database is not lost because an email provider
- * had a bad minute. Failures are reported to the caller so they can be logged,
- * not surfaced to the visitor — from their side the message did arrive.
- *
- * No-ops when the provider is not configured, which is the case locally and in
- * CI.
+ * The submission is saved before this runs and `sendEmail` never throws, so a
+ * provider outage costs a notification, never an enquiry. No-ops when email is
+ * unconfigured, which is the case locally and in CI.
  */
-export interface ContactNotification {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string | null;
-  subject?: string | null;
-  message: string;
-}
+export type ContactNotification = ContactEnquiry;
 
 export async function notifyContact(
   submission: ContactNotification,
-): Promise<{ sent: boolean; reason?: string }> {
-  if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !env.COMPANY_EMAIL) {
-    return { sent: false, reason: 'email not configured' };
+): Promise<SendResult> {
+  if (!env.COMPANY_EMAIL) {
+    return { sent: false, reason: NOT_CONFIGURED };
   }
 
-  try {
-    const resend = new Resend(env.RESEND_API_KEY);
-
-    const { error } = await resend.emails.send({
-      from: env.EMAIL_FROM,
-      to: env.COMPANY_EMAIL,
-      // So a reply goes to the enquirer rather than to the company itself.
-      replyTo: submission.email,
-      subject: submission.subject
-        ? `Contact: ${submission.subject}`
-        : `Contact from ${submission.name}`,
-      text: [
-        `Name:    ${submission.name}`,
-        `Email:   ${submission.email}`,
-        `Phone:   ${submission.phone ?? '—'}`,
-        `Subject: ${submission.subject ?? '—'}`,
-        '',
-        submission.message,
-        '',
-        `Submission #${submission.id}`,
-      ].join('\n'),
-    });
-
-    if (error) return { sent: false, reason: error.message };
-    return { sent: true };
-  } catch (error) {
-    return {
-      sent: false,
-      reason: error instanceof Error ? error.message : 'unknown',
-    };
-  }
+  return sendEmail({
+    to: env.COMPANY_EMAIL,
+    template: contactEnquiryEmail(submission),
+    // So a reply goes to the enquirer rather than to the company itself.
+    replyTo: submission.email,
+  });
 }

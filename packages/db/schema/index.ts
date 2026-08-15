@@ -17,4 +17,5 @@ export * from './subscriptions';
 export * from './reconciliation';
 export * from './audit';
 export * from './cms';
+export * from './settings';
 export * from './views';

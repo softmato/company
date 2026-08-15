@@ -6,7 +6,7 @@
  * placeholder CMS content. It never posts a journal entry, and it never
  * publishes a page.
  */
-import { sql } from 'drizzle-orm';
+import { and, eq, like, sql } from 'drizzle-orm';
 
 import { db } from '../client';
 import { accounts, products } from '../schema/accounts';
@@ -76,7 +76,27 @@ async function seedCms(): Promise<void> {
     .insert(legalDocuments)
     .values(legalDocumentSeeds)
     .onConflictDoNothing();
+
   await db.insert(blogPosts).values(blogPostSeeds).onConflictDoNothing();
+
+  /*
+   * A database seeded before the real copy existed still holds the old
+   * placeholder text, and `onConflictDoNothing` above leaves it there.
+   *
+   * Upgrade it in place — but only where the body is *still* the placeholder
+   * and the row is *still* a draft. A page the founder has edited, or one
+   * already published, is never touched by a seed run. That pair of conditions
+   * is the whole safety argument; do not relax either one.
+   */
+  const upgraded =
+    (await upgradePlaceholders(pages, pageSeeds)) +
+    (await upgradePlaceholders(services, serviceSeeds)) +
+    (await upgradePlaceholders(productPages, productPageSeeds)) +
+    (await upgradeLegalPlaceholders());
+
+  if (upgraded > 0) {
+    console.log(`cms: ${upgraded} placeholder rows replaced with draft copy`);
+  }
 
   /*
    * team_members has no natural key to conflict on — a person is not
@@ -96,6 +116,70 @@ async function seedCms(): Promise<void> {
       `${productPageSeeds.length} product pages, ${legalDocumentSeeds.length} legal ` +
       `documents, ${blogPostSeeds.length} post — all draft`,
   );
+}
+
+/** The marker every placeholder body carried. */
+const PLACEHOLDER_MARKER = '%**Placeholder.**%';
+
+/**
+ * Tables keyed by slug, holding a title and a body. Written generically
+ * because the alternative is the same six lines four times, and a rule about
+ * not overwriting a founder's work should exist in exactly one place.
+ */
+type CopyTable = typeof pages | typeof services | typeof productPages;
+type CopySeed = { slug: string; title: string; body?: string | undefined };
+
+async function upgradePlaceholders(
+  table: CopyTable,
+  seeds: CopySeed[],
+): Promise<number> {
+  let count = 0;
+
+  for (const seed of seeds) {
+    if (!seed.body) continue;
+
+    const rows = await db
+      .update(table)
+      .set({ title: seed.title, body: seed.body, updatedAt: new Date() })
+      .where(
+        and(
+          eq(table.slug, seed.slug),
+          eq(table.status, 'draft'),
+          like(table.body, PLACEHOLDER_MARKER),
+        ),
+      )
+      .returning({ slug: table.slug });
+
+    count += rows.length;
+  }
+
+  return count;
+}
+
+/** Same rule, but legal documents are keyed by slug *and* version. */
+async function upgradeLegalPlaceholders(): Promise<number> {
+  let count = 0;
+
+  for (const seed of legalDocumentSeeds) {
+    if (!seed.body) continue;
+
+    const rows = await db
+      .update(legalDocuments)
+      .set({ title: seed.title, body: seed.body, updatedAt: new Date() })
+      .where(
+        and(
+          eq(legalDocuments.slug, seed.slug),
+          eq(legalDocuments.version, seed.version ?? 1),
+          eq(legalDocuments.status, 'draft'),
+          like(legalDocuments.body, PLACEHOLDER_MARKER),
+        ),
+      )
+      .returning({ slug: legalDocuments.slug });
+
+    count += rows.length;
+  }
+
+  return count;
 }
 
 await main();

@@ -6,6 +6,7 @@ import { contactSubmissions, db } from '@softmato/db';
 
 import { notifyContact } from '@/lib/contact/notify';
 import { hashIp, isRateLimited } from '@/lib/contact/rate-limit';
+import { NOT_CONFIGURED } from '@/lib/email/send';
 
 export interface ContactResult {
   ok: boolean;
@@ -95,7 +96,7 @@ export async function submitContact(
    * whole reason it is stored as well as sent (docs/PRD.md §5.1).
    */
   const notified = await notifyContact(saved);
-  if (!notified.sent && notified.reason !== 'email not configured') {
+  if (!notified.sent && notified.reason !== NOT_CONFIGURED) {
     console.error('contact email failed', {
       id: saved.id,
       reason: notified.reason,

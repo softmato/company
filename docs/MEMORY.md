@@ -10,38 +10,99 @@ is lost — fill in the rest as you build.
 
 ## Current status
 
-**Phase:** 1 accepted. **Phase 2 in progress** — roughly half built.
-**Last session:** 2026-08-14 (session 3)
+**Phase:** 1 accepted. **Phase 2 in progress** — everything built except a
+verified email sender, Lighthouse, and real content.
+**Last session:** 2026-08-14 (session 4)
 **Repo:** `origin/main` (`SiddTheCoder/soft-cuddle`)
 
 **Done in Phase 2:** CMS schema (migration `0003`), design tokens, placeholder
 content, admin editors, the whole public site reading from the CMS, the contact
 form, and SEO (metadata, Open Graph, sitemap, robots).
 
-**Also done:** CMS image upload to R2 — validation, object keys, the client,
-the action and the field. **It has never run against a real bucket**: no R2
-credentials exist yet, so the path from `putCmsObject` onward is unverified.
-The validation is covered by 15 unit tests, which is the part that matters for
-security.
+**Also done:** CMS image upload to R2, **verified against the real bucket** on
+2026-08-14 — a PNG uploads through the same S3 client and parameters the app
+uses, and is served from `R2_PUBLIC_BASE_URL` byte-identical, with the content
+type taken from its magic bytes and a one-year immutable cache header.
+
+**Also done:** outbound email has a home — `lib/email/`: one client, one
+`sendEmail()` that never throws, and pure templates that render HTML and text.
+`lib/contact/notify.ts` is now a thin caller. Everything but the live send is
+covered by tests; the send itself is **unverified** (see below).
 
 **Still to do in Phase 2:**
 
-1. **R2 credentials**, then verify a real upload end to end. Set all five of
-   `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
-   `R2_PUBLIC_BUCKET`, `R2_PUBLIC_BASE_URL` — the app refuses to boot on a
-   partial set. Until they exist the image fields are plain URL inputs, which
-   is deliberate.
+1. **A sender domain of our own — TEMPORARY ARRANGEMENT, expires ~2026-08-16.**
+   `softmato.com` is being bought around 16 Aug 2026. Until it lands, the
+   contact form sends from `no-reply@questioncall.com`, the founder's other
+   project and the only domain verified on the shared Resend account. Verified
+   end to end on 2026-08-14: a rendered enquiry was accepted and Resend
+   reported `delivered`. When the domain arrives: verify it at
+   resend.com/domains, set `EMAIL_FROM=no-reply@softmato.com`, and update
+   `AUTH_URL`, `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_CHECKOUT_URL` at the same
+   time. Nothing in the code changes. **Do not ship to production sending as
+   questioncall.com.**
 2. **Lighthouse ≥ 95** performance and accessibility (acceptance 4). Not yet
    measured. Acceptance 5 — keyboard navigation, visible focus,
    `prefers-reduced-motion` — is verified.
-3. **Real content.** Everything in the CMS is placeholder and every row is
-   draft, so the public site 404s today. That is correct, not broken: a draft
-   page is not a page. It comes alive when the founder publishes real copy.
+3. **Publishing.** Every page, service, product page, the blog post and the six
+   policies now hold real draft copy, written from `docs/PRD.md` and the code
+   rather than placeholder text. **Nothing is published**, so the public site
+   still 404s — that is correct, not broken. It comes alive when a founder
+   reads each one and publishes it. Two exceptions stay placeholder on purpose:
+   team names, and photos, which are uploaded from the panel rather than
+   seeded. The old `hello-world` sample post is still there; delete it once the
+   real post is published.
 
-**Note on images:** team photos, blog covers and product screenshots render as
-`<img>`, not `next/image`. The R2 host is not in `next.config.ts`
-`remotePatterns`, and an unconfigured host fails the build rather than
-degrading. Add the host and switch them over together, in one change.
+4. **Legal review.** The six legal documents are no longer placeholders: they
+   are real drafts for a Nepali software company, seeded from
+   `packages/db/seed/legal/`, one file each. They are **unreviewed**, they all
+   carry a draft notice as their first line, and they contain 67 `[confirm: …]`
+   markers for facts only the founder knows — refund windows, notice periods,
+   the registered address, PAN. Grep for `[confirm:` before publishing any of
+   them, and have a Nepali lawyer read them. Re-running the seed replaces a
+   legal body only where it is still the old placeholder text and still draft,
+   so an edited or published policy is never overwritten.
+
+**Environment variable names live in `apps/web/lib/env.ts`.** That schema is
+the authority; `.env.example` and `ENVIRONMENT.md` §2 were wrong about the R2
+names until 2026-08-14 and now follow it. R2 is all-or-nothing:
+`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`R2_PUBLIC_BUCKET`, `R2_PUBLIC_BASE_URL`. `R2_ENDPOINT` and
+`R2_PRIVATE_BUCKET` are optional; the private bucket is Phase 3.
+
+**Operational numbers are settings, not constants.** Invoice terms, grace
+period, refund window, VAT registration and rate, uptime target, support
+response targets, the contact-form rate limit and the company's contact details
+all live in `platform_settings` and are edited at `/admin/settings`. The
+authority for what exists is `apps/web/lib/settings/definitions.ts`: the table
+holds overrides only, a missing row means the coded default, and a stored value
+that fails validation falls back rather than throwing. Read them through
+`getSettings()` — never re-read `process.env` for something a founder should be
+able to change without a deploy. **What must never move there:** account codes,
+posting rules, period boundaries, provider credentials. A value editable from a
+form must not be able to move posted money.
+
+Several settings are also _stated in the legal documents_ — invoice terms,
+grace, refund window, uptime target. Change both together, or the policy and
+the platform disagree in front of a customer.
+
+**Buckets are `softmato-data-public` and `softmato-data-private`**, and keys
+begin with the owner: `company/images/…` for CMS images. A SaaS product added
+later takes its own prefix in the same two buckets — never a third bucket. The
+public/private split is what protects customer data, and that must stay a
+property of the bucket rather than of a path someone can mistype.
+
+**Note on images:** team photos, blog covers and product screenshots go through
+`components/public/cms-image.tsx`. Our own bucket is optimised by `next/image`;
+any other host falls back to a plain `<img>`, because image fields also accept
+a pasted URL and allowing every host would make the optimiser an open image
+proxy. `next.config.ts` derives `remotePatterns` from `R2_PUBLIC_BASE_URL`, so
+CI still builds with no R2 at all — there the fallback is what runs.
+
+Blog covers crop to a 16:9 frame and product screenshots letterbox inside one.
+Both reserve their space before the image loads, which is the layout-shift half
+of the Lighthouse number. The CMS stores a URL and no dimensions, so a frame is
+the only way to know the space in advance.
 
 **Uncommitted at hand-off:** nothing.
 
@@ -68,7 +129,14 @@ production.** Replace it before the first real deployment.
 | Contact form                      | `apps/web/app/(public)/contact/`, `lib/contact/`    |
 | BS date formatting                | `apps/web/lib/format/date.ts`                       |
 | Upload validation (magic bytes)   | `apps/web/lib/storage/image-validation.ts`          |
+| R2 object key layout              | `apps/web/lib/storage/object-key.ts`                |
 | R2 client (public bucket only)    | `apps/web/lib/storage/r2.ts`                        |
+| Email client, send path           | `apps/web/lib/email/`                               |
+| Email templates (pure)            | `apps/web/lib/email/templates/`                     |
+| **Platform settings (authority)** | `apps/web/lib/settings/definitions.ts`              |
+| Settings admin page               | `apps/web/app/(admin)/admin/settings/`              |
+| Marketing copy seeds              | `packages/db/seed/marketing/`                       |
+| Legal document seeds              | `packages/db/seed/legal/`                           |
 | The four guarantees               | `packages/db/migrations/0001_ledger_guarantees.sql` |
 | Ledger tests                      | `packages/db/tests/ledger.test.ts`                  |
 | Auth (argon2id + TOTP)            | `apps/web/lib/auth.ts`                              |
@@ -95,17 +163,17 @@ production.** Replace it before the first real deployment.
 
 ## Phase progress
 
-| Phase                         | Status         | Notes                                                                                                                            |
-| ----------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — Foundation                | ✅ Accepted    | All seven criteria pass. 1–6 verified end to end against Neon 18.4; 7 verified by running every CI step locally — see session 3. |
-| 2 — Public site + CMS         | 🟡 In progress | Schema, tokens, editors, public site, contact form and SEO all in. Left: R2 image upload, Lighthouse ≥ 95, real content.         |
-| 3 — Payment core + manual QR  | ⬜ Not started |                                                                                                                                  |
-| 4 — Khalti                    | ⬜ Not started |                                                                                                                                  |
-| 5 — eSewa                     | ⬜ Not started |                                                                                                                                  |
-| 6 — Invoicing + subscriptions | ⬜ Not started |                                                                                                                                  |
-| 7 — Accounting depth          | ⬜ Not started |                                                                                                                                  |
-| 8 — Client portal             | ⬜ Not started |                                                                                                                                  |
-| 9 — Fonepay                   | ⬜ Blocked     | Awaiting bank credentials                                                                                                        |
+| Phase                         | Status         | Notes                                                                                                                                        |
+| ----------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Foundation                | ✅ Accepted    | All seven criteria pass. 1–6 verified end to end against Neon 18.4; 7 verified by running every CI step locally — see session 3.             |
+| 2 — Public site + CMS         | 🟡 In progress | Schema, tokens, editors, public site, contact form, SEO and R2 uploads all in. Left: a verified email domain, Lighthouse ≥ 95, real content. |
+| 3 — Payment core + manual QR  | ⬜ Not started |                                                                                                                                              |
+| 4 — Khalti                    | ⬜ Not started |                                                                                                                                              |
+| 5 — eSewa                     | ⬜ Not started |                                                                                                                                              |
+| 6 — Invoicing + subscriptions | ⬜ Not started |                                                                                                                                              |
+| 7 — Accounting depth          | ⬜ Not started |                                                                                                                                              |
+| 8 — Client portal             | ⬜ Not started |                                                                                                                                              |
+| 9 — Fonepay                   | ⬜ Blocked     | Awaiting bank credentials                                                                                                                    |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ accepted · 🔴 blocked
 
@@ -219,6 +287,28 @@ mistake.
 2084/85` **before Ashadh 2084 ends**, and eyeball the output against a patro.
   Never call the converter at seed time: a library upgrade must not be able to
   move a boundary under posted history.
+- **`next build` used to fail while `next dev` was running.** Next 16 writes
+  generated route types into `.next/dev/types/`, and a production build in the
+  same directory type-checked them and reported a wall of `TS1128` errors in a
+  file nobody wrote — which reads as a compiler bug rather than as two
+  processes sharing a directory. A `prebuild` script now deletes `.next/dev`,
+  so this cannot bite again; it is a no-op on Vercel, where that directory
+  never exists. Worth remembering if a build ever type-checks a path under
+  `.next/`: the file is generated, and the cause is upstream of the error.
+- **A regex in a Drizzle `check()` loses its backslashes.** `\.` written in the
+  TypeScript source arrives at Postgres as a bare `.`, which matches any
+  character — so `platform_settings_key_format` claimed to require a dotted key
+  while accepting anything. Use a character class (`[.]`) in any `sql` template
+  that carries a pattern, and read the generated SQL rather than trusting the
+  source. Migration `0004` was regenerated for this reason.
+- **A wrong system clock looks exactly like bad R2 credentials.** The
+  development machine was eight hours behind real UTC, and the first upload
+  attempt failed two different ways: the AWS SDK threw
+  `CERT_NOT_YET_VALID` — a certificate issued that morning is "not yet valid"
+  to a clock set in the past — and a hand-signed request came back
+  `RequestTimeTooSkewed`, because SigV4 signatures expire in fifteen minutes.
+  Neither error mentions time in a way that points at your own machine. Before
+  suspecting a key, compare `date -u` against a `Date:` response header.
 - **Neon no longer offers Postgres 16.** New projects start at 18. Nothing in
   the schema depends on 16.
 - **Drizzle Kit cannot serialize a `bigint` literal default.** `.default(0n)`
@@ -276,6 +366,47 @@ divergence between docs and code is how a project loses its plan.
 ## Session log
 
 Newest first. Keep entries short.
+
+### Session 4 — 2026-08-14
+
+**Phase:** 2
+**Completed:** R2 is real. Credentials went in, and an upload was verified end
+to end through the app's own S3 client: PUT 200, public GET 200,
+`content-type: image/png` from magic bytes, immutable cache header, bytes
+identical. Object keys moved into `lib/storage/object-key.ts` and now begin
+with an owner prefix — `company/images/…` — to match the bucket layout the
+founder set up in Cloudflare.
+
+Then the environment documentation, which was lying: `.env.example` and
+`ENVIRONMENT.md` §2 named `R2_BUCKET_PUBLIC` and `R2_PUBLIC_URL`, while the
+code reads `R2_PUBLIC_BUCKET` and `R2_PUBLIC_BASE_URL`. Anyone following the
+docs would have configured R2 four-fifths of the way and met a boot error. Both
+now follow `lib/env.ts`, which is stated there as the authority. `R2_ENDPOINT`
+is accepted as an override rather than silently ignored.
+
+Then email: `lib/email/` — client, a `sendEmail()` that never throws, and pure
+templates rendering HTML and text. Patterns taken from the founder's reference
+project (`D:\Jiwan-Mijhar`), which used a Resend singleton, a from-address
+helper and one sender per template kind. Simplified to one send path, because
+a single `EMAIL_FROM` needs no helper. 8 new tests, all on escaping.
+
+**Acceptance criteria:** unchanged — 1, 2, 3, 5, 6 pass; 4 (Lighthouse) not
+measured.
+
+**In progress:** nothing.
+
+**Learned:** the clock-skew entry above. Also: Resend refuses to send from an
+unverified domain **and** refuses to send anywhere but the account owner's
+address when using its shared sender, so a shared key from another project
+proves nothing about our own delivery.
+
+**Blocked on:** `softmato.com` verification at resend.com/domains before any
+email reaches a real mailbox. Question 8 (real team content) still open.
+
+**Next:** verify a live send once the domain is verified, then Lighthouse
+against real content.
+
+---
 
 ### Session 3 — 2026-08-14
 

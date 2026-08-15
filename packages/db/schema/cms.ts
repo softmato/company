@@ -152,7 +152,7 @@ export const teamMembers = pgTable(
     name: text('name').notNull(),
     role: text('role').notNull(),
     bio: text('bio'),
-    /** R2 public bucket, `cms/{uuid}-{slug}.{ext}` (docs/ENVIRONMENT.md §3). */
+    /** R2 public bucket, `company/images/{uuid}-{slug}.{ext}` (ENVIRONMENT.md §3). */
     photoUrl: text('photo_url'),
     email: text('email'),
     linkedinUrl: text('linkedin_url'),
