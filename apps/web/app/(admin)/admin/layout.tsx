@@ -11,8 +11,10 @@
  */
 import { redirect } from 'next/navigation';
 
+import { initials } from '@/lib/initials';
 import { auth } from '@/lib/auth';
 import { AdminNav } from '@/components/admin/admin-nav';
+import { Wordmark } from '@/components/public/wordmark';
 
 export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
   const session = await auth();
@@ -21,14 +23,28 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
     redirect('/login');
   }
 
+  const email = session.user.email ?? '';
+  const name = session.user.name ?? email;
+
   return (
     <div className="flex min-h-full flex-1">
       <AdminNav />
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-neutral-200 px-6 py-3">
-          <span className="text-sm text-neutral-500">Softmato admin</span>
-          <span className="text-sm text-neutral-700">{session.user.email}</span>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
+          <Wordmark className="text-[17px]" />
+
+          <div className="flex items-center gap-2.5">
+            <span
+              aria-hidden="true"
+              className="grid size-7 place-items-center rounded-full bg-primary/10 font-mono text-[11px] text-primary"
+            >
+              {initials(name)}
+            </span>
+            <span className="text-sm text-muted-foreground">{email}</span>
+          </div>
         </header>
+
         <main className="flex-1 px-6 py-6">{children}</main>
       </div>
     </div>

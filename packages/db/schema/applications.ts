@@ -50,6 +50,17 @@ export const applications = pgTable(
     webhookUrl: text('webhook_url'),
     /** Signs outbound events. Never reaches a client bundle. */
     webhookSecret: text('webhook_secret'),
+    /**
+     * Rotation overlap (docs/API.md §2): the superseded secret keeps working
+     * for 24 hours so a SaaS can redeploy without a window of 401s. Three
+     * columns move together or not at all — a hash with no expiry would be a
+     * second permanent credential, which is the opposite of rotating.
+     */
+    previousSecretHash: text('previous_secret_hash'),
+    previousSecretLast4: text('previous_secret_last4'),
+    previousSecretExpiresAt: timestamp('previous_secret_expires_at', {
+      withTimezone: true,
+    }),
     isLive: boolean('is_live').notNull().default(false),
     isActive: boolean('is_active').notNull().default(true),
     rotatedAt: timestamp('rotated_at', { withTimezone: true }),
@@ -60,6 +71,11 @@ export const applications = pgTable(
   },
   (t) => [
     index('applications_product_idx').on(t.productId),
+    check(
+      'previous_secret_complete',
+      sql`(${t.previousSecretHash} IS NULL AND ${t.previousSecretLast4} IS NULL AND ${t.previousSecretExpiresAt} IS NULL)
+          OR (${t.previousSecretHash} IS NOT NULL AND ${t.previousSecretLast4} IS NOT NULL AND ${t.previousSecretExpiresAt} IS NOT NULL)`,
+    ),
     check(
       'scopes_known',
       sql`${t.scopes} <@ ARRAY['payment:create','payment:read','invoice:create','invoice:read','refund:request','customer:read']::TEXT[]`,

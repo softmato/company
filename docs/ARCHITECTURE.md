@@ -82,7 +82,7 @@ Customer redirected to payment.softmato.com/checkout/<session_id>
 Provider adapter .initiate()
         │
         ▼
-eSewa / Khalti / Fonepay / manual QR
+Fonepay (primary) / eSewa / Khalti
         │
         ├── callback path (eSewa) ────┐
         └── polling path (Khalti) ────┤

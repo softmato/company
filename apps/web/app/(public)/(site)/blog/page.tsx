@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { getPage, listPublishedPosts } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
 import { formatBs } from '@/lib/format/date';
-import { CardList } from '@/components/public/card-list';
 import { PageHeader } from '@/components/public/page-header';
+import { PostList } from '@/components/public/blog/post-list';
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage('blog');
@@ -16,16 +16,16 @@ export default async function BlogIndexPage() {
 
   return (
     <div>
-      <PageHeader title="Blog" />
+      <PageHeader eyebrow="Writing" title="Blog" />
 
-      <CardList
-        empty="No posts yet."
-        items={posts.map((post) => ({
-          key: String(post.id),
-          href: `/blog/${post.slug}`,
+      <PostList
+        posts={posts.map((post) => ({
+          slug: post.slug,
           title: post.title,
-          description: post.excerpt,
-          meta: post.publishedAt ? formatBs(post.publishedAt) : null,
+          excerpt: post.excerpt,
+          tags: post.tags ?? [],
+          date: post.publishedAt ? formatBs(post.publishedAt) : null,
+          dateTime: post.publishedAt ? post.publishedAt.toISOString() : null,
         }))}
       />
     </div>

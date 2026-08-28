@@ -63,9 +63,22 @@ Nothing works yet, but everything stands on this.
 
 ---
 
-## Phase 3 — Payment core + manual QR
+## Phase 3 — Payment core
 
 The first real money moves here. Take your time.
+
+> **Changed 2026-08-16.** This phase was "Payment core + manual QR" and its
+> acceptance turned on a customer uploading a screenshot for an admin to
+> approve. **The manual QR flow is removed.** Every payment now goes through a
+> gateway — Fonepay primary, eSewa and Khalti secondary — and a confirmed
+> payment sends the payer a receipt.
+>
+> **This reorders the remaining phases in practice.** Phase 3 no longer
+> contains a provider anyone can pay with: `manual_qr` was the only one needing
+> no external credentials, so the first payment now waits on Phase 9 (Fonepay)
+> or Phases 4–5 (Khalti, eSewa), whichever set of credentials arrives first.
+> The phase can be *built* and *accepted for everything except a live payment*
+> before then.
 
 **Build**
 
@@ -73,10 +86,10 @@ The first real money moves here. Take your time.
 - Application registration, credential issue/rotate/revoke, scope enforcement
 - `POST /api/v1/checkout` with idempotency
 - Checkout page: session lookup, expiry handling, provider selection by amount
-- `manual_qr` adapter: QR display, proof upload to R2 (presigned PUT), pending
-  state
-- Admin approval queue: view proof via presigned GET, approve or reject
-- Journal posting on approval (`CHART_OF_ACCOUNTS.md` §9.3)
+- Transaction creation on provider selection, one live attempt per provider
+- Settlement: journal posting on a verified success (`CHART_OF_ACCOUNTS.md`
+  §9.2), invoice cleared, session closed
+- **Receipt to the payer on a confirmed payment**
 - Outbound webhooks: signing, QStash delivery, retry, admin replay
 - `packages/sdk` with typed client
 - Jobs: `expire-stale-sessions`, `retry-webhooks`, `heartbeat`
@@ -84,13 +97,19 @@ The first real money moves here. Take your time.
 **Accept when**
 
 1. A registered SaaS creates a session and receives a checkout URL
-2. A customer pays by manual QR and uploads proof
-3. An admin approves it; the ledger balances; the invoice is marked paid
-4. The SaaS receives a signed webhook and verifies the signature
-5. The same `Idempotency-Key` twice returns the same session, not two
-6. Application A cannot read application B's transactions
-7. An expired session cannot be paid
-8. The proof file is not reachable without an authenticated presigned URL
+2. A customer completes a payment through a gateway
+3. The ledger balances; the invoice is marked paid
+4. **The payer receives a receipt naming the amount, invoice and provider**
+5. The SaaS receives a signed webhook and verifies the signature
+6. The same `Idempotency-Key` twice returns the same session, not two
+7. Application A cannot read application B's transactions
+8. An expired session cannot be paid
+9. The same verified result arriving repeatedly posts exactly one journal
+10. A provider amount differing from expected posts nothing and flags for
+    reconciliation
+
+Criteria 2, 3 and 4 need a working gateway adapter and live credentials; the
+rest do not.
 
 ---
 

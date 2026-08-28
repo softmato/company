@@ -48,7 +48,7 @@ apps/web/
 │   │   ├── payments/
 │   │   │   ├── page.tsx          transaction list
 │   │   │   ├── [id]/             detail + provider event timeline
-│   │   │   ├── approvals/        manual QR queue
+│   │   │   ├── reconciliation/   amount mismatches awaiting a human
 │   │   │   └── refunds/
 │   │   ├── invoices/
 │   │   ├── customers/

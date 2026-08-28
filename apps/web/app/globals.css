@@ -1,117 +1,211 @@
 @import 'tailwindcss';
+@import './marketing.css';
 
 /*
  * Design tokens.
  *
- * Palette, surfaces and type are ported from the founder's reference project
- * (D:\Jiwan-Mijhar) — warm paper, emerald primary, terracotta accent, glass
- * panels. See docs/DESIGN.md, which was rewritten to match; do not reintroduce
- * the old greenbar palette.
+ * Two grounds, one hue.
  *
- * Two things survive from the original direction because they are functional
- * rather than stylistic, and both concern money:
+ *   - `:root` — **white and emerald.** Admin, checkout, login and the portal.
+ *     Flat, legible, ledger-like. `--primary` #047857 carries white text.
+ *   - `.dark` — **the marketing night.** The public site only, applied to its
+ *     shell in `app/(public)/layout.tsx`. Near-black ground with emerald light
+ *     burning on it.
  *
- *   1. Every figure is set in tabular mono (`.numeric` below). Digits must
- *      align in a column so a mis-keyed NPR 50,000 is visible at a glance.
+ * Approved by the founder 2026-08-28, replacing the violet/near-black system,
+ * which had itself replaced the original white/black/emerald one. This
+ * supersedes docs/DESIGN.md §1–§2; the violet `--primary` and the six
+ * `--brand-*` display accents are gone.
+ *
+ * **Why the public site is dark and the rest is not.** The look comes from a
+ * reference film in which every section is built around one enormous emissive
+ * light-form. The first build of this design put those forms on a white
+ * ground, and they died there: light is additive, white is already maximum, so
+ * a glow on white can only subtract and every form came out as a pale stain.
+ * The fix was not better values — the mechanism cannot work on white. The
+ * money surfaces stayed light because they want a ledger's flat legibility,
+ * not a film's contrast.
+ *
+ * What did NOT change, and must not:
+ *
+ *   1. Every figure is set in tabular mono (`.numeric` below). Digits align in
+ *      a column so a mis-keyed NPR 50,000 is visible at a glance.
  *   2. --credit and --flag carry meaning. Green is money in, red is money out
- *      or reversed. Never use either to emphasise non-financial text, and
- *      never set an amount in --accent-strong.
+ *      or reversed.
+ *
+ * Point 2 got *harder* with this rebrand and needs restating, because the
+ * brand hue is now the same family as `--credit`. What keeps them apart is no
+ * longer "different hues" — it is direction of use, and it runs both ways:
+ *
+ *   - An **amount** is only ever `--credit`, `--flag` or `--foreground`.
+ *     Never `--primary`, never a `--glow-*`.
+ *   - A **non-financial** element is never `--credit` or `--flag`. A green
+ *     button is `--primary`; a green light-form is `--glow`. Neither of those
+ *     values appears on a figure anywhere in the product.
+ *
+ * Read that as one rule with two halves. Breaking either half puts a brand
+ * green on a number, and on a page of numbers that is a lie about money.
  */
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Warm paper surfaces. */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.147 0.004 49.25);
-  --surface: rgba(255, 250, 244, 0.78);
-  --surface-strong: #fff8ef;
-  --shadow: 0 24px 80px rgba(100, 63, 24, 0.12);
+  /*
+   * Ground and panels. Not pure white: a few points of green in the ground is
+   * what lets an emerald bloom sit on it without looking pasted on. Pure #fff
+   * and a glow share no ancestry, and the join always shows.
+   */
+  --background: #fbfdfc;
+  --surface: #f2f7f4;
+  --surface-strong: #e7efea;
+  --foreground: #06140f;
+  --muted: #f2f7f4;
+  /*
+   * Dark enough to clear 4.5:1 on --surface (#f2f7f4), not just on white.
+   * Check secondary text against the darkest panel it can land on, never
+   * against --background.
+   */
+  --muted-foreground: #55665d;
+  --border: #dee8e2;
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.147 0.004 49.25);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.147 0.004 49.25);
-
-  /* Emerald primary, terracotta accent. */
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --accent: oklch(0.97 0.001 106.424);
-  --accent-foreground: oklch(0.216 0.006 56.043);
-  --accent-strong: #b84a1a;
-  --teal: #1f766e;
-  --sky: #2176ae;
-
-  --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
-  --border: oklch(0.923 0.003 48.717);
-  --input: oklch(0.923 0.003 48.717);
-  --ring: oklch(0.709 0.01 56.259);
-  --destructive: oklch(0.577 0.245 27.325);
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
 
   /*
-   * Money semantics. Not decoration — see the note above.
-   * --credit: money in, positive. --flag: money out, reversed, negative.
+   * Emerald. The interface hue — buttons, links, active state. Deeper than
+   * --glow on purpose: this one has to carry white text at 4.5:1, which the
+   * display greens cannot.
+   */
+  --primary: #047857;
+  --primary-foreground: #ffffff;
+  --primary-hover: #036048;
+  --secondary: var(--surface);
+  --secondary-foreground: var(--foreground);
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+
+  --input: var(--border);
+  --ring: var(--primary);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  /*
+   * The light. The marketing surface overrides all four in `.dark` below,
+   * which is where they actually do their work; these light-mode values exist
+   * so a `--glow-*` referenced outside the night (an admin accent, a checkout
+   * flourish) resolves to something sane rather than to nothing.
+   *
+   * Four values, because a light-form that reads as light needs four: a hot
+   * centre, the body of the light, the dark edge it falls off into, and the
+   * haze it casts on the ground around it.
+   *
+   * These are NOT interface colours: they do not meet contrast for text or
+   * controls and must never carry either.
+   */
+  --glow-core: #6bf7b8;
+  --glow: #12be7e;
+  --glow-deep: #05614a;
+  --haze: #d8f7e8;
+
+  /* The one near-black in the system: dark sections, device frames, wordmark. */
+  --ink: #04120d;
+
+  /*
+   * Money semantics. Not decoration — see the two-halved rule above.
    */
   --credit: #1b6b4a;
   --flag: #a81e12;
 
+  /*
+   * Depth is a hairline plus a shadow you have to look for. --shadow-card sits
+   * under cards and raised table headers; --shadow-float under anything that
+   * overlays the page — dialogs, drawers, toasts, menus.
+   */
+  --shadow-card: 0 1px 2px rgba(6, 20, 15, 0.05);
+  --shadow-float: 0 24px 80px rgba(6, 20, 15, 0.1);
+
+  /* 6 / 8 / 10 / 14. Nothing rounder, outside the marketing surface. */
   --radius: 0.625rem;
 
-  /* Admin sidebar. */
-  --sidebar: #e2e6e3;
-  --sidebar-foreground: oklch(0.147 0.004 49.25);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: #d3d8d4;
-  --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
-  --sidebar-border: rgba(108, 121, 113, 0.3);
-  --sidebar-ring: oklch(0.709 0.01 56.259);
+  /* Admin sidebar. The one surface with a tint of its own. */
+  --sidebar: #071a14;
+  --sidebar-foreground: #eaf5f0;
+  --sidebar-primary: #34d399;
+  --sidebar-primary-foreground: #04120d;
+  --sidebar-accent: #0e2a21;
+  --sidebar-accent-foreground: #eaf5f0;
+  --sidebar-border: rgba(52, 211, 153, 0.2);
+  --sidebar-ring: var(--primary);
 }
 
 /*
- * Dark mode ships with the palette but nothing toggles it yet. docs/DESIGN.md
- * scopes dark to the admin surface; public and checkout stay light.
+ * **The marketing night.** This is the public site's real ground, not an
+ * optional theme — `app/(public)/layout.tsx` puts `.dark` on its shell, and
+ * admin, checkout, login and the portal stay on the light `:root` palette
+ * above.
+ *
+ * It is scoped that way because of what the reference film actually is. Its
+ * whole identity is *emissive light*, and light is additive: a stroke reads as
+ * burning only because there is a near-black stage for it to be bright
+ * against. The first attempt at this design put the same forms on a white
+ * ground, where the page is already at maximum brightness and a glow can only
+ * ever subtract — every light-form came out as a pale stain. That is not a
+ * tuning failure that better values would have fixed; the mechanism cannot
+ * work on white. So the marketing surface went dark and the money surfaces,
+ * which want a ledger's flat legibility and not a film's, did not.
+ *
+ * The greens here are deliberately brighter and more saturated than their
+ * light-mode counterparts. On black they have to *be* the light rather than
+ * tint a ground that already has plenty.
  */
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --surface: rgba(28, 32, 30, 0.72);
-  --surface-strong: #1b211e;
+  --background: #050d09;
+  --surface: #0b1a13;
+  --surface-strong: #12241a;
+  --foreground: #eaf6ef;
+  --muted: #0b1a13;
+  /* 7.6:1 on --background. Secondary copy on this surface is never marginal. */
+  --muted-foreground: #8fa79a;
+  --border: #1a2f24;
 
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
+  --card: #0a1710;
+  --popover: #0a1710;
 
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
+  --primary: #34d399;
+  --primary-foreground: #04120d;
+  --primary-hover: #5ee0b0;
 
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.553 0.013 58.071);
-  --destructive: oklch(0.704 0.191 22.216);
+  --input: #1a2f24;
+  --destructive: #ef4444;
+
+  /*
+   * The light, as light. `--glow-core` is very nearly white — the hot centre
+   * of the reference's arc is not violet, it is a white core with violet
+   * falling off it, and the same is true of a green one. A saturated core
+   * reads as a coloured line; a white one reads as something burning.
+   *
+   * `--haze` inverts its meaning on this ground: on white it was the tint a
+   * light-form cast, here it is the faint *lift* it gives the black around it.
+   */
+  --glow-core: #c4ffe6;
+  --glow: #2fe89a;
+  --glow-deep: #0b6b4a;
+  --haze: #0d2b1f;
+
+  --ink: #020705;
 
   /* Lightened so they still read against a dark ground. */
   --credit: #4bbd8b;
   --flag: #e8705f;
 
-  --sidebar: #16211d;
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: #20302a;
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: rgba(114, 148, 131, 0.24);
-  --sidebar-ring: oklch(0.553 0.013 58.071);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-float: 0 24px 80px rgba(0, 0, 0, 0.6);
+
+  --sidebar: #020705;
+  --sidebar-accent: #12241a;
+  --sidebar-border: rgba(52, 211, 153, 0.22);
 }
 
 @theme inline {
@@ -125,21 +219,27 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-accent-strong: var(--accent-strong);
-  --color-teal: var(--teal);
-  --color-sky: var(--sky);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-credit: var(--credit);
   --color-flag: var(--flag);
+
+  --color-glow-core: var(--glow-core);
+  --color-glow: var(--glow);
+  --color-glow-deep: var(--glow-deep);
+  --color-haze: var(--haze);
+  --color-ink: var(--ink);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -153,12 +253,19 @@
   --font-heading: var(--font-heading);
   --font-mono: var(--font-mono);
 
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
+
+  --animate-rise: rise 200ms ease-out;
+  --animate-sway: sway 3s ease-in-out infinite;
+  --animate-breathe: breathe 7s ease-in-out infinite;
 }
 
 @layer base {
@@ -167,14 +274,30 @@
   }
 
   html {
-    scroll-behavior: smooth;
     font-family: var(--font-sans);
   }
 
+  /*
+   * No `scroll-behavior: smooth` here. Lenis drives the scroll on the
+   * marketing surface and the two fight: the browser animates to a target
+   * while Lenis is animating to the same one, which reads as a stutter at the
+   * end of every in-page jump. Lenis does its own smoothing, and the
+   * reduced-motion block below turns it off entirely.
+   */
   body {
     background: var(--background);
     color: var(--foreground);
-    overflow-x: hidden;
+    /*
+     * `clip`, not `hidden`.
+     *
+     * `overflow-x: hidden` computes the other axis to `auto`, which turns the
+     * body into a scroll container. ScrollTrigger then measures against the
+     * window while the scrolling actually happens on the body, the two never
+     * agree, and every scrub and pin on the site silently freezes at its start
+     * value. `clip` contains the same horizontal overflow without creating a
+     * scroll container, so the document keeps scrolling and the triggers fire.
+     */
+    overflow-x: clip;
   }
 
   img,
@@ -191,32 +314,56 @@
   }
 
   ::selection {
-    background: rgba(223, 106, 52, 0.22);
+    background: rgba(4, 120, 87, 0.16);
   }
 }
 
 @layer components {
-  .glass-panel {
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(18px);
-  }
-
+  /*
+   * A panel on the page ground: hairline, soft radius, a shadow you have to
+   * look for.
+   */
   .section-frame {
     border: 1px solid var(--border);
-    background: var(--surface-strong);
-    box-shadow: var(--shadow);
+    background: var(--card);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
   }
 
+  /*
+   * Section labels. Only where they label a real section — an eyebrow over
+   * something that is not a section is just noise in a small font.
+   */
   .eyebrow {
     font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.2;
     letter-spacing: 0.18em;
     text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 
+  /*
+   * Headings. Lighter and wider than the violet system's 600/-0.04em: the
+   * reference sets its headlines large, thin and open, and 600 at 76px reads
+   * as a shout where the reference is making a statement.
+   */
   .headline {
     font-family: var(--font-heading);
-    letter-spacing: -0.04em;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+  }
+
+  /*
+   * The marketing surface's largest type — the one-line statements each
+   * section is built around. Weight 300, because at 80px a 300 still has
+   * plenty of mass and keeps its counters open.
+   */
+  .display {
+    font-family: var(--font-heading);
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
   }
 
   /*
@@ -227,6 +374,46 @@
   .numeric {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Motion: 150–200ms, ease-out, opacity and small transforms only.
+ * `rise` enters rows and dialogs, `sway` animates the two letters in the
+ * wordmark, `breathe` is the slow pulse under a light-form. Checkout gets none
+ * of it beyond a spinner. The marketing surface is the exception and runs its
+ * own longer, scroll-driven motion.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
   }
 }
 

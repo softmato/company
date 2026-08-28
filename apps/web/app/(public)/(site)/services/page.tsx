@@ -16,6 +16,7 @@ export default async function ServicesIndexPage() {
   return (
     <CmsPage slug="services">
       <CardList
+        columns={2}
         empty="Services appear here once they are published."
         items={services.map((service) => ({
           key: String(service.id),

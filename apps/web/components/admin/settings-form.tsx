@@ -2,12 +2,14 @@
 
 import { useActionState } from 'react';
 
+import { cn } from '@/lib/cn';
 import {
   SETTING_DEFINITIONS,
   SETTING_GROUPS,
   type SettingDefinition,
 } from '@/lib/settings/definitions';
 import { saveSettings } from '@/app/(admin)/admin/settings/actions';
+import { Input } from '@/components/ui/input';
 import { SubmitButton } from '@/components/admin/submit-button';
 
 /**
@@ -26,7 +28,7 @@ export function SettingsForm({
   const [state, action] = useActionState(saveSettings, undefined);
 
   return (
-    <form action={action} className="mt-6">
+    <form action={action} className="mt-6 pb-24">
       {SETTING_GROUPS.map((group) => {
         const definitions = SETTING_DEFINITIONS.filter(
           (definition) => definition.group === group,
@@ -34,12 +36,10 @@ export function SettingsForm({
         if (definitions.length === 0) return null;
 
         return (
-          <fieldset key={group} className="mb-8">
-            <legend className="eyebrow text-xs text-muted-foreground">
-              {group}
-            </legend>
+          <fieldset key={group} className="mb-9">
+            <legend className="eyebrow">{group}</legend>
 
-            <div className="mt-3 space-y-5">
+            <div className="mt-3.5 grid gap-5">
               {definitions.map((definition) => (
                 <SettingField
                   key={definition.key}
@@ -54,17 +54,27 @@ export function SettingsForm({
         );
       })}
 
-      <div className="flex items-center gap-3">
-        <SubmitButton>Save settings</SubmitButton>
+      {/*
+       * Sticky (docs/UI_BRIEF.md §3.2). This is a long form — a save button
+       * that scrolled away would mean editing the VAT rate at the top and
+       * scrolling past thirty fields to commit it.
+       */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-6 py-3">
+          <SubmitButton pendingLabel="Saving…">Save settings</SubmitButton>
 
-        {state?.message ? (
-          <p
-            role="status"
-            className={`text-sm ${state.ok ? 'text-muted-foreground' : 'text-destructive'}`}
-          >
-            {state.message}
-          </p>
-        ) : null}
+          {state?.message ? (
+            <p
+              role="status"
+              className={cn(
+                'text-sm',
+                state.ok ? 'text-muted-foreground' : 'text-destructive',
+              )}
+            >
+              {state.message}
+            </p>
+          ) : null}
+        </div>
       </div>
     </form>
   );
@@ -82,8 +92,9 @@ function SettingField({
   overridden: boolean;
   error?: string | undefined;
 }) {
-  const numeric =
-    definition.kind === 'integer' || definition.kind === 'decimal';
+  const helpId = `${definition.key}-help`;
+  const errorId = `${definition.key}-error`;
+  const describedBy = error ? `${errorId} ${helpId}` : helpId;
 
   if (definition.kind === 'boolean') {
     return (
@@ -102,26 +113,19 @@ function SettingField({
             name={definition.key}
             value="true"
             defaultChecked={value === 'true'}
-            aria-describedby={`${definition.key}-help`}
-            className="size-4 rounded-sm border-input"
+            aria-describedby={describedBy}
+            className="size-4 rounded-sm border-input accent-[var(--primary)]"
           />
           {definition.label}
-          {!overridden ? (
-            <span className="text-xs font-normal text-muted-foreground">
-              default
-            </span>
-          ) : null}
+          {!overridden ? <DefaultMarker /> : null}
         </label>
 
-        <p
-          id={`${definition.key}-help`}
-          className="mt-1 text-xs text-muted-foreground"
-        >
+        <p id={helpId} className="mt-1.5 text-[13px] text-muted-foreground">
           {definition.help}
         </p>
 
         {error ? (
-          <p role="alert" className="mt-1 text-xs text-destructive">
+          <p id={errorId} role="alert" className="mt-1 text-[13px] text-destructive">
             {error}
           </p>
         ) : null}
@@ -129,53 +133,61 @@ function SettingField({
     );
   }
 
+  /*
+   * Mono is for figures, not for every field. Setting an address or a support
+   * email in tabular mono makes prose look like data and costs the numbers
+   * the distinction that mono is carrying in the first place.
+   */
+  const numeric =
+    definition.kind === 'integer' || definition.kind === 'decimal';
+
   return (
     <div>
       <label
         htmlFor={definition.key}
-        className="flex items-baseline justify-between text-sm font-medium"
+        className="flex items-baseline justify-between gap-3 text-sm font-medium"
       >
         {definition.label}
-        {!overridden ? (
-          <span className="text-xs font-normal text-muted-foreground">
-            default
-          </span>
-        ) : null}
+        {!overridden ? <DefaultMarker /> : null}
       </label>
 
-      <div className="mt-1 flex items-center gap-2">
-        <input
+      <div className="mt-1.5 flex items-center gap-2">
+        <Input
           id={definition.key}
           name={definition.key}
           defaultValue={value}
           inputMode={numeric ? 'decimal' : undefined}
           type={definition.kind === 'email' ? 'email' : 'text'}
-          aria-describedby={`${definition.key}-help`}
-          aria-invalid={error ? true : undefined}
-          className={`numeric w-full rounded-md border bg-background px-3 py-2 text-sm ${
-            error ? 'border-destructive' : 'border-input'
-          }`}
+          aria-describedby={describedBy}
+          invalid={Boolean(error)}
+          className={numeric ? 'numeric' : undefined}
         />
 
         {definition.unit ? (
-          <span className="shrink-0 text-xs text-muted-foreground">
+          <span className="shrink-0 text-[13px] text-muted-foreground">
             {definition.unit}
           </span>
         ) : null}
       </div>
 
-      <p
-        id={`${definition.key}-help`}
-        className="mt-1 text-xs text-muted-foreground"
-      >
+      <p id={helpId} className="mt-1.5 text-[13px] text-muted-foreground">
         {definition.help}
       </p>
 
       {error ? (
-        <p role="alert" className="mt-1 text-xs text-destructive">
+        <p id={errorId} role="alert" className="mt-1 text-[13px] text-destructive">
           {error}
         </p>
       ) : null}
     </div>
+  );
+}
+
+/** "Legible but quiet" (docs/UI_BRIEF.md §3.2) — it is context, not a warning. */
+function DefaultMarker() {
+  return (
+    <span className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+      default
+    </span>
   );
 }

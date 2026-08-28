@@ -15,7 +15,7 @@ export function LegalToc({ headings }: { headings: Heading[] }) {
       aria-label="Sections of this document"
       className="section-frame mt-8 rounded-lg p-5"
     >
-      <p className="eyebrow text-xs text-muted-foreground">On this page</p>
+      <p className="eyebrow">On this page</p>
 
       <ol className="numeric mt-3 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
         {headings.map(({ id, text }) => (

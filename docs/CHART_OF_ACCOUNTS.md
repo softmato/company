@@ -221,14 +221,19 @@ Dr  5010  Payment Provider Fees                   240
 
 Triggered only on a verified `Completed` lookup result — never on the redirect.
 
-### 9.3 Payment received via manual QR
+### 9.3 Payment received via manual QR — **withdrawn 2026-08-16**
 
 ```
 Dr  1020  Bank — Current Account               12,000
     Cr  1110  AR — SaaS Subscriptions                   12,000
 ```
 
-No provider fee. Posted when an admin approves the uploaded proof.
+**Nothing posts this any more.** The manual QR flow was removed; every payment
+is confirmed by a gateway and posts §9.2 instead. The entry is left here rather
+than deleted because posted history is not rewritten — if any journal was ever
+made under this rule it is still on the books and still has to be readable.
+
+The section number is kept so references to §9.4 onwards stay correct.
 
 ### 9.4 Monthly revenue recognition — run at each month end
 

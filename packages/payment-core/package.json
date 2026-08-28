@@ -9,14 +9,19 @@
     ".": "./index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.0.2",
+    "@softmato/accounting": "workspace:*",
     "@softmato/db": "workspace:*",
+    "drizzle-orm": "^0.38.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@softmato/config": "workspace:*",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
   }
 }

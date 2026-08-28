@@ -292,6 +292,11 @@ CREATE TABLE applications (
     client_id       TEXT        NOT NULL UNIQUE,   -- 'app_live_hostelhub_...'
     secret_hash     TEXT        NOT NULL,          -- argon2id. Never the secret.
     secret_last4    TEXT        NOT NULL,
+    -- Rotation overlap (API.md §2): the superseded secret keeps working for
+    -- 24 hours so a SaaS can redeploy without a window of 401s.
+    previous_secret_hash       TEXT,
+    previous_secret_last4      TEXT,
+    previous_secret_expires_at TIMESTAMPTZ,
     scopes          TEXT[]      NOT NULL DEFAULT '{}',
     webhook_url     TEXT,
     webhook_secret  TEXT,                          -- for signing outbound events
@@ -300,6 +305,17 @@ CREATE TABLE applications (
     rotated_at      TIMESTAMPTZ,
     revoked_at      TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    -- All three overlap columns move together. A hash with no expiry would be
+    -- a second permanent credential, which is the opposite of rotating.
+    CONSTRAINT previous_secret_complete CHECK (
+        (previous_secret_hash IS NULL
+         AND previous_secret_last4 IS NULL
+         AND previous_secret_expires_at IS NULL)
+        OR (previous_secret_hash IS NOT NULL
+            AND previous_secret_last4 IS NOT NULL
+            AND previous_secret_expires_at IS NOT NULL)
+    ),
 
     CONSTRAINT scopes_known CHECK (
         scopes <@ ARRAY[

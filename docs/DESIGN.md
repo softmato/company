@@ -1,5 +1,36 @@
 # Design
 
+> **⚠ §1 and §2 below are superseded — twice.** On **2026-08-27** the founder
+> replaced the white/black/emerald direction with violet and near-black, taken
+> from a reference video. On **2026-08-28** a second reference film replaced
+> that in turn with **white light and emerald**: a near-white ground, `#047857`
+> as the only interface hue, and a four-value family of luminous greens used
+> for the marketing surface's light-forms and nothing else. The live tokens are
+> in `apps/web/app/globals.css`; the marketing surface's own classes are in
+> `apps/web/app/marketing.css`. **Read the tokens there, not §2 here.**
+>
+> §1's *emerald* is therefore right again by accident, and its palette table is
+> still wrong: `--primary` is back to `#047857`, but the ground, the type scale
+> and the display accents all moved. Do not read this section as current.
+>
+> Two things in this document have survived both changes unaltered, because
+> both are about reading money rather than taste, and both still hold:
+>
+> - **§4/§5 tables and figures** — tabular mono, right-aligned amounts, the
+>   structural (never hover-only) table band.
+> - **`--credit` / `--flag`** — green is money in, red is money out or
+>   reversed.
+>
+> The second of those needed **restating** in the 2026-08-28 rebrand rather
+> than merely carrying over, and the restatement is load-bearing. The brand hue
+> is now the same family as `--credit`, so what holds the two apart is no
+> longer hue. It is direction of use, and it runs both ways: an **amount** is
+> only ever `--credit`, `--flag` or `--foreground`, never `--primary` and never
+> a `--glow-*`; a **non-financial** element is never `--credit` or `--flag`.
+> The full note is at the top of `globals.css`.
+>
+> The rest of §1–§2 is kept for the record of what was decided and why.
+
 > **Approved 2026-08-14**, with the palette and typography replaced by the
 > founder's reference project (`D:\Jiwan-Mijhar`). Follow this exactly — do not
 > substitute defaults mid-build.
@@ -13,13 +44,18 @@
 
 ---
 
-## 1. Direction: warm paper, quiet emerald
+## 1. Direction: white, black and emerald
 
-Warm off-white surfaces, a deep emerald primary, terracotta reserved for
-emphasis, soft depth from long low-opacity shadows rather than hard borders.
-Panels either float (`.glass-panel`, blurred translucent surface) or sit framed
-(`.section-frame`, hairline border on solid warm paper). Headings are tightly
-tracked; small uppercase mono eyebrows label real sections.
+White page ground, near-black text, a deep emerald primary, and no third hue.
+Depth is a hairline plus a shadow you have to look for. Panels sit framed
+(`.section-frame`: hairline border, 14px radius, `--shadow-card`). Headings are
+tightly tracked; small uppercase mono eyebrows label real sections.
+
+**This supersedes the warm-paper/terracotta direction.** The founder narrowed
+the palette in `docs/handoff/UI_HANDOFF.md` §1: the terracotta `--accent-strong`,
+the cream ground, `--teal`, `--sky` and `.glass-panel` are gone from
+`globals.css`. Do not reintroduce any of them. Red survives in two roles only,
+and they are different tokens on purpose — see below.
 
 The product's subject is still a well-kept account book, and that shows in how
 data is set rather than in the colour of the page: ruled columns, aligned
@@ -40,11 +76,10 @@ a palette duplicated into a doc is a palette that drifts. The shape:
 | Token                            | Role                                             |
 | -------------------------------- | ------------------------------------------------ |
 | `--background` / `--foreground`  | Page ground and text                             |
-| `--surface` / `--surface-strong` | Translucent glass panel / solid warm paper panel |
+| `--surface` / `--surface-strong` | Panels, secondary buttons, summary rails         |
 | `--card`, `--popover`            | Lifted containers                                |
-| `--primary`                      | Emerald. Primary action.                         |
-| `--accent-strong`                | Terracotta `#b84a1a`. Emphasis, never a number.  |
-| `--teal`, `--sky`                | Secondary hues, sparingly                        |
+| `--primary`                      | Emerald `#047857`. Primary action, links, active. |
+| `--shadow-card` / `--shadow-float` | Card depth / overlay depth                     |
 | `--muted` / `--muted-foreground` | Recessed surfaces, secondary text                |
 | `--border`, `--input`, `--ring`  | Hairlines and focus                              |
 | `--destructive`                  | Destructive UI actions                           |
@@ -53,9 +88,10 @@ a palette duplicated into a doc is a palette that drifts. The shape:
 
 **Colour carries meaning in this product.** `--credit` and `--flag` are not
 decoration — green means money in, red means money out or something reversed.
-Never use either for emphasis on non-financial text, and never set an amount in
-`--accent-strong`. `--destructive` is for destructive _actions_ (delete, revoke);
-`--flag` is for _figures_. They are different tokens on purpose.
+Never colour a non-financial word with either, and never set an amount in
+anything but `--credit`, `--flag` or `--foreground`. `--destructive` is for
+destructive _actions_ (delete, revoke); `--flag` is for _figures_. They are
+different tokens on purpose.
 
 Dark mode: the full dark palette ships in `globals.css` under `.dark`, but
 nothing toggles it yet. Scope stays admin-only, deferred to Phase 7 — public and
@@ -279,7 +315,7 @@ appearance.
 
 **Buttons.** Primary `--primary` with `--primary-foreground` text. Secondary
 `--border` outline on `--surface-strong`. Destructive `--destructive`. Ghost for
-tertiary. Terracotta `--accent-strong` is for emphasis, not a third button
+tertiary. There is no accent button variant — one emerald primary per screen
 variant. 40px tall, 48px on touch.
 
 **Forms.** Label above input, always visible — never placeholder-as-label.
@@ -326,7 +362,7 @@ Not negotiable, not announced:
 - Visible keyboard focus on every interactive element — never `outline: none`
   without a replacement
 - `prefers-reduced-motion` respected; all motion becomes instant
-- WCAG 2.1 AA contrast. Verify `--accent-strong` on `--surface-strong`, and
+- WCAG 2.1 AA contrast. Verify `--primary` on `--surface`, and
   `--credit` and `--flag` on `--muted`, specifically — the banded rows are where
   a marginal contrast ratio actually bites.
 - Touch targets ≥ 44px

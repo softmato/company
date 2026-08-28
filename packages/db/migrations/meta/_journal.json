@@ -36,6 +36,13 @@
       "when": 1786759031733,
       "tag": "0004_flat_iceman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786762395296,
+      "tag": "0005_lame_hulk",
+      "breakpoints": true
     }
   ]
 }

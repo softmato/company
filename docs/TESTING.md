@@ -252,11 +252,13 @@ test('invoice numbers are gapless within a fiscal year', async () => {
 ## 9. End to end (Playwright)
 
 ```
-Manual QR    create session → checkout → upload proof → admin approves
-             → invoice paid → webhook delivered → ledger balances
+Fonepay      create session → checkout → sandbox pay → confirm
+             → invoice paid → receipt emailed → webhook delivered
+             → ledger balances
 
 Khalti       create session → checkout → sandbox pay → return
-             → lookup confirms → invoice paid → ledger balances
+             → lookup confirms → invoice paid → receipt emailed
+             → ledger balances
 
 eSewa mobile UA → Intent deeplink | desktop UA → ePay form
 

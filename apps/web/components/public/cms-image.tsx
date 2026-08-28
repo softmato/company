@@ -1,6 +1,7 @@
 import Image from 'next/image';
 
 import { env } from '@/lib/env';
+import { TRUSTED_IMAGE_HOSTNAMES } from '@/lib/images/trusted-hosts';
 
 /**
  * A CMS image, optimised when we are allowed to and plain when we are not.
@@ -16,10 +17,20 @@ import { env } from '@/lib/env';
  * imported into a client component by accident.
  */
 function optimizable(src: string): boolean {
-  if (!env.R2_PUBLIC_BASE_URL) return false;
-
   try {
-    return new URL(src).origin === new URL(env.R2_PUBLIC_BASE_URL).origin;
+    const url = new URL(src);
+
+    if (
+      TRUSTED_IMAGE_HOSTNAMES.includes(
+        url.hostname as (typeof TRUSTED_IMAGE_HOSTNAMES)[number],
+      )
+    ) {
+      return true;
+    }
+
+    if (!env.R2_PUBLIC_BASE_URL) return false;
+
+    return url.origin === new URL(env.R2_PUBLIC_BASE_URL).origin;
   } catch {
     return false;
   }
@@ -74,6 +85,16 @@ interface CmsImageFillProps {
   sizes: string;
   /** Applied to the image itself. The parent supplies the frame and its ratio. */
   className?: string | undefined;
+  /**
+   * Load eagerly and preload. Set this on an image that is above the fold —
+   * the hero especially, which is the largest contentful paint on the page.
+   * Left lazy it is fetched only once the browser has laid the page out,
+   * which is the difference between a good LCP and a failing one.
+   *
+   * Never set it on more than one image per page: preloading everything
+   * preloads nothing.
+   */
+  priority?: boolean | undefined;
 }
 
 /**
@@ -88,6 +109,7 @@ export function CmsImageFill({
   alt,
   sizes,
   className,
+  priority,
 }: CmsImageFillProps) {
   if (!optimizable(src)) {
     return (
@@ -95,10 +117,28 @@ export function CmsImageFill({
       <img
         src={src}
         alt={alt}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : undefined}
         className={`absolute inset-0 h-full w-full ${className ?? ''}`}
       />
     );
   }
 
-  return <Image src={src} alt={alt} fill sizes={sizes} className={className} />;
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes}
+      // `exactOptionalPropertyTypes` is on: next/image declares `priority` as
+      // a plain boolean, so an explicit undefined is not assignable.
+      priority={priority ?? false}
+      // `priority` emits the preload link but leaves the element's own fetch
+      // priority at the browser's default, which Lighthouse reports as a
+      // missing priority hint on the LCP request. Stated here so the hint is
+      // on the image itself and not only on the preload.
+      fetchPriority={priority ? 'high' : 'auto'}
+      className={className}
+    />
+  );
 }

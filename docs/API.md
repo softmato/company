@@ -34,9 +34,17 @@ Error shape:
 | `IDEMPOTENCY_CONFLICT` | 409  |
 | `VALIDATION_FAILED`    | 422  |
 | `RATE_LIMITED`         | 429  |
+| `INTERNAL`             | 500  |
 | `PROVIDER_UNAVAILABLE` | 502  |
 
+`INTERNAL` is the catch-all for anything unrecognised. It is not something a
+caller can act on, but it exists so that our own bug is not reported as
+`PROVIDER_UNAVAILABLE` — blaming a provider for our crash makes an outage
+look like theirs.
+
 Never leak provider internals in `message`. Log the detail, return the code.
+The message a client sees is fixed per code in
+`packages/payment-core/errors.ts`; it is never the thrown error's message.
 
 ---
 
@@ -103,7 +111,7 @@ A client-supplied amount would be a vulnerability.
   "session_id": "cs_live_8f7d92a1...",
   "checkout_url": "https://payment.softmato.com/checkout/cs_live_8f7d92a1...",
   "expires_at": "2026-08-12T11:00:00Z",
-  "allowed_providers": ["khalti", "esewa", "fonepay", "manual_qr"]
+  "allowed_providers": ["fonepay", "esewa", "khalti"]
 }
 ```
 
@@ -162,7 +170,7 @@ Adapter interface:
 
 ```ts
 interface PaymentProvider {
-  id: 'esewa' | 'khalti' | 'fonepay' | 'manual_qr';
+  id: 'fonepay' | 'esewa' | 'khalti';
 
   initiate(session: PaymentSession): Promise<{
     providerRef: string;
@@ -193,20 +201,25 @@ for Khalti, the only confirmation path.
 
 ---
 
-### 5.1 `manual_qr`
+### 5.1 `manual_qr` — **removed 2026-08-16**
 
-Replaces the current manual process; remains a permanent fallback.
+A customer transferring by bank QR and uploading a screenshot for an admin to
+approve. **Deleted**, reversing the 2026-08-12 decision that made it
+first-class. Every payment now goes through a gateway; nothing is credited on
+a person's say-so.
 
-1. Customer selects Manual QR
-2. Page shows the company QR and a reference code
-3. Customer pays, uploads a screenshot via presigned PUT to the R2 private
-   bucket
-4. Transaction → `pending`, enters the admin approval queue
-5. Admin verifies against the bank/wallet app, approves or rejects
-6. Approval posts the journal entry and fires the webhook
+Two consequences worth stating plainly, because neither is solved by the
+removal itself:
 
-`poll()` returns the current DB status — no external call.
-`provider_fee_minor` is 0. Approval writes an audit entry naming the admin.
+- **There is no fallback when a gateway is down.** That was this provider's
+  other job.
+- **Nothing can currently take a payment.** `manual_qr` was the only provider
+  needing no external credentials, so until Fonepay, eSewa or Khalti has both
+  credentials and an adapter, `allowed_providers` comes back empty and
+  checkout refuses every session.
+
+The section number is kept so that references to §5.2–§5.4 elsewhere in the
+docs and in code comments stay correct.
 
 ---
 
@@ -404,3 +417,50 @@ const allowed = await db.query.paymentProviders.findMany({
 
 Wallets have per-transaction limits. A customer must never select a method that
 will fail mid-payment.
+
+**Provider preference.** Fonepay is the primary integration — a full merchant
+account reaching banks and wallets rather than one wallet's customers. eSewa
+and Khalti are secondary. `sort_order` encodes that (10 / 20 / 30) and decides
+the order a customer sees once the amount filter above has run.
+
+Note that the query filters on `is_active`, so **a provider without live
+credentials is not offered at all.** Activating a provider is part of the
+change that lands its adapter and its credentials — never before, or a customer
+is shown a method that fails when they try to pay.
+
+---
+
+## 9. Receipts
+
+**A confirmed payment sends the payer a receipt.** Not the SaaS — the person
+whose money moved. The SaaS learns about the payment from the webhook (§4);
+these are different audiences and different messages.
+
+A receipt is a rendering of a succeeded transaction, not a record of its own.
+There is no receipts table and no separate receipt sequence: `txn_no` is the
+receipt number, and it is already gapless per fiscal year.
+
+| Field       | Source                                                     |
+| ----------- | ---------------------------------------------------------- |
+| Receipt no. | `transactions.txn_no`                                      |
+| Invoice no. | `invoices.invoice_no`                                      |
+| Amount      | `gross_amount_minor` — what left the customer's account    |
+| Paid with   | `payment_providers.display_name`                           |
+| Reference   | `transactions.provider_ref`, to match against a statement  |
+| Date        | `succeeded_at`                                             |
+
+Three rules govern it:
+
+1. **The amount is the gross, never the net.** The provider's fee is our cost,
+   not a deduction from what the customer paid. A receipt quoting the net would
+   understate what they are owed if the payment is later refunded.
+2. **Sending can never fail the payment.** The receipt goes out after the
+   journal is posted and the invoice cleared, through a sender that does not
+   throw. An email problem must not roll back confirmed money.
+3. **A payer with no email address is normal**, not an error. A SaaS is not
+   obliged to give us one; the payment completes and there is simply nowhere to
+   send the receipt.
+
+⚠ **Open with the accountant:** whether Nepali practice requires a distinct
+receipt series alongside the invoice series. If it does, this grows a number
+and a table. Recorded in `MEMORY.md`.

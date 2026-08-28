@@ -7,7 +7,8 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./schema": "./schema/index.ts"
+    "./schema": "./schema/index.ts",
+    "./seed/cms": "./seed/cms.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",

@@ -33,17 +33,28 @@ export {
 
 export { legalDocumentSeeds } from './legal';
 
+/**
+ * The two founders, named by the founder on 2026-08-28. These replace the
+ * fictional placeholders that stood here while open question 8 was unanswered.
+ *
+ * The bios describe what each person is responsible for and nothing else. No
+ * years, no previous employers, no qualifications — none of that was given,
+ * and a biography is the easiest place on a website to state something nobody
+ * checked. Photographs are deliberately absent: `photoUrl` stays null and the
+ * team grid renders an initials tile, which says "no photograph yet" and is
+ * true. A stock portrait under a real colleague's name is not.
+ */
 export const teamMemberSeeds: TeamMemberSeed[] = [
   {
-    name: 'Placeholder Person',
-    role: 'Founder',
-    bio: 'Fictional. Replace with a real team member — open question 8.',
+    name: 'Jiwan Mijhar',
+    role: 'Founder, Chairperson & CEO',
+    bio: 'Runs the company: what it takes on, who it answers to, and where it is going. Sits closest to the people we work for, and signs off anything that moves money.',
     sortOrder: 1,
   },
   {
-    name: 'Second Placeholder',
-    role: 'Founder',
-    bio: 'Fictional. Replace with a real team member — open question 8.',
+    name: 'Siddhant Yadav',
+    role: 'Founder, Director & CTO',
+    bio: 'Runs how the software gets built — the architecture, the payment and accounting platform, and the standards the rest of it is held to. Writes code most days and reviews the rest.',
     sortOrder: 2,
   },
 ];

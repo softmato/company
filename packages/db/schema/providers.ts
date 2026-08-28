@@ -21,7 +21,7 @@ import { accounts } from './accounts';
 export const paymentProviders = pgTable(
   'payment_providers',
   {
-    id: text('id').primaryKey(), // 'khalti','esewa','fonepay','manual_qr'
+    id: text('id').primaryKey(), // 'fonepay' (primary), 'esewa', 'khalti'
     displayName: text('display_name').notNull(),
     isActive: boolean('is_active').notNull().default(true),
     /** Amount-based routing: hides wallets when the amount exceeds their limit. */

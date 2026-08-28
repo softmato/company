@@ -55,4 +55,19 @@ export async function closeDb(): Promise<void> {
 export type Db = NodePgDatabase<typeof schema>;
 /** A transaction handle — what every ledger write must be given. */
 export type DbTx = Parameters<Parameters<Db['transaction']>[0]>[0];
+/**
+ * Either the pool or an open transaction.
+ *
+ * For the operations that legitimately run both ways: the API path reads a
+ * session inside the transaction `withIdempotency` owns, while a server
+ * component rendering the checkout page reads the same session on the pool with
+ * no transaction in sight. Both are correct, and a function that serves both
+ * should say so rather than force a caller to open a transaction it does not
+ * need.
+ *
+ * **This is not for ledger writes.** Anything that posts a journal, or that
+ * must be atomic across more than one statement, still takes `DbTx` — the point
+ * of that type is that the caller cannot forget the transaction.
+ */
+export type DbLike = Db | DbTx;
 export { schema };

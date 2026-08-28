@@ -25,11 +25,11 @@ export function FieldShell({
   const errorId = error ? `${name}-error` : undefined;
 
   return (
-    <div className="mt-4">
+    <div className="mt-5">
       <label htmlFor={name} className="block text-sm font-medium">
         {label}
         {required ? (
-          <span className="text-destructive" aria-hidden>
+          <span className="text-muted-foreground" aria-hidden>
             {' '}
             *
           </span>
@@ -38,25 +38,35 @@ export function FieldShell({
 
       {children}
 
-      {hint ? (
-        <p id={hintId} className="mt-1 text-xs text-muted-foreground">
-          {hint}
+      {error ? (
+        <p id={errorId} className="mt-1.5 text-[13px] text-destructive">
+          {error}
         </p>
       ) : null}
 
-      {error ? (
-        <p id={errorId} className="mt-1 text-xs text-destructive">
-          {error}
+      {hint ? (
+        <p id={hintId} className="mt-1.5 text-[13px] text-muted-foreground">
+          {hint}
         </p>
       ) : null}
     </div>
   );
 }
 
-/** Shared input styling, so every field looks and focuses the same. */
+/**
+ * Shared input styling, so every field looks and focuses the same.
+ *
+ * Matches `components/ui/input.tsx` — the admin field specs predate that
+ * primitive and drive their inputs from a spec object rather than JSX, so
+ * they carry the class instead of the component. Change both together.
+ */
 export const inputClass =
-  'mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ' +
-  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring';
+  'mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs ' +
+  'placeholder:text-muted-foreground/70 ' +
+  'transition-[border-color,box-shadow] duration-150 ease-out ' +
+  'focus-visible:outline-none focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/50 ' +
+  'aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive/40 ' +
+  'disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Describes an input by its hint and error, for screen readers. */
 export function describedBy(

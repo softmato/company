@@ -1,15 +1,16 @@
 import Link from 'next/link';
 
 import type { ContentRow, ListColumn } from '@/lib/cms';
+import { Card } from '@/components/ui/card';
+import { DataTable, Td, Th, Tr } from '@/components/ui/table';
+import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/admin/status-badge';
 
 /**
- * Banded list table (docs/DESIGN.md §4).
+ * The list view for one content kind, on the shared banded table.
  *
  * The band is structural, never hover-only — it is there so the eye tracks a
- * row across the columns, which is the same reason a ledger uses it. A real
- * `<table>`, not divs: screen readers need the row/column relationship the
- * band communicates visually.
+ * row across the columns, which is the same reason a ledger uses it.
  */
 
 /** Columns whose values are figures and must be set in tabular mono. */
@@ -24,56 +25,59 @@ export function ContentTable({
   columns: readonly ListColumn[];
   rows: ContentRow[];
 }) {
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        className="mt-6"
+        title="Nothing of this kind yet"
+        description="Entries appear here once they are created. Each one starts as a draft and stays off the public site until it is published."
+      />
+    );
+  }
+
   return (
-    <div className="mt-6 overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
+    <Card className="mt-6 overflow-hidden">
+      <DataTable>
         <thead>
-          <tr className="border-b border-border">
+          <tr>
             {columns.map((col) => (
-              <th key={col.field} scope="col" className={headerClass}>
+              <Th key={col.field} numeric={NUMERIC_FIELDS.has(col.field)}>
                 {col.label}
-              </th>
+              </Th>
             ))}
-            <th scope="col" className={headerClass}>
-              Status
-            </th>
-            <th scope="col" className="px-3 py-2">
+            <Th>Status</Th>
+            <Th className="text-right">
               <span className="sr-only">Actions</span>
-            </th>
+            </Th>
           </tr>
         </thead>
+
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.id} className={index % 2 === 1 ? 'bg-muted' : ''}>
+          {rows.map((row) => (
+            <Tr key={row.id}>
               {columns.map((col) => (
-                <td
-                  key={col.field}
-                  className={`px-3 py-2 ${NUMERIC_FIELDS.has(col.field) ? 'numeric' : ''}`}
-                >
+                <Td key={col.field} numeric={NUMERIC_FIELDS.has(col.field)}>
                   {display(row[col.field])}
-                </td>
+                </Td>
               ))}
-              <td className="px-3 py-2">
+              <Td>
                 <StatusBadge status={row.status} />
-              </td>
-              <td className="px-3 py-2 text-right">
+              </Td>
+              <Td className="text-right">
                 <Link
                   href={`/admin/cms/${kindSlug}/${row.id}`}
-                  className="text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
                 >
                   Edit
                 </Link>
-              </td>
-            </tr>
+              </Td>
+            </Tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </DataTable>
+    </Card>
   );
 }
-
-const headerClass =
-  'eyebrow px-3 py-2 text-left text-xs text-muted-foreground font-normal';
 
 function display(value: unknown): string {
   if (value === null || value === undefined || value === '') return '—';

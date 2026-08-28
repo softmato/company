@@ -1,9 +1,18 @@
+'use client';
+
 /**
  * Admin navigation. Mirrors the structure in docs/FOLDER_STRUCTURE.md —
  * sections whose phase has not been built yet are shown but not linked, so the
  * shape of the system is visible without offering dead ends.
+ *
+ * A client component only because the active item is derived from the path.
+ * The sidebar is the one surface with a ground of its own (`--sidebar`); it
+ * is a tool, and the tint is what separates the tool from the work.
  */
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { cn } from '@/lib/cn';
 
 interface NavItem {
   label: string;
@@ -40,41 +49,70 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Platform',
     items: [
-      { label: 'Products', phase: 3 },
+      { label: 'Products', href: '/admin/products' },
       { label: 'Providers', phase: 3 },
       { label: 'Content', href: '/admin/cms' },
       { label: 'Clients', phase: 8 },
-      { label: 'Audit log', phase: 1 },
+      { label: 'Audit log', href: '/admin/audit' },
       { label: 'Settings', href: '/admin/settings' },
     ],
   },
 ];
 
 export function AdminNav() {
+  const pathname = usePathname();
+
+  /*
+   * `/admin` matches only itself. Prefix-matching it would light the Dashboard
+   * up on every page in the panel, which makes the active state meaningless.
+   */
+  function isActive(href: string): boolean {
+    return href === '/admin'
+      ? pathname === '/admin'
+      : pathname === href || pathname.startsWith(`${href}/`);
+  }
+
   return (
     <nav
       aria-label="Admin sections"
-      className="w-56 shrink-0 border-r border-neutral-200 px-4 py-6"
+      className="w-56 shrink-0 border-r border-sidebar-border bg-sidebar px-3 py-5"
     >
       {SECTIONS.map((section) => (
-        <div key={section.title} className="mb-6">
-          <h2 className="mb-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
-            {section.title}
-          </h2>
-          <ul className="space-y-1">
+        <div key={section.title} className="mb-5">
+          <h2 className="eyebrow px-2">{section.title}</h2>
+
+          <ul className="mt-2 space-y-0.5">
             {section.items.map((item) => (
               <li key={item.label}>
                 {item.href ? (
                   <Link
                     href={item.href}
-                    className="block rounded px-2 py-1 text-sm text-neutral-800 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    className={cn(
+                      'block rounded-md px-2 py-1.5 text-sm transition-colors duration-150',
+                      'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-sidebar-ring/50',
+                      isActive(item.href)
+                        ? 'bg-background font-medium text-primary shadow-card'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent',
+                    )}
                   >
                     {item.label}
                   </Link>
                 ) : (
-                  <span className="flex items-center justify-between px-2 py-1 text-sm text-neutral-400">
+                  /*
+                   * Not a link and not disabled-looking-clickable: plain text
+                   * with the phase that delivers it. Someone reading the
+                   * sidebar learns the system's shape and learns that this
+                   * part is not built, in one glance.
+                   */
+                  <span className="flex items-center justify-between gap-2 px-2 py-1.5 text-sm text-muted-foreground">
                     {item.label}
-                    <span className="text-xs">P{item.phase}</span>
+                    <span
+                      className="numeric shrink-0 text-[10.5px]"
+                      title={`Phase ${item.phase}`}
+                    >
+                      P{item.phase}
+                    </span>
                   </span>
                 )}
               </li>

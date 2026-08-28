@@ -9,7 +9,8 @@
     ".": "./index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@softmato/db": "workspace:*",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@softmato/config": "workspace:*",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
   }
 }

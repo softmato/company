@@ -25,6 +25,8 @@ export default async function ContentEditPage({
 
   if (!row) notFound();
 
+  const title = String(row.title ?? row.name ?? kind.singular);
+
   return (
     <div className="max-w-2xl">
       <Breadcrumbs
@@ -37,9 +39,7 @@ export default async function ContentEditPage({
       </Breadcrumbs>
 
       <div className="mt-2 flex items-center gap-3">
-        <h1 className="headline text-2xl">
-          {String(row.title ?? row.name ?? kind.singular)}
-        </h1>
+        <h1 className="headline text-[30px] leading-tight">{title}</h1>
         <StatusBadge status={row.status} />
       </div>
 
@@ -53,6 +53,7 @@ export default async function ContentEditPage({
       <PublicationPanel
         kindSlug={kind.slug}
         id={row.id}
+        title={title}
         published={row.status === 'published'}
       />
     </div>

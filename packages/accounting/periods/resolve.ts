@@ -19,7 +19,7 @@ export async function resolveFiscalPeriod(
   tx: DbTx,
   occurredAt: Date,
 ): Promise<FiscalPeriod> {
-  const [period] = await tx
+  const matches = await tx
     .select()
     .from(fiscalPeriods)
     .where(
@@ -28,13 +28,41 @@ export async function resolveFiscalPeriod(
         gt(fiscalPeriods.endsAt, occurredAt),
       ),
     )
-    .limit(1);
+    .limit(2);
+
+  const period = matches[0];
 
   if (!period) {
     throw new AccountingError(
       'NO_FISCAL_PERIOD',
       `No fiscal period covers ${occurredAt.toISOString()}. Seed the BS year before posting.`,
       { occurredAt: occurredAt.toISOString() },
+    );
+  }
+
+  /*
+   * The comment above claims no event can land in two periods. Nothing in the
+   * database enforced that, and a stray wide-ranged period — a test fixture
+   * spanning 2000–2100, say — silently swallowed every real posting, because
+   * `LIMIT 1` made the ambiguity invisible.
+   *
+   * Fail closed instead. A posting that could belong to two periods belongs to
+   * neither until someone decides (docs/RULES.md §5).
+   */
+  if (matches.length > 1) {
+    const second = matches[1]!;
+    throw new AccountingError(
+      'NO_FISCAL_PERIOD',
+      `More than one fiscal period covers ${occurredAt.toISOString()}: ` +
+        `${period.fiscalYear}/${period.periodNo} and ${second.fiscalYear}/${second.periodNo}. ` +
+        'Fiscal periods must not overlap; fix the periods before posting.',
+      {
+        occurredAt: occurredAt.toISOString(),
+        periods: [
+          `${period.fiscalYear}/${period.periodNo}`,
+          `${second.fiscalYear}/${second.periodNo}`,
+        ],
+      },
     );
   }
 

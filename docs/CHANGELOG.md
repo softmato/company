@@ -14,6 +14,211 @@ this file tracks what was delivered.
 
 ### Added
 
+- **A cinematic light-form design for the public site**, rebuilt from a second
+  reference film the founder supplied (2026-08-28). One near-white ground runs
+  the length of the page and each section is built around a single enormous
+  emerald light-form the reader scrolls through: an arc, an orb with a comet,
+  an eclipse, and a globe of points. The forms live in
+  `apps/web/components/three/forms/`; the stage, bloom, grid floor, pill and
+  device classes are in `apps/web/app/marketing.css`.
+- **The wordmark as the hero's light-form.** `ArcMark` draws S O F T M A T O
+  along a bowl of light, reproducing the reference's opening frame by frame:
+  the bowl expands from a sliver, a spark travels out along each half, the
+  letters light as it passes them from the centre outward, and a quieter second
+  bowl resolves inside the first.
+- **`StaggerIn`**, a motion primitive that fades a block's direct children up in
+  order, on mount or on scroll.
+- **`pnpm cms:sync-copy`** — local-only, pulls a development database's CMS rows
+  back in line with the seeds. The seeder correctly refuses to overwrite
+  published rows, which left databases seeded before the copy existed holding
+  placeholders for ever.
+- **The two founders in the team seeds**, replacing the fictional placeholders
+  that stood in for open question 8.
+
+### Changed
+
+- **Palette rebranded from violet and near-black to white light and emerald**,
+  at the founder's direction (2026-08-28) — `--primary` is `#047857` again, and
+  the six `--brand-*` display accents are replaced by a four-value light family
+  (`--glow-core`, `--glow`, `--glow-deep`, `--haze`) plus `--ink`. This
+  supersedes `docs/DESIGN.md` §1–§2.
+  - **The `--credit` / `--flag` rule needed restating, not relaxing.** The brand
+    hue is now the same family as `--credit`, so what holds them apart is no
+    longer hue but direction of use, and it runs both ways: an amount is only
+    ever `--credit`, `--flag` or `--foreground`; a non-financial element is
+    never `--credit` or `--flag`. See the note at the top of `globals.css`.
+- **Display face changed from DM Sans to Outfit**, at 300/400/500. The
+  marketing surface sets one-line statements at 80px and up, where DM Sans
+  closed its counters under the tracking the design wanted.
+- **The home page is no longer a stack of alternating light/dark bands.** The
+  ground never changes now; only what is lit on it does. `Band`, `.band-*`,
+  `.dot-grid` and the curved joins are gone. One section inverts to dark — the
+  products section — because a page of light needs a floor under it exactly
+  once.
+- **Navigation moved from a bottom-fixed pill to the header.** Wordmark left,
+  link pill centre, one action right, with a disclosure under `md`. On a page
+  whose sections are full-height light-forms, a bar fixed to the bottom sits in
+  the middle of every one of them.
+- **Email templates repainted** to the new tokens' sRGB equivalents.
+- **`BlurIn` and `WordReveal` no longer force `.headline`.** The caller passes
+  `.headline` or `.display`, so a display heading is not two conflicting rules
+  relying on stylesheet order.
+
+### Fixed
+
+- **ScrollTrigger now refreshes once the webfonts have swapped in.** It caches
+  trigger positions on first run; the display face arriving afterwards changes
+  every heading's height and moves every trigger below it. The symptom is a
+  reveal firing early near the foot of a long page, and it is invisible on a
+  warm cache.
+- **Two contrast failures found by calculation rather than by eye**, both only
+  present where the design is at its most decorative: secondary copy over the
+  hot centre of a bloom (4.2:1) and the team page's emerald initials over a
+  `--glow-core` tile (4.1:1). The bloom's alphas and the tile's gradient are
+  now set by that budget, and both places carry the arithmetic in a comment.
+
+### Removed
+
+- `Band`/`BandInner`, `FloatingNav`, `SiteNav`, `PinnedShowcase`, `PillDrop`,
+  `Doodle` and the procedural blob scene — all superseded by the light-form
+  design.
+- **`lib/home/content.ts`, and with it every invented figure on the site**: the
+  "6 years shipping / 2 products / 41 hostels" strip and the NPR
+  25,000/75,000/240,000 pricing table. The founder confirmed on 2026-08-28 that
+  neither should ship. Nothing on the public site now states a number about the
+  business that is not checkable — the one figure left on the home page is
+  Kathmandu's coordinates.
+
+### Added
+
+- **A motion and 3D layer for the public site**, built from the founder's
+  reference video. Reusable primitives in `apps/web/components/motion/`:
+  word-by-word scrub reveal, blur-in headline entrance, parallax, DrawSVG
+  hand-drawn annotations, a pinned feature showcase, and a Matter.js physics
+  drop. WebGL blobs in `apps/web/components/three/` are procedural
+  (`MeshPhysicalMaterial` with clearcoat + iridescence) rather than loaded
+  models, and the lighting environment is built in-memory from lightformers so
+  nothing is fetched from a CDN.
+- **Full-bleed banded home page.** Alternating light/dark sections joined by
+  the reference's curved edges (`Band`, `.band-*` in `app/marketing.css`).
+- **A floating pill navigation** fixed to the bottom of the viewport, replacing
+  the header's link list. The header is now the wordmark and one action.
+- **`pnpm legal:check` and `pnpm legal:todo`**, plus a `predeploy` script.
+  `legal:check` fails when a *published* legal document still carries its
+  "not yet reviewed" banner or an unfilled `[confirm: …]` marker.
+
+### Changed
+
+- **Palette rebranded from white/black/emerald to violet, near-black and a set
+  of bright display accents**, at the founder's direction (2026-08-27). This
+  supersedes `docs/DESIGN.md` §1–§2. `--credit` and `--flag` were deliberately
+  *not* folded into the brand accents: telling money in from money out at a
+  glance is a legibility requirement on a product that moves real money.
+- **`body` now uses `overflow-x: clip` rather than `hidden`.** `hidden`
+  computes the other axis to `auto`, which made the body a scroll container;
+  ScrollTrigger measured the window instead and every scrub and pin on the site
+  froze at its start value.
+- **The public layout no longer constrains width.** Pages other than the home
+  page sit in a `(site)` route group whose layout applies the measure, so
+  full-bleed bands can reach the viewport edge.
+
+### Removed
+
+- **The manual QR payment flow**, reversing the decision that made it
+  first-class. A customer transferring by bank QR and uploading a screenshot
+  for an admin to approve is gone; every payment now goes through a gateway and
+  nothing is credited on a person's say-so. Two consequences, both accepted:
+  there is no longer a fallback when a gateway is down, and since this was the
+  only provider needing no external credentials, **no payment can be taken
+  until Fonepay, eSewa or Khalti has both credentials and a working adapter.**
+
+### Changed
+
+- **Fonepay is the primary payment integration**; eSewa and Khalti are
+  secondary. Providers are seeded inactive — a provider is activated in the
+  same change that lands its adapter and its credentials, never before, so a
+  customer is never shown a method that fails when they try to pay.
+
+### Added
+
+- **A confirmed payment posts to the ledger and sends the payer a receipt.**
+  The receipt states the gross amount — what left the customer's account —
+  because the provider's fee is our cost, not a deduction from what they paid.
+  It reuses the transaction number rather than opening a second numbered
+  series, and it can never fail the payment: it is sent after the journal is
+  posted, through a path that cannot throw.
+- **The same verified result arriving repeatedly posts exactly one journal.** A
+  callback and a poll racing, a retry, five identical lookups — all settle a
+  payment once.
+- **A provider amount that differs from what we expected posts nothing** and
+  flags the transaction for a human to reconcile. It is never resolved by
+  taking the provider's word, and never by taking ours.
+- Posting rule for a confirmed gateway payment (`CHART_OF_ACCOUNTS.md` §9.2),
+  with the provider's fee passed through exactly as reported rather than
+  computed as a percentage.
+
+- **Payment sessions move through an enforced state machine.**
+  `packages/payment-core/sessions/transition.ts` is the only writer of
+  `payment_sessions.status`, and every move goes through the legal-transition
+  table. The UPDATE carries `WHERE status = <from>`, so two writers racing on
+  the same session cannot both win — the loser is told the session moved rather
+  than overwriting it.
+- **An expired session cannot be paid** (Phase 3 acceptance 7).
+  `loadPayableSession()` settles expiry on the way past: a session whose
+  deadline passed is written `expired` before any caller acts on it, rather
+  than left reading `created` for a status column nobody re-checked. A session
+  that already succeeded is never expired after the fact.
+- **Provider selection** — a customer picks a method, checked against the
+  `allowed_providers` written at session creation rather than against the
+  providers table as it now stands, so a provider deactivated mid-session
+  cannot change what the page in front of a human is offering. Re-selection and
+  double-clicks are both handled.
+- **Selecting a provider now starts a payment attempt** — a numbered
+  `transactions` row, its amount taken from the session (which recomputed it
+  from the invoice), with no fee assumed until a provider reports one.
+- **Reloading the checkout page does not start a second attempt.** A live
+  attempt is returned unchanged, with the same reference code and QR the
+  customer was already shown. Without this a customer could pay quoting the
+  first reference while the page displayed a second, and the screenshot would
+  match no transaction anyone was looking for. A *failed* attempt is left
+  behind as the record that it happened; trying again opens a new one.
+- **The `manual_qr` adapter**, the first provider behind the registry. It
+  produces the company QR and a reference code for the payment remark, and its
+  `poll()` reports our own record rather than pretending to have checked
+  something — there is no external system to ask. No fee, ever: the money
+  arrives in the bank account directly.
+- Reference codes are built to survive being photographed and retyped: the
+  alphabet excludes `I`, `L`, `O` and `U`, and an admin can enter one
+  lower-cased, spaced, unhyphenated or without its prefix and still match it.
+- The company QR lives in `payment_providers.config`, **not** in platform
+  settings, and is read fresh on every initiate. It decides where a customer's
+  money lands, so changing it is a reviewable migration rather than a form
+  submission — and a corrected QR is live at once.
+- **A provider registry** (`packages/payment-core/providers/registry.ts`).
+  Adapters register themselves at composition time, so `payment-core` does not
+  depend on any gateway SDK and Phases 4, 5 and 9 add a provider by writing an
+  adapter rather than by editing the core. A provider configured active with no
+  adapter behind it fails loudly instead of at the point of money.
+- The founder's UI mockups and their implementation handoff are committed at
+  `docs/handoff/`, and are the design authority for the interface.
+- A shared component set in `apps/web/components/ui/` — button, input, field,
+  card, badge, banded data table, money and Bikram Sambat displays, stat tile,
+  empty state, skeleton, spinner, tabs, confirm dialog and toasts — so every
+  screen composes the same pieces instead of restyling its own.
+- NPR amounts render with **lakh–crore grouping** (`2,40,000.00`, never
+  `240,000.00`) and a true minus sign, from bigint paisa.
+- The home page is composed rather than a single markdown body: hero, figures,
+  services, products, the support-retainer price list set as a receipt, recent
+  writing and one call to action. Publishing a service or a post changes the
+  front page with no edit.
+- The blog index filters by tag, and announces the result count.
+- **Audit log at `/admin/audit`** — the full stream, filterable by action,
+  with before/after changes readable without a JSON viewer.
+- The admin dashboard shows ledger integrity and recent activity.
+- Designed 404 and 500 pages, replacing Next's defaults.
+- The public site meets its accessibility and performance bar: **Lighthouse
+  accessibility 100 on every page**, performance 93–97, measured against a
+  production build.
 - Content models behind the public site: pages, blog posts, team members,
   services, product pages, legal documents, and contact form submissions.
 - A founder can edit every page, service, product page, team member, blog post
@@ -69,8 +274,33 @@ this file tracks what was delivered.
   image tag for any other host. Covers and screenshots sit in fixed frames, so
   the page no longer reflows when an image finishes loading.
 
+### Changed
+
+- The palette is now **white, black and emerald**. The terracotta accent and
+  the warm cream ground are gone. Money keeps its two colours, and they keep
+  their meanings.
+
 ### Fixed
 
+- **The wordmark was unreadable to a screen reader.** ARIA forbids
+  `aria-label` on a `span` with no role, so the label wrapping the animated
+  letters was ignored and the company name was announced one letter at a time —
+  the exact failure the label existed to prevent.
+- **Secondary text failed contrast inside tinted panels.** The muted foreground
+  cleared AA on white but reached only 4.43:1 on `--surface`, so every muted
+  paragraph and eyebrow sitting in a panel was below the 4.5:1 floor.
+- The home page skipped a heading level: the Services, Our products and Writing
+  labels were paragraphs, leaving the card titles as `h3` directly under the
+  `h1`. They are headings now, with no visual change.
+- Rendered CMS markdown carried an invalid `node="[object Object]"` attribute on
+  every element — 86 of them on a single legal page.
+- A failed sign-in showed nothing. `/login` redirected to `?error=1` but never
+  rendered an error, so a wrong password or a rolled-over authenticator code
+  silently reloaded an empty form.
+- Publishing and unpublishing fired on a single click. Both now require
+  confirmation, so content cannot go live — or come down — by mis-clicking.
+- Eyebrow labels rendered at 12px instead of 10.5px: a Tailwind utility was
+  overriding the component-layer class that sets their size.
 - Admin sign-in 404'd on `admin.softmato.com`. The layout redirects to
   `/login`, which subdomain rewriting turned into `/admin/login` — a route that
   does not exist. Signing in previously only worked through the public host.

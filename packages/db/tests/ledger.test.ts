@@ -54,10 +54,19 @@ beforeAll(async () => {
   }
   await db.insert(products).values(productSeeds).onConflictDoNothing();
 
+  /*
+   * A narrow window in the past, deliberately.
+   *
+   * This period used to span 2000–2100, which covered every real date — so
+   * `resolveFiscalPeriod()` matched it ahead of the seeded BS year and every
+   * journal posted in development landed in the test books. These tests insert
+   * `fiscalPeriodId` directly and never resolve by date, so the window only
+   * has to exist, not to contain `now()`.
+   */
   openPeriodId = await ensurePeriod(
     1,
-    new Date('2000-01-01T00:00:00Z'),
-    new Date('2100-01-01T00:00:00Z'),
+    new Date('1995-01-01T00:00:00Z'),
+    new Date('1996-01-01T00:00:00Z'),
     'open',
   );
   closedPeriodId = await ensurePeriod(

@@ -1,0 +1,469 @@
+/*
+ * Marketing surface only.
+ *
+ * These classes build the public site's one visual idea: a near-black stage
+ * with one enormous emerald light-form in it — an arc, an orb, an eclipse, a
+ * globe of points — that the page scrolls through. Nothing here is used by
+ * admin, checkout or the portal, which stay on the quiet light system in
+ * globals.css.
+ *
+ * Three rules govern this file.
+ *
+ * **1. The ground is black so the light can be light.** This was built once on
+ * a white ground and every form came out as a pale stain, because a glow is
+ * additive and white is already the maximum. Everything below assumes it is
+ * painting *onto darkness*. Do not port these classes to a light surface —
+ * they will not degrade, they will vanish.
+ *
+ * **2. Every animated element is readable with its final styling before any
+ * JavaScript runs.** GSAP dims and offsets things on mount and animates them
+ * back. Doing it the other way round — hiding in CSS, revealing in JS — means
+ * a failed bundle leaves the page blank, and a marketing page that renders
+ * nothing is worse than one that renders unmoved.
+ *
+ * **3. The light is built, not filtered.** `filter: blur()` on a 900px element
+ * is a full-size offscreen pass every frame it moves, and on the home page
+ * several of those overlap. Every glow below is a layered `radial-gradient`
+ * instead: same falloff, composited on the GPU, free to animate.
+ */
+
+@layer components {
+  /*
+   * A stage: one full-bleed section holding one light-form.
+   *
+   * `isolation: isolate` gives it its own stacking context so a bloom can be
+   * painted behind the copy with a negative z-index without escaping into the
+   * section above.
+   */
+  .stage {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    overflow: clip;
+  }
+
+  /*
+   * The light a form throws onto the stage around it.
+   *
+   * Four stacked radial gradients, brightest first. A real bloom is not one
+   * falloff — it is a hot, small core, a saturated body, and a very wide, very
+   * faint skirt that lifts the black without ever becoming a colour. One
+   * gradient can only express one of those, and using one is exactly what
+   * makes a CSS "glow" look like a coloured circle.
+   *
+   * Sized in `vmax` so the form keeps its proportion to the viewport rather
+   * than to whatever box it lands in. Placement comes from `--bloom-x` /
+   * `--bloom-y`, set inline by the section.
+   *
+   * **Keep it small.** The temptation on a dark ground is to spend the freedom
+   * a black stage gives you, and the first pass here did: gradients sized
+   * 32–95vmax turned the entire viewport into a flat mid-green wash and the
+   * corners never reached black. The reference's ground is *black* — its glow
+   * is a tight halo hugging the light-form, and the darkness around it is what
+   * makes the form look bright. A bloom that fills the screen is not a glow,
+   * it is a background colour.
+   */
+  .bloom {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        9vmax 9vmax at var(--bloom-x, 50%) var(--bloom-y, 42%),
+        color-mix(in oklab, var(--glow-core) 20%, transparent) 0%,
+        transparent 72%
+      ),
+      radial-gradient(
+        20vmax 20vmax at var(--bloom-x, 50%) var(--bloom-y, 42%),
+        color-mix(in oklab, var(--glow) 20%, transparent) 0%,
+        color-mix(in oklab, var(--glow) 6%, transparent) 48%,
+        transparent 74%
+      ),
+      radial-gradient(
+        38vmax 34vmax at var(--bloom-x, 50%) var(--bloom-y, 42%),
+        color-mix(in oklab, var(--glow-deep) 34%, transparent) 0%,
+        transparent 76%
+      ),
+      radial-gradient(
+        62vmax 50vmax at var(--bloom-x, 50%) var(--bloom-y, 42%),
+        var(--haze) 0%,
+        transparent 80%
+      );
+  }
+
+  /*
+   * The perspective floor — the grid running to the horizon in the reference's
+   * "Fast. Reliable. Safe." frame.
+   *
+   * A pair of repeating-linear-gradients on a rotated plane, not an image.
+   * `mask-image` fades the far edge out instead of ending on a hard line,
+   * which is the whole illusion: a grid that stops is a texture, a grid that
+   * dissolves is a distance.
+   */
+  .grid-floor {
+    position: absolute;
+    inset-inline: -50%;
+    bottom: 0;
+    height: 44vh;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        color-mix(in oklab, var(--glow) 42%, transparent) 0 1px,
+        transparent 1px 6%
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklab, var(--glow) 42%, transparent) 0 1px,
+        transparent 1px 11%
+      );
+    transform: perspective(46vh) rotateX(66deg);
+    transform-origin: bottom center;
+    mask-image: linear-gradient(to top, #000 0%, transparent 78%);
+    opacity: 0.28;
+  }
+
+  /*
+   * A hairline rule. The reference draws these under stat labels and between
+   * sections; they are structural, so they are a class rather than a border
+   * utility repeated fifteen times.
+   */
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /*
+   * The reference's call to action: a fully-round pill that lifts a little on
+   * hover. It is the only button shape on the marketing surface.
+   *
+   * The primary one is **white on black**, exactly as in the reference. On a
+   * dark stage the brightest object is the one the eye goes to, and the thing
+   * we want clicked should be the brightest object. An emerald button here
+   * would compete with the light-form and lose.
+   */
+  .pill-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.95rem 1.9rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      transform 200ms ease-out,
+      box-shadow 200ms ease-out,
+      background-color 200ms ease-out;
+  }
+
+  .pill-cta:hover {
+    transform: translateY(-2px);
+  }
+
+  .pill-solid {
+    background: #ffffff;
+    color: #06140f;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 12px 40px rgba(47, 232, 154, 0.18);
+  }
+
+  .pill-solid:hover {
+    background: #ffffff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 18px 55px rgba(47, 232, 154, 0.3);
+  }
+
+  .pill-quiet {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--foreground);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .pill-quiet:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /*
+   * The floating pill navigation, top-centre as in the reference.
+   *
+   * Translucent, and it takes its ground from whichever palette is in scope —
+   * a near-white pill on the light pages, a near-black one while the header is
+   * over the hero's band of night. It was hard-coded to the dark build's
+   * near-black, which after the surface went light left near-black text on a
+   * near-black pill on every page.
+   *
+   * No `backdrop-filter`. These pills sit directly over the hero's entrance,
+   * and a backdrop filter re-samples and re-blurs whatever is behind it every
+   * time that changes — which, for one second after every page load, is every
+   * frame. The ground is simply more opaque instead; at 88% the frosting was
+   * doing very little that the opacity does not.
+   */
+  .nav-pill {
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--background) 88%, transparent);
+    border: 1px solid color-mix(in oklab, var(--foreground) 10%, transparent);
+    box-shadow: 0 8px 32px rgba(4, 18, 13, 0.14);
+    transition:
+      background-color 250ms ease-out,
+      border-color 250ms ease-out;
+  }
+
+  /*
+   * A device frame. Near-black shell with a thin lit edge, and an interior
+   * glow so an empty one reads as a screen that is switched on — which matters,
+   * because until product screenshots are uploaded every one of these is empty.
+   */
+  .device {
+    position: relative;
+    border-radius: 1.75rem;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.14),
+      rgba(255, 255, 255, 0.02) 30%
+    );
+    padding: 1px;
+    box-shadow: 0 50px 110px -40px rgba(47, 232, 154, 0.4);
+  }
+
+  .device-inner {
+    border-radius: calc(1.75rem - 1px);
+    background: var(--ink);
+    padding: 0.5rem;
+  }
+
+  .device-screen {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.4rem;
+    background:
+      radial-gradient(
+        120% 95% at 50% 122%,
+        color-mix(in oklab, var(--glow) 55%, transparent) 0%,
+        color-mix(in oklab, var(--glow-deep) 45%, transparent) 40%,
+        transparent 70%
+      ),
+      #04100b;
+  }
+
+  /*
+   * Word-by-word reveal. The dimmed state is applied by JS (see
+   * `word-reveal.tsx`), so the default here is the final one: full contrast,
+   * readable with no bundle.
+   */
+  .reveal-word {
+    display: inline-block;
+    color: inherit;
+  }
+
+  /*
+   * The hero's band of night.
+   *
+   * The one dark section on a light site. See the note in `home/hero.tsx` for
+   * why it is scoped to this section rather than applied to the surface: a
+   * light-form needs headroom above the background to be brighter than, and a
+   * white page has none.
+   */
+  .hero-band {
+    background: var(--ink);
+  }
+
+  /*
+   * The wordmark and the light behind it, as one positioned block.
+   *
+   * `--hero-word-size` is declared here rather than on `.hero-word` because
+   * two things depend on it: the letters' height, and how far the arc's bowl
+   * hangs below their baseline. Tuned separately those two drift apart the
+   * moment the type scale is touched, and the arc starts cutting through the
+   * word or floating away from it.
+   *
+   * The padding is headroom for the arc's arms, which run up off the top of
+   * the section. `.stage` clips them.
+   */
+  .hero-mark {
+    --hero-word-size: clamp(2.6rem, 11.5vw, 9rem);
+    position: relative;
+    display: block;
+    padding-top: clamp(3rem, 12vh, 8rem);
+
+    /*
+     * Room under the word for the bowl of the arc.
+     *
+     * The arc is anchored to the *bottom of this block*, not hung below it on
+     * a negative offset. Both earlier attempts used a negative `bottom` and
+     * both collided with type: too small an offset and the arc struck straight
+     * through the wordmark like a strikethrough, too large and it sliced the
+     * tagline in half instead. Reserving the space means the bowl has
+     * somewhere to be and whatever follows starts underneath it, at any word
+     * size, without a second number to keep in sync.
+     */
+    padding-bottom: calc(var(--hero-word-size) * 0.42);
+  }
+
+  /*
+   * The arc: the hero's light-form, sized to the viewport rather than to the
+   * word.
+   *
+   * Wider than its container on purpose — the reference's circle is bigger
+   * than the screen and only its bottom is ever visible, which is what makes
+   * it read as a horizon. An arc scaled to fit the wordmark reads as an
+   * underline drawn beneath a logo, which is what the first build was.
+   *
+   * The stroke is drawn by DrawSVG on mount, so the default here is the
+   * finished state — a complete arc. `stroke-linecap: round` is what gives the
+   * ends the tapered, burning-out look the reference has.
+   */
+  .hero-arc {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    /*
+     * Behind the letters, and normally composited.
+     *
+     * It sat on top with `mix-blend-mode: screen`, which is the more faithful
+     * arrangement — in the reference the light visibly crosses the wordmark —
+     * but blending is not free. A blended element cannot be composited on its
+     * own; the browser has to re-combine it with everything behind it on every
+     * frame it changes, and this one contains three Gaussian blurs and moves.
+     * Between a hero that renders the light slightly wrong and one that locks
+     * the tab on refresh, this is not a close call.
+     */
+    z-index: 0;
+    /*
+     * The full measure, and no wider. The radius is half the viewBox width, so
+     * the arms land at about 10% and 90% of the section — a curve passing
+     * through the frame rather than a border drawn around it.
+     */
+    width: 100%;
+
+    /*
+     * Preflight sets `max-width: 100%` on every `svg`, which silently held
+     * this to its container's width — the arc rendered as a shape sized to the
+     * wordmark, which is the exact failure the oversized geometry exists to
+     * avoid, and it looked deliberate enough to survive three rounds of
+     * tuning. Anything wider than its container has to opt out explicitly.
+     */
+    max-width: none;
+    /*
+     * `--arc-bleed` is set by the component: the share of the SVG's height
+     * that is empty room under the bowl, so the arc lands where the layout
+     * expects it however much falloff space the drawing reserves.
+     */
+    transform: translate(-50%, var(--arc-bleed, 0%));
+    pointer-events: none;
+  }
+
+  /*
+   * Two hints, and they are deliberately different.
+   *
+   * The bloom only ever fades, so it wants a cached raster it can vary the
+   * alpha of. The bare filament only ever moves, and carries no filter, so its
+   * transform is a pure compositor operation. Naming the one property each
+   * will actually animate is what keeps them in those two cheap lanes;
+   * promising `transform` on the blurred half is what invites the browser to
+   * re-blur it every frame.
+   */
+  .hero-arc [data-arc-bloom] {
+    will-change: opacity;
+  }
+
+  .hero-arc [data-arc-shape] {
+    will-change: transform;
+  }
+
+  .hero-arc path {
+    stroke-linecap: round;
+  }
+
+  /*
+   * The company name: one flat line, letters distributed edge to edge.
+   *
+   * `space-between` rather than a `letter-spacing` value. The reference's
+   * wordmark reaches both ends of its measure at every width, and a fixed
+   * tracking cannot do that — it overflows on a phone and huddles in the
+   * middle of a wide display. Distributing the letters makes the line
+   * edge-to-edge by construction, so the only thing left to size is their
+   * height.
+   *
+   * White, not `--foreground`: the letters are part of the light rather than
+   * ink laid over it.
+   */
+  .hero-word {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-inline: clamp(0.25rem, 1.5vw, 1.75rem);
+    font-family: var(--font-heading);
+    font-size: var(--hero-word-size);
+    font-weight: 300;
+    line-height: 0.88;
+    color: #ffffff;
+  }
+
+  /*
+   * One letter. `inline-block` so it can take a transform, and its own
+   * containing box so the blur it resolves out of is not clipped by the flex
+   * line.
+   */
+  .hero-letter {
+    display: inline-block;
+    will-change: filter, transform, opacity;
+  }
+}
+
+/*
+ * The fixed header while it is over a dark section.
+ *
+ * `DarkNavZone` sets the attribute from inside the section; this rule decides
+ * what it means, so a section only has to declare that it is dark and never
+ * what the header should do about it.
+ *
+ * Redefining two token variables rather than restyling each control works
+ * because the theme is declared `@theme inline` — the utilities compile to
+ * `var(--foreground)` directly rather than through a second indirection — so
+ * every `text-foreground`, `text-muted-foreground` and `bg-foreground` inside
+ * the header follows without a single override or `!important`.
+ */
+html[data-nav='over-dark'] header {
+  --background: #04120d;
+  --foreground: #eaf6ef;
+  --muted-foreground: #9fc4b2;
+
+  /*
+   * The `color` declaration is not redundant with the token above it.
+   * Redefining `--foreground` only changes what *declarations inside the
+   * header* resolve to; the wordmark has no colour of its own and inherits its
+   * computed value from `<body>`, which was set from the light palette long
+   * before this rule applied. Without this line the logo is near-black on the
+   * hero's near-black band — an empty pill, which is exactly how it shipped.
+   */
+  color: var(--foreground);
+}
+
+/*
+ * Reduced motion: the choreography is decorative, so it goes away entirely
+ * rather than being sped up. Every animated element already carries its final
+ * styling (see the note at the top), so removing the motion leaves a complete,
+ * readable page rather than a half-built one.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-word {
+    opacity: 1 !important;
+    color: inherit !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .hero-letter {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .pill-cta:hover {
+    transform: none;
+  }
+}

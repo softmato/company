@@ -10,11 +10,11 @@
  * Pure string work, no `server-only`: the tests render templates directly.
  */
 
-const INK = '#1c1917';
-const EMERALD = '#0f7a5f';
-const MUTED = '#79716b';
-const BORDER = '#e7e5e4';
-const PAPER = '#fff8ef';
+const INK = '#06140f';
+const EMERALD = '#047857';
+const MUTED = '#55665d';
+const BORDER = '#dee8e2';
+const PAPER = '#f2f7f4';
 
 /**
  * Escapes text for HTML.

@@ -9,6 +9,8 @@ import { describe, expect, test } from 'vitest';
 
 import { escapeHtml, paragraph } from '@/lib/email/html';
 import { contactEnquiryEmail } from '@/lib/email/templates/contact-enquiry';
+import { paymentReceiptEmail } from '@/lib/email/templates/payment-receipt';
+import type { Receipt } from '@softmato/payment-core';
 
 const enquiry = {
   id: 42,
@@ -84,5 +86,71 @@ describe('contactEnquiryEmail', () => {
     expect(html).not.toContain('<img');
     expect(html).not.toContain('<a href');
     expect(html).toContain('&lt;script&gt;');
+  });
+});
+
+describe('paymentReceiptEmail', () => {
+  const receipt: Receipt = {
+    receiptNo: 'TXN-2083/84-00000001',
+    invoiceNo: 'INV-2083/84-000001',
+    payerName: 'Bina Shrestha',
+    payerEmail: 'bina@example.com',
+    amountMinor: 12_000_00n,
+    currency: 'NPR',
+    providerName: 'Fonepay',
+    providerRef: 'fp_abc123',
+    paidAt: new Date('2026-08-16T10:00:00Z'),
+    journalNo: 'JE-2083/84-000042',
+  };
+
+  test('states the amount in NPR with lakh–crore grouping', () => {
+    const { html, text, subject } = paymentReceiptEmail({
+      ...receipt,
+      amountMinor: 2_40_000_00n,
+    });
+
+    expect(subject).toContain('2,40,000.00');
+    expect(html).toContain('2,40,000.00');
+    expect(text).toContain('2,40,000.00');
+  });
+
+  test('names the receipt, the invoice and how it was paid', () => {
+    const { html, text } = paymentReceiptEmail(receipt);
+
+    for (const value of [receipt.receiptNo, receipt.invoiceNo, 'Fonepay']) {
+      expect(html).toContain(value);
+      expect(text).toContain(value);
+    }
+  });
+
+  test('addresses the payer by name', () => {
+    expect(paymentReceiptEmail(receipt).text).toContain('Bina Shrestha');
+  });
+
+  test('a missing provider reference renders as a dash, not "null"', () => {
+    const { html, text } = paymentReceiptEmail({ ...receipt, providerRef: null });
+
+    expect(html).not.toContain('null');
+    expect(text).not.toContain('null');
+  });
+
+  /**
+   * A customer's name is whatever they told a SaaS product it was. That is
+   * close enough to untrusted to treat as untrusted.
+   */
+  test('escapes a payer name rather than emitting it as markup', () => {
+    const { html } = paymentReceiptEmail({
+      ...receipt,
+      payerName: '<img src=x onerror=alert(1)>',
+    });
+
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img');
+  });
+
+  test('falls back to a plain amount for a currency that is not NPR', () => {
+    const { html } = paymentReceiptEmail({ ...receipt, currency: 'USD' });
+
+    expect(html).toContain('USD');
   });
 });

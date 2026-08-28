@@ -65,7 +65,7 @@ export default async function LegalDocumentPage({
           aria-label="Other policies"
           className="section-frame mt-12 rounded-lg p-5"
         >
-          <p className="eyebrow text-xs text-muted-foreground">
+          <p className="eyebrow">
             Other policies
           </p>
 

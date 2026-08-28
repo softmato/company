@@ -57,10 +57,29 @@ export async function allocateSequence(
   const table = sql.identifier(TABLE[kind]);
   const column = sql.identifier(COLUMN[kind]);
 
+  /*
+   * Two things here are not stylistic.
+   *
+   * `::int` on the offset: `SUBSTRING(x FROM $1)` with an untyped parameter
+   * resolves to `substring(text, text)` — the POSIX *regex* overload — so the
+   * offset is read as a pattern, does not match, and every row returns NULL.
+   * MAX of nothing is NULL, so the allocator returned 1 forever and the second
+   * document of any fiscal year collided with the first. The cast is what
+   * picks `substring(text, int)`.
+   *
+   * The `~ '^[0-9]+$'` filter: one non-numeric suffix in the table would make
+   * the `::BIGINT` cast throw for the whole query. Test fixtures write random
+   * suffixes, and a failure to allocate a number must not be reachable from
+   * data that is not ours.
+   */
   const result = await tx.execute<{ max_sequence: string | null }>(sql`
-    SELECT MAX(SUBSTRING(${column} FROM ${prefix.length + 1})::BIGINT) AS max_sequence
-    FROM ${table}
-    WHERE ${column} LIKE ${prefix + '%'}
+    SELECT MAX(tail::BIGINT) AS max_sequence
+    FROM (
+      SELECT SUBSTRING(${column} FROM ${prefix.length + 1}::int) AS tail
+      FROM ${table}
+      WHERE ${column} LIKE ${prefix + '%'}
+    ) numbered
+    WHERE tail ~ '^[0-9]+$'
   `);
 
   const row = result.rows[0];

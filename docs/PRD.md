@@ -113,7 +113,9 @@ rate-limited, and has a honeypot.
 - Register a SaaS product, issue and rotate credentials, set scopes
 - Create checkout sessions server-to-server with idempotency
 - Hosted checkout page showing product, invoice, amount, and available methods
-- Providers: `manual_qr`, Khalti, eSewa, Fonepay
+- Providers: Fonepay (primary), eSewa, Khalti. A confirmed payment sends the
+  payer a receipt. `manual_qr` was removed on 2026-08-16 — every payment goes
+  through a gateway
 - Available methods computed **by amount** — wallets have limits, and a customer
   must never pick a method that will fail mid-payment
 - Verification by signed callback and/or authenticated status lookup, never by
