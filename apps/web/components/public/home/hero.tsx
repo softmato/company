@@ -4,6 +4,7 @@ import { StaggerIn } from '@/components/motion/stagger-in';
 
 import { DarkNavZone } from './dark-nav-zone';
 import { HeroArc } from './hero-arc';
+import { HeroEye } from './hero-eye';
 import { HERO } from './hero-timing';
 import { HeroWordmark } from './hero-wordmark';
 
@@ -73,9 +74,18 @@ export function Hero({
           a light-form would otherwise lose entirely.
         */}
         <h1>
+          {/*
+            Arc, then name, then lens — which is also the stacking order, and
+            the reason `HeroEye` comes last despite drawing partly *behind* the
+            wordmark. It renders two layers straddling the letters: the
+            coloured half sits at the arc's depth and the filament sits above
+            the type. Painted before `HeroWordmark` its lower layer would still
+            land correctly and its upper one would not.
+          */}
           <span className="hero-mark">
             <HeroArc />
             <HeroWordmark />
+            <HeroEye />
           </span>
 
           <StaggerIn delay={HERO.tagline} className="mt-6 text-center sm:mt-8">

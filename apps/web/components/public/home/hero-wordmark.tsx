@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
 import { gsap, registerMotionPlugins } from '@/lib/motion/register';
 
+import { heroStart } from './hero-start';
 import { HERO } from './hero-timing';
 
 /**
@@ -35,6 +36,19 @@ import { HERO } from './hero-timing';
  * outward from the bottom of the bowl. A left-to-right stagger here would
  * visibly disagree with the light that is supposed to be causing it.
  */
+/*
+ * How far out of focus the letters start.
+ *
+ * Down from 24px, which was chosen by eye against the reference and cost more
+ * than it was worth. A Gaussian blur's cost grows with the area it has to
+ * cover, and the spread is roughly three times the radius on every side — at
+ * 24px each glyph's offscreen buffer was about 250x280px, times eight, redrawn
+ * every frame of a one-second pull. At 14 the buffers are under half the area
+ * and the letters are still unreadable smudges at the peak, which is the only
+ * thing the number has to buy.
+ */
+const LETTER_BLUR = 14;
+
 export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
   const root = useRef<HTMLSpanElement>(null);
 
@@ -49,6 +63,20 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
       const stagger = { each: HERO.letters.stagger, from: 'center' as const };
 
       /*
+       * Paused, and played from the shared gate in `hero-start.ts`.
+       *
+       * This component is the reason that gate exists. The letters are laid
+       * out with `space-between` in a `next/font` face, so the moment the real
+       * font arrives all eight change width and the flex line redistributes
+       * them — and `font-display: swap` puts that about 171ms into an entrance
+       * that used to begin at mount. Eight glyphs jumping sideways while each
+       * one is carrying an animated Gaussian blur is the most expensive single
+       * frame on the page, and it landed in the middle of the one animation
+       * anybody looks at.
+       */
+      const tl = gsap.timeline({ paused: true });
+
+      /*
        * The arrival. Opacity only, and quick — by the end of this the letters
        * are at *full brightness* and still completely out of focus, which is
        * the state the reference holds for the better part of a second. Rolling
@@ -57,16 +85,16 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
        * and a dim blur is a grey smear where a bright one is a bubble of
        * light.
        */
-      gsap.fromTo(
+      tl.fromTo(
         '.hero-letter',
-        { opacity: 0, filter: 'blur(24px)', scale: 1.22 },
+        { opacity: 0, filter: `blur(${LETTER_BLUR}px)`, scale: 1.22 },
         {
           opacity: 1,
           duration: HERO.letters.rise.duration,
-          delay: HERO.letters.rise.at,
           ease: 'power2.out',
           stagger,
         },
+        HERO.letters.rise.at,
       );
 
       /*
@@ -75,21 +103,53 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
        * its settled value until 1.9s. Nothing about this is fast, and every
        * earlier attempt at it was.
        */
-      gsap.to('.hero-letter', {
-        filter: 'blur(0px)',
-        scale: 1,
-        duration: HERO.letters.focus.duration,
-        delay: HERO.letters.focus.at,
-        ease: 'power2.inOut',
-        stagger,
-        /*
-         * Drop the filter once it lands. A `blur(0px)` left on the element
-         * still costs an offscreen pass on every subsequent paint, which is a
-         * permanent tax on scrolling for an effect that finished in the first
-         * two seconds.
-         */
-        clearProps: 'filter',
-      });
+      tl.to(
+        '.hero-letter',
+        {
+          filter: 'blur(0px)',
+          duration: HERO.letters.focus.duration,
+          ease: 'power2.inOut',
+          stagger,
+          /*
+           * Drop the filter once it lands. A `blur(0px)` left on the element
+           * still costs an offscreen pass on every subsequent paint, which is
+           * a permanent tax on scrolling for an effect that finished in the
+           * first two seconds.
+           */
+          clearProps: 'filter',
+        },
+        HERO.letters.focus.at,
+      );
+
+      /*
+       * Size settles ahead of focus, and slightly past its mark.
+       *
+       * These two used to be one tween, which meant a letter was still
+       * shrinking at the exact moment it became readable — the glyph appears
+       * to be sharpening *and* receding, and the eye reads the second one. Let
+       * the size land first and the last third of the pull is a letter holding
+       * still and coming into focus, which is what the reference does.
+       *
+       * `back.out` is the small overshoot the brief asks for. At 1.1 it dips a
+       * bare percent under its final size and returns — not a bounce, which at
+       * this scale on eight glyphs looks like a title card, but enough that
+       * the letters arrive rather than stop.
+       */
+      tl.to(
+        '.hero-letter',
+        {
+          scale: 1,
+          duration: HERO.letters.focus.duration * 0.72,
+          ease: 'back.out(1.1)',
+          stagger,
+        },
+        HERO.letters.focus.at,
+      );
+
+      /* Layer hints off once the glyphs are settled type again. */
+      tl.eventCallback('onComplete', () => el.setAttribute('data-hero-settled', ''));
+
+      void heroStart().then(() => tl.play());
     }, el);
 
     return () => ctx.revert();

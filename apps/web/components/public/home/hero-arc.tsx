@@ -5,6 +5,8 @@ import { useEffect, useRef } from 'react';
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
 import { gsap, registerMotionPlugins } from '@/lib/motion/register';
 
+import { ARC_BLEED, ARC_ORIGIN, ARC_PATH, VIEW_BOX } from './hero-geometry';
+import { heroStart } from './hero-start';
 import { HERO } from './hero-timing';
 
 /**
@@ -48,95 +50,12 @@ import { HERO } from './hero-timing';
  * A short bright **head runs out along each arm** on top of all that, built as
  * two more copies of the path with a moving DrawSVG window, so they follow the
  * curve exactly by construction.
- */
-
-/*
- * The circle, in viewBox units.
  *
- * **`CENTER_Y` is negative, and that is the whole point.** The equator — the
- * circle's widest point — has to sit *above* the top of the frame. With it
- * inside the frame the two arms reach their widest and then curve back toward
- * each other on the way up, and on a tall viewport the arc visibly closes into
- * an ellipse: a left border, a right border and a bottom, framing the page
- * like a box. The reference never shows that, because its arms are still
- * spreading outward at the moment they leave the top edge — which is what
- * makes the eye read a circle far bigger than the screen rather than a shape
- * with a top to it.
- *
- * At exactly zero the equator sits on the frame's top edge: the arms are still
- * at their widest as they leave, and there is no inward curve anywhere in the
- * visible run. The radius is then half the viewBox width, which puts the arms
- * at roughly 10% and 90% of the section — far enough in to read as a curve
- * passing through. Pushed out to the very edges they stop being arms and
- * become a left and a right border, which with the bowl closing the bottom is
- * what made the page look like a box in a frame.
+ * The circle itself lives in `hero-geometry.ts`, not here, because the lens in
+ * `hero-eye.tsx` is anchored to it: that shape's two ends are the points where
+ * it crosses *this* arc, and its lower edge is a piece of this arc's own
+ * circle. One radius, read twice.
  */
-const CENTER_X = 560;
-const CENTER_Y = 0;
-const RADIUS = 560;
-
-/*
- * Where the arc leaves the top of the frame: the circle's two crossings of
- * y = 0. Everything above that is off-stage, so the viewBox stops there and
- * the section's `overflow: clip` does the rest.
- */
-const EXIT_DX = Math.sqrt(RADIUS ** 2 - CENTER_Y ** 2);
-
-/*
- * Sweep flag 0 — the run goes left exit, down through the bowl, up to the
- * right exit, which is decreasing angle in SVG's y-down space. The large-arc
- * flag is computed rather than written down: with the equator above the frame
- * the visible run is always less than a semicircle, but that stops being true
- * the moment someone drops `CENTER_Y` back below zero, and an arc drawn with
- * the wrong flag silently becomes its own complement.
- */
-const SWEEP_DEGREES = 2 * (90 - (Math.atan2(-CENTER_Y, EXIT_DX) * 180) / Math.PI);
-const LARGE_ARC = SWEEP_DEGREES > 180 ? 1 : 0;
-
-const ARC_PATH = `M ${(CENTER_X - EXIT_DX).toFixed(2)} 0 A ${RADIUS} ${RADIUS} 0 ${LARGE_ARC} 0 ${(
-  CENTER_X + EXIT_DX
-).toFixed(2)} 0`;
-
-/*
- * The bottom of the bowl: the point the light grows out of.
- *
- * Handed to GSAP as `svgOrigin`, not `transformOrigin`. `transformOrigin` in
- * px is measured from the element's own **bounding box**, and this group's box
- * starts well left of the viewBox because the widest halo stroke overhangs the
- * path by half its width. The result was an origin ~200 units right of the
- * circle's centre, so the arc grew out of a point off to the right and slid
- * into place — the one thing that gives away that it is a scaled object rather
- * than a light opening. `svgOrigin` is in the viewBox's own coordinates, which
- * is what these numbers have always meant.
- */
-const ORIGIN = `${CENTER_X} ${CENTER_Y + RADIUS}`;
-
-/*
- * Room below the bowl for the halo to fall off in.
- *
- * The viewBox used to end exactly on the arc's lowest point, which cut the
- * wide strokes off mid-falloff and drew a dead-straight horizontal line across
- * the bottom of the glow — the one shape a light source cannot have. Half the
- * widest stroke is enough for it to reach zero on its own.
- */
-const BOTTOM_BLEED = 70;
-
-
-/* Left/top/width/height, cropped to the drawing rather than to round numbers. */
-const VIEW_HEIGHT = CENTER_Y + RADIUS + BOTTOM_BLEED;
-const VIEW_BOX = `0 0 ${CENTER_X * 2} ${VIEW_HEIGHT}`;
-
-/*
- * The bleed as a share of the SVG's own height, handed to CSS so it can put
- * the bowl back where it was.
- *
- * The element is anchored by its bottom edge, so growing the box downward
- * lifts the bowl by exactly this much; a `translateY` percentage resolves
- * against the element's own height, which is the one unit that cancels it out
- * at every width. Passing it as a variable rather than writing the percentage
- * into the stylesheet means the two cannot drift when the geometry is tuned.
- */
-const ARC_BLEED = `${((BOTTOM_BLEED / VIEW_HEIGHT) * 100).toFixed(3)}%`;
 
 /*
  * The bloom, as two Gaussian-blurred copies of the path.
@@ -192,7 +111,14 @@ export function HeroArc() {
     registerMotionPlugins();
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      /*
+       * Built now, played later. See `hero-start.ts`: the entrance waits for
+       * the font swap and for hydration to get out of the way. Building the
+       * timeline up front means the tweens are already initialised when the
+       * gate opens, so the first frame is not also the frame that reads every
+       * computed style.
+       */
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true });
 
       /*
        * **Only the unfiltered half of the arc is allowed to move.**
@@ -215,7 +141,7 @@ export function HeroArc() {
        */
       tl.fromTo(
         '[data-arc-shape]',
-        { scaleX: 0.42, scaleY: 0.1, svgOrigin: ORIGIN },
+        { scaleX: 0.42, scaleY: 0.1, svgOrigin: ARC_ORIGIN },
         {
           scaleX: 1,
           scaleY: 1,
@@ -271,6 +197,16 @@ export function HeroArc() {
         { opacity: 0, duration: 0.45 },
         HERO.spark.at + HERO.spark.duration - 0.2,
       );
+
+      /*
+       * `will-change` comes off when the arc lands. Held permanently it is two
+       * compositor layers kept alive for an animation that finished in the
+       * first second, and the hero is the one section a reader scrolls past on
+       * every visit.
+       */
+      tl.eventCallback('onComplete', () => el.setAttribute('data-hero-settled', ''));
+
+      void heroStart().then(() => tl.play());
     }, el);
 
     return () => ctx.revert();

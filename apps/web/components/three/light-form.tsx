@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useSyncExternalStore } from 'react';
 
+import { useNearViewport } from './use-near-viewport';
 import { noopSubscribe, serverSnapshot, webglSupported } from './webgl-supported';
 
 /**
@@ -34,7 +35,27 @@ export function LightForm({ kind }: { kind: FormKind }) {
    */
   const enabled = useSyncExternalStore(noopSubscribe, webglSupported, serverSnapshot);
 
+  /*
+   * **The scene waits until the reader is coming.**
+   *
+   * `ssr: false` keeps three out of the initial bundle but says nothing about
+   * *when* it is evaluated, and the answer was "as soon as hydration finishes,
+   * all three at once". Measured on the home page that is one 454ms task at
+   * 1.75s — three GL contexts and their shaders — landing 586ms into the hero's
+   * entrance and freezing the only animation on the page. Every one of those
+   * three sections is below the fold on first paint, so none of that work was
+   * for anything the reader could see.
+   *
+   * The observed element is the same absolutely-positioned box the scene would
+   * have filled, so the measurement is of the section itself.
+   */
+  const { ref, near } = useNearViewport<HTMLDivElement>();
+
   if (!enabled) return null;
 
-  return <LightFormScene kind={kind} />;
+  return (
+    <div ref={ref} className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+      {near ? <LightFormScene kind={kind} /> : null}
+    </div>
+  );
 }

@@ -61,6 +61,52 @@ export const HERO = {
     stagger: 0.06,
   },
 
+  /**
+   * The lens at the centre, in three movements: it draws, it blooms, it
+   * breathes.
+   *
+   * **It arrives late on purpose, and the written brief disagrees.** The spec
+   * this was built from puts the centre curve at 0.80s–1.20s, "immediately
+   * after the letters appear". The reference does not: sampling it, the lens
+   * has no visible trace until about 1.9s, reaches its brightest around 2.2s,
+   * and is only fully formed by 2.6s. Built to the written timing it lands in
+   * the middle of the focus pull, where the letters are still luminous blurs —
+   * a thin arc drawn across five bright smudges, invisible for half its
+   * entrance and then suddenly there.
+   *
+   * What the brief is *right* about is that none of this may be sequential.
+   * `open` starts at 1.35s, while the pull still has half a second to run, so
+   * the lens is already growing as the letters sharpen — which is the thing it
+   * asks for in the end: the letters resolve, the centre emerges out of that,
+   * one motion rather than two.
+   */
+  eye: {
+    /** Outward from the bottom of the bowl to both crossings at once. */
+    open: { at: 1.35, duration: 0.55 },
+
+    /**
+     * The bloom, and it overshoots. The reference's centre is momentarily the
+     * brightest thing on the screen and then settles back — so this tween ends
+     * *above* the resting value and the idle breath takes it down, which makes
+     * the peak the first beat of the breathing rather than a separate flare
+     * that has to be faded out afterwards.
+     */
+    bloom: { at: 1.55, duration: 0.75 },
+
+    /**
+     * The two hot points where the lens meets the bowl. Last in, because they
+     * are the consequence of the other two arriving — light meeting light.
+     */
+    flare: { at: 1.95, duration: 0.5 },
+
+    /**
+     * The idle: a slow breath and a highlight that runs the curve. Starts once
+     * everything else has landed and then never stops, which is the one piece
+     * of this hero that outlives its own entrance.
+     */
+    idle: 2.4,
+  },
+
   /** The tagline under the name. */
   tagline: 1.8,
 

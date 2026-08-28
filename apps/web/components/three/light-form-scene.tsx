@@ -36,11 +36,12 @@ export default function LightFormScene({ kind }: { kind: FormKind }) {
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
-    <div
-      ref={ref}
-      className="pointer-events-none absolute inset-0 -z-10"
-      aria-hidden="true"
-    >
+    /*
+      `LightForm` owns the positioned box now — it has to exist before this
+      component does, so there is something to observe while deciding whether to
+      mount it. This one is only here to carry the visibility ref.
+    */
+    <div ref={ref} className="absolute inset-0">
       <Canvas
         frameloop={inView ? 'always' : 'never'}
         /*

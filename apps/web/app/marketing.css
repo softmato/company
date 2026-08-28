@@ -298,7 +298,7 @@
      * somewhere to be and whatever follows starts underneath it, at any word
      * size, without a second number to keep in sync.
      */
-    padding-bottom: calc(var(--hero-word-size) * 0.42);
+    padding-bottom: calc(var(--hero-word-size) * 0.32);
   }
 
   /*
@@ -364,11 +364,11 @@
    * promising `transform` on the blurred half is what invites the browser to
    * re-blur it every frame.
    */
-  .hero-arc [data-arc-bloom] {
+  .hero-arc:not([data-hero-settled]) [data-arc-bloom] {
     will-change: opacity;
   }
 
-  .hero-arc [data-arc-shape] {
+  .hero-arc:not([data-hero-settled]) [data-arc-shape] {
     will-change: transform;
   }
 
@@ -410,7 +410,84 @@
    */
   .hero-letter {
     display: inline-block;
+  }
+
+  /*
+   * The hint comes off when the word lands.
+   *
+   * `will-change` is a standing request for a compositing layer, and eight of
+   * them were being held for the whole visit to serve an animation that
+   * finishes in the first two seconds. The components set `data-hero-settled`
+   * from their timeline's `onComplete`, so the promise lasts exactly as long as
+   * the promise is being kept.
+   */
+  .hero-word:not([data-hero-settled]) .hero-letter {
     will-change: filter, transform, opacity;
+  }
+
+  /*
+   * The lens at the centre, in two layers that straddle the wordmark.
+   *
+   * Every positioning declaration here is copied from `.hero-arc` on purpose,
+   * because that is what makes the two shapes share a coordinate system: same
+   * `viewBox`, same width, same anchor, same `--arc-bleed` offset, so a point
+   * in the lens SVG lands on the same pixel as the identical point in the
+   * arc's. The lens's ends are *solved* to sit on the arc's circle (see
+   * `hero-geometry.ts`); if the two elements were positioned differently that
+   * arithmetic would be exactly wrong, and wrong in the most visible way —
+   * the almond's lower edge tearing away from the filament it is drawn on.
+   */
+  .hero-eye {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    /* Preflight's `max-width: 100%` again; see the note on `.hero-arc`. */
+    max-width: none;
+    transform: translate(-50%, var(--arc-bleed, 0%));
+    pointer-events: none;
+  }
+
+  /*
+   * The coloured half, at the arc's own depth. It shares `z-index: 0` with
+   * `.hero-arc` and paints above it by document order, which is what puts the
+   * almond of light on top of the bowl rather than under it.
+   */
+  .hero-eye[data-eye-layer='bloom'] {
+    z-index: 0;
+  }
+
+  /*
+   * The filament and the two flares, above the type. In the reference the
+   * small curve visibly crosses the letters it passes; below them it stops
+   * being light in the room and becomes a shape behind a wall.
+   */
+  .hero-eye[data-eye-layer='core'] {
+    z-index: 2;
+  }
+
+  /*
+   * The same two lanes as the arc, and here it matters more: this animation
+   * has no end. The blurred half only ever changes its alpha, the bare half
+   * only ever transforms, and naming the one property each will actually
+   * animate is what keeps a permanent idle from re-rasterising a blur on every
+   * frame the page is open.
+   */
+  .hero-eye [data-eye-bloom] {
+    will-change: opacity;
+  }
+
+  .hero-eye [data-eye-shape] {
+    will-change: transform;
+  }
+
+  /*
+   * The crescent moves for as long as the hero is on screen, so it keeps its
+   * hint — but it is three plain strokes with no filter under them, which is
+   * the whole reason it can afford to.
+   */
+  .hero-eye [data-eye-crescent] {
+    will-change: transform;
   }
 }
 
@@ -461,6 +538,17 @@ html[data-nav='over-dark'] header {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
+  }
+
+  /*
+   * The lens is already painted in its settled state and its timeline never
+   * gets built, so there is nothing here to undo — but `will-change` is a
+   * standing request for a compositing layer, and holding two of them for an
+   * animation that will not run is pure cost.
+   */
+  .hero-eye [data-eye-bloom],
+  .hero-eye [data-eye-shape] {
+    will-change: auto;
   }
 
   .pill-cta:hover {
