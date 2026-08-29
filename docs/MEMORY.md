@@ -31,6 +31,24 @@ readable by anyone who follows the footer link. **This is the highest-priority
 content task: fill the markers, delete the banners, set effective dates.** The
 guard lifts itself automatically once a document is clean.
 
+**⚠ Known and deliberately unfixed — the public site is one database away from a
+total 404.** Every public page reads its content from the CMS and calls
+`notFound()` when the row is missing or still `draft`. There is no fallback, so
+the site does not degrade: it 404s completely, home page included.
+
+This happened on 2026-08-29. Vercel was pointed at a Neon database
+(`ep-small-cloud-…-pooler`) where all 22 content rows were drafts, while the
+content being edited lived in a different one (`ep-flat-wildflower-…`). Every
+URL returned 404 except `/blog` — the only public page that renders without a
+`pages` row. **That split is how to recognise this failure quickly.**
+
+The founder's call is to leave it until the site has been fully reviewed; the
+real fix (a cached fallback, or a build that fails loudly instead of shipping
+prerendered 404 pages) comes then. A plain-text note saying so is pinned at the
+top of the admin dashboard so it is not forgotten — do not delete that note
+without fixing the behaviour. **After any database or env-var change, load
+softmato.com and confirm the home page renders.**
+
 **Repo:** `origin/main` (`SiddTheCoder/soft-cuddle`)
 
 **⚠ A large amount of Phase 2 and Phase 3 work is uncommitted.** The tree is
