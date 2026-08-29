@@ -14,6 +14,86 @@ this file tracks what was delivered.
 
 ### Added
 
+- **The home page's chapters below the hero, rebuilt against a second reference
+  film** (Eduwerks, supplied 2026-08-29; stills and the rules taken from it at
+  `docs/reference/film-2/`). The first film gave the site its light-form
+  language; this one gave it a layout grammar. Eight chapters, each a different
+  shape, used once each: a two-tone sentence over a scatter of discs, a panel
+  held still while the services scroll past it, the dark products band, a
+  three-rung scope ladder, a heap of words dropped under gravity, a photograph
+  beside the globe, a ruled list of posts, and a dark close. The hero, header
+  and footer are untouched.
+- **`.band-dark`** — a dark chapter with a large top radius that slides up over
+  the section above. This is what lets the page open on night and close on night
+  with the products band between; the previous build allowed exactly one dark
+  section because a straight join at two positions reads as stripes.
+- **`ToneReveal`** — a headline whose words are set in two tones and brighten to
+  their final tone on scroll. Replaces `WordReveal` on the home page, which
+  animated every word to one colour and so could not carry a two-tone sentence.
+- **`PillPile`** — a Matter.js drop that settles fourteen words into a heap in
+  the principles chapter, mounted on approach and stopped once every body is
+  asleep. Ships at its resting layout, so the no-JS, failed-bundle and
+  reduced-motion states are the same heap already at rest.
+- **`DrawIn` and `components/public/marks/`** — hand-drawn annotation strokes
+  (underline, circle, spark, squiggle) and a ringed link arrow, drawn on with
+  `stroke-dashoffset` rather than faded in. At most one mark per section.
+- **A scope ladder on the home page** — static / advanced / custom, for websites
+  and for apps, each rung settled by one yes/no question. Stands in for a price
+  list; no figure appears. Definitions in `lib/home/tiers.ts` are **placeholder
+  pending the founder's confirmation**.
+- **Drawn stills, one per service** (`components/public/home/stills/`) — an
+  application with a sidebar and a chart, a browser window, and a phone whose
+  screen is built from mobile glyphs (sign-in, offline, camera, location, push,
+  stores). Held in the services chapter's sticky panel until real screenshots
+  exist, and **keyed by slug** so a service is never shown beside a picture of
+  something else.
+- **Mobile apps as a service of its own**, alongside websites — seeded in
+  `packages/db/seed/marketing/services.ts` and published.
+- **A light-form in the closing section** — `showcase`, a carousel of four
+  surfaces (a website, an app, a product dashboard, a design artboard) turning
+  slowly inside the bowl of the closing arc. Each panel is a 2D canvas drawn once
+  and mapped onto a single plane (`components/three/forms/surfaces/`), so the
+  whole thing is eight meshes and four draw calls; the panels billboard so none
+  of them ever goes edge-on, and the group scales to fit narrow canvases.
+- **`LightForm` takes `ground` and a placement class.** `ground="dark"` swaps the
+  light rig — the default keys a form from behind into a silhouette, which is
+  right on the near-white page and renders a black object on a black band. The
+  class decides which box the scene fills, and therefore where the form sits,
+  since the camera looks at the middle of that box.
+- **A placeholder photograph of Kathmandu** in the place section, from Unsplash,
+  which was already the one non-bucket host `next/image` may optimise from.
+
+### Changed
+
+- **`payment-integration` is off the public site**, at the founder's request on
+  2026-08-29 — put back to **draft** rather than deleted, so the copy survives
+  and one toggle in the admin panel brings it back when there is a live gateway
+  behind it. Its detail page now 404s; the sitemap drops it on its own, since
+  that is generated from published rows.
+
+### Fixed
+
+- **No light-form had ever mounted — not one, on any page.** `LightForm` decides
+  whether WebGL is available with `useSyncExternalStore` and returns `null` while
+  it does not know, so the first client render (which uses the *server* snapshot,
+  `false`) produced no element. `useNearViewport`'s effect ran against that
+  commit, found `ref.current === null`, bailed, and never ran again — its
+  dependency array had no reason to change when the second render finally mounted
+  the div. The orb, the eclipse and the globe were all shipped, all imported, and
+  all invisible. It failed silently because every section paints its own bloom in
+  CSS underneath, so a missing form looks exactly like one that has not arrived
+  yet. The hook hands back a callback ref now, so the observer is created when the
+  node attaches.
+
+- **The header's dark-ground tint was wrong over any dark section taller than
+  the viewport.** `DarkNavZone` watched a one-pixel sentinel at the section's
+  bottom edge, which reports "not intersecting" both when the section has
+  scrolled past and when its bottom simply has not arrived yet — correct for a
+  one-viewport hero, wrong for the 1400px products band, over which the wordmark
+  went back to near-black on near-black. It is a ScrollTrigger range now, and
+  the zones are counted rather than each writing the attribute, which also
+  removes a first-paint race between three of them.
+
 - **A cinematic light-form design for the public site**, rebuilt from a second
   reference film the founder supplied (2026-08-28). One near-white ground runs
   the length of the page and each section is built around a single enormous

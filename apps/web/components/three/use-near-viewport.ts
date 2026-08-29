@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * Whether the reader has ever come near this element — a latch, not a state.
@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react';
  * This is the gate on *mounting* a WebGL scene, which is a different question
  * from `useInView`'s "should it be drawing right now". Creating a canvas costs
  * a GL context and a shader compile whether or not anything is ever drawn with
- * it, and the home page creates three of them.
+ * it, and the home page creates one per section that has a form.
  *
  * **Measured, because it was not obvious.** Profiling a refresh puts a single
  * 454ms main-thread task at 1.75s — after `load`, and 586ms into the hero's
@@ -31,26 +31,42 @@ import { useEffect, useRef, useState } from 'react';
  * is safe here for the reason `light-form.tsx` already documents: every section
  * paints its own bloom in CSS underneath, so it reads as finished whether the
  * scene arrives, arrives late, or never arrives at all.
+ *
+ * ---
+ *
+ * **It hands back a callback ref, not a ref object, and that is the whole fix
+ * for a bug that kept every light-form on the site from ever appearing.**
+ *
+ * `LightForm` decides whether WebGL is available with `useSyncExternalStore`,
+ * and returns `null` when it is not. During hydration React renders with the
+ * *server* snapshot — `false` — so the first client render produces no element
+ * at all. Effects run against that commit. With a ref object the effect would
+ * find `ref.current === null`, bail out, and never run again: its dependency
+ * array has no reason to change when the second render finally mounts the div.
+ * Every scene stayed unmounted, on every page, forever — silently, because a
+ * missing light-form looks exactly like a light-form that has not arrived yet,
+ * and each section paints its own bloom underneath so nothing ever looked
+ * broken.
+ *
+ * A callback ref fires when the node attaches, so the node is state and the
+ * observer is set up the moment there is something to observe. Any hook that
+ * gates on an element which may not exist on the first render wants this shape;
+ * a ref object plus `[]` is a hook that works only when the element is
+ * unconditional.
  */
 export function useNearViewport<T extends HTMLElement>(rootMargin = '80% 0px') {
-  const ref = useRef<T>(null);
+  const [node, setNode] = useState<T | null>(null);
 
   /*
    * No observer, no gate: an environment without IntersectionObserver starts
    * latched, so it gets the scene immediately rather than never. The failure
    * mode here has to be "costs more than it should", never "the section is
    * empty".
-   *
-   * Decided in the initialiser rather than from the effect, because setting
-   * state during an effect schedules a second render pass for something that
-   * was knowable before the first.
    */
   const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined');
 
   useEffect(() => {
-    const el = ref.current;
-
-    if (!el || typeof IntersectionObserver === 'undefined') return;
+    if (!node || near || typeof IntersectionObserver === 'undefined') return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -62,10 +78,10 @@ export function useNearViewport<T extends HTMLElement>(rootMargin = '80% 0px') {
       { rootMargin },
     );
 
-    observer.observe(el);
+    observer.observe(node);
 
     return () => observer.disconnect();
-  }, [rootMargin]);
+  }, [node, near, rootMargin]);
 
-  return { ref, near };
+  return { ref: setNode, near };
 }

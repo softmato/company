@@ -14,6 +14,13 @@ is lost — fill in the rest as you build.
 and a founder publishing the content). **Phase 3 in progress** — the
 `payment-core` foundation is built and enforced; no payment path is open yet.
 **Last session:** 2026-08-28 (session 9)
+
+**Public services, as of 2026-08-29:** product engineering, web applications and
+**mobile apps** (new) are published. **Payment integration is back to draft** on
+the founder's instruction — off the site until a gateway is live behind it (see
+question 17). The copy is intact; republishing is one toggle in the admin panel.
+Its `/services/payment-integration` URL 404s in the meantime.
+
 **Repo:** `origin/main` (`SiddTheCoder/soft-cuddle`)
 
 **⚠ A large amount of Phase 2 and Phase 3 work is uncommitted.** The tree is
@@ -320,6 +327,8 @@ Nothing proceeds past the listed phase until these are answered.
 | 16  | ~~The company QR and the account name it pays into~~                                                                                                                                                                                                                     | —            | ✅ **Moot from 2026-08-16** — the manual QR flow was removed                                                     |
 | 17  | **Which gateway do we get live first?** Nothing can take a payment until one of Fonepay, eSewa or Khalti has both merchant credentials and an adapter. Fonepay is now primary but is the most gated (Phase 9, needs the bank's integration document). eSewa and Khalti credentials are already applied for. | Phase 3 go-live | ⬜ Open — **blocks every payment**                                                                            |
 | 18  | **Does the accountant require a separate receipt number series**, distinct from the invoice series? Receipts currently reuse `txn_no`, which is already gapless per fiscal year. If a distinct series is needed this grows a table and a sequence; nothing else changes. | Phase 3      | ⬜ Open — not blocking                                                                                            |
+| 19  | **Confirm the static / advanced / custom definitions.** Drafted on 2026-08-29 and live on the home page as placeholder copy (`apps/web/lib/home/tiers.ts`). The axis chosen is *what the software has to answer to*, not size: static = nothing changes after launch; advanced = someone on the client's side changes it without us; custom = the software enforces rules of its own. First yes wins, same ladder for web and app. Correct the wording, the four bullets per cell, or the axis itself. | Phase 2 launch | 🟡 Drafted, awaiting confirmation |
+| 20  | **Confirm the contact form's questions.** Proposed 2026-08-29: name, email, phone/WhatsApp, then three selects — *what is it* (website / app / both / payment or billing / not sure), *where is it now* (idea / plan or designs / exists and needs work / exists and needs replacing), *when does it go live* (no date / within a month / 1–3 months / fixed deadline) — then one required "tell us about it". Drops the current free-text Subject. **Not built yet**; the form still has the old fields. | Phase 2 launch | 🟡 Proposed, awaiting confirmation |
 
 ## Blocked on external parties
 

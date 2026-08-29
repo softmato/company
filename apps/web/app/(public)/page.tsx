@@ -5,6 +5,7 @@ import { getPage } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
 import { splitLede } from '@/lib/markdown/lede';
 import { homeTagline } from '@/lib/home/tagline';
+import { BuildTiers } from '@/components/public/home/build-tiers';
 import { ClosingCta } from '@/components/public/home/closing-cta';
 import { Hero } from '@/components/public/home/hero';
 import { PlaceSection } from '@/components/public/home/place-section';
@@ -20,22 +21,34 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The home page: a sequence of full-height stages, each built around one
- * light-form, on a single near-white ground.
+ * The home page: eight chapters under the hero, each a different shape, on one
+ * near-white ground with two bands of night in it.
  *
- * This replaces the alternating light/dark band stack. The reference the
- * founder supplied is one continuous space that the page moves through rather
- * than a set of panels laid end to end, and the thing that makes it read that
- * way is that the *ground never changes* — only what is lit on it does. Bands
- * with curved joins say "new section" at every boundary, which is the opposite.
+ * **Every section is a different shape, and that is the rule the page is built
+ * on.** This is the portfolio for a company that sells websites; a repeating
+ * card grid down the page reads as one work sample shown eight times, however
+ * well the cards are made. So: a sentence over a scatter of discs, then a panel
+ * held still while copy scrolls past it, then a dark band of product surfaces,
+ * then a ruled ladder, then a heap of words dropped under gravity, then a
+ * photograph beside a globe, then a plain list, then the close. Each shape is
+ * used once.
  *
- * One exception: `ProductsSection` inverts to dark. See the note there — a
- * page of light needs a floor under it exactly once.
+ * **Two dark bands, not one.** The earlier build allowed exactly one, because a
+ * dark section butted against a light one on a straight edge reads as a stripe
+ * and two stripes read as a pattern. The second reference film solves it a
+ * different way — every dark panel has a large top radius and slides up over
+ * the light behind it, so it reads as a chapter rather than a band — and with
+ * that join the page can open on night, spend its middle in the light, and
+ * close on the ground it started from. See `.band-dark` in marketing.css.
  *
- * The hero is the `home` page row (title and lede are founder-edited); every
+ * The hero is the `home` page row (title and lede are founder-edited). Every
  * section below reads its own content kind and returns null when that kind has
- * nothing published, which is why this reads as an unconditional list. The page
+ * nothing published, which is why this reads as an unconditional list: the page
  * shortens on its own.
+ *
+ * Section copy that is not in the CMS yet lives in `lib/home/`, written to
+ * become admin-editable fields the same way services, products, team and posts
+ * already are.
  */
 export default async function HomePage() {
   const page = await getPage('home');
@@ -50,6 +63,7 @@ export default async function HomePage() {
       <Statement />
       <ServicesSection />
       <ProductsSection />
+      <BuildTiers />
       <PrinciplesSection />
       <PlaceSection />
       <RecentPosts />

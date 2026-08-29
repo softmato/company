@@ -8,7 +8,8 @@ import { Eclipse } from './forms/eclipse';
 import { FORM_COLORS } from './forms/palette';
 import { Orb } from './forms/orb';
 import { PointGlobe } from './forms/point-globe';
-import type { FormKind } from './light-form';
+import { Showcase } from './forms/showcase';
+import type { FormGround, FormKind } from './light-form';
 
 /**
  * The WebGL layer behind a marketing section.
@@ -32,7 +33,15 @@ import type { FormKind } from './light-form';
  * what keeps three of these on one page from spending three scenes' worth of
  * frame budget to draw the one the reader is looking at.
  */
-export default function LightFormScene({ kind }: { kind: FormKind }) {
+export default function LightFormScene({
+  kind,
+  ground = 'light',
+}: {
+  kind: FormKind;
+  ground?: FormGround;
+}) {
+  const dark = ground === 'dark';
+
   const { ref, inView } = useInView<HTMLDivElement>();
 
   return (
@@ -56,21 +65,34 @@ export default function LightFormScene({ kind }: { kind: FormKind }) {
         style={{ background: 'transparent' }}
       >
         {/*
-          Low fill, one hard key from behind. See the note above: this ratio is
-          what separates a lit object from a silhouette, and the silhouette is
-          the one that reads on white.
+          Two rigs, and they are opposites rather than one adjusted.
+
+          On white: low fill and one hard key from *behind*, which is what
+          separates a lit object from a silhouette — and the silhouette is the
+          one that reads on a near-white page.
+
+          On the near-black bands that rig produces a black object on a black
+          ground, because the silhouette has nothing to be a silhouette against.
+          There the form is lit like an object: a real front key, a cooler rim
+          behind it to pick the edge off the ground, and more ambient so the
+          unlit faces are a deep green rather than a hole.
         */}
-        <ambientLight intensity={0.35} />
+        <ambientLight intensity={dark ? 0.85 : 0.35} />
         <directionalLight
-          position={[-6, 3, -5]}
-          intensity={2.6}
+          position={dark ? [-5, 4, 6] : [-6, 3, -5]}
+          intensity={dark ? 2.2 : 2.6}
           color={FORM_COLORS.core}
         />
-        <directionalLight position={[4, -3, 6]} intensity={0.5} color="#ffffff" />
+        <directionalLight
+          position={dark ? [5, -2, -6] : [4, -3, 6]}
+          intensity={dark ? 1.4 : 0.5}
+          color={dark ? FORM_COLORS.glow : '#ffffff'}
+        />
 
         {kind === 'orb' ? <Orb /> : null}
         {kind === 'eclipse' ? <Eclipse /> : null}
         {kind === 'globe' ? <PointGlobe /> : null}
+        {kind === 'showcase' ? <Showcase /> : null}
       </Canvas>
     </div>
   );

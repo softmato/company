@@ -1,73 +1,152 @@
-import Link from 'next/link';
+'use client';
 
-import { BlurIn } from '@/components/motion/blur-in';
-import { LightForm } from '@/components/three/light-form';
-import { listPublishedServices } from '@/lib/cms/public-queries';
+import { useEffect, useRef, useState } from 'react';
+
+import { DrawIn } from '@/components/motion/draw-in';
+import { ToneReveal } from '@/components/motion/tone-reveal';
+import { MarkSpark } from '@/components/public/marks';
+import { SERVICES_HEADING } from '@/lib/home/sentences';
+
+import { ServiceStep } from './service-step';
+import { stillFor } from './stills';
 
 /**
- * The orb section — the reference's "Data Protection" frame: a heading sitting
- * over a lit body, with the detail cards below it.
+ * The services chapter: one panel held still on the left while the services
+ * scroll past it on the right.
  *
- * Every service is a published CMS row, so this section's length is whatever
- * the founder has published. It returns null when that is nothing: an empty
- * "Services" heading over three empty cards is worse than a shorter page.
+ * **This is the page's one demonstration.** Every other section describes
+ * something; this one shows a picture of the kind of screen each piece of work
+ * produces and changes the picture as the reader moves. It replaces a grid of
+ * three cards, which said the same thing in a shape this site cannot afford to
+ * use — the page is the portfolio for a company that sells websites, and a card
+ * grid is the one layout every template already has.
  *
- * The index numbers are ordinals, not counts. They exist because the services
- * have no icons — `icon` is an optional field and nothing has filled it — and
- * a card needs something at its top left to hang the eye on.
+ * The panel is `position: sticky`, not a pinned ScrollTrigger. See
+ * `components/motion/sticky-steps.tsx` for why, and for why the active step is
+ * decided by an observer band across the middle of the viewport.
+ *
+ * A client component because the active step is client state. The service rows
+ * are queried by `services-section.tsx` and passed in — a `'use client'` file
+ * cannot be `async`, and pushing the query up is cheaper than a `use()` and a
+ * suspense boundary for three rows that are already on the server.
  */
-export async function ServicesSection() {
-  const services = await listPublishedServices();
+export interface ServiceStepData {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string | null;
+}
 
-  if (services.length === 0) return null;
+export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const root = ref.current;
+
+    if (!root) return;
+
+    const steps = Array.from(root.querySelectorAll<HTMLElement>('[data-step]'));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+
+          const index = Number((entry.target as HTMLElement).dataset.step ?? 0);
+          if (Number.isInteger(index)) setActive(index);
+        }
+      },
+      /*
+       * A band across the middle of the viewport — the height the sticky panel
+       * occupies. Observing entry at the bottom edge instead switches the panel
+       * a screen early, while the previous step is still the one being read.
+       */
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    );
+
+    steps.forEach((step) => observer.observe(step));
+
+    return () => observer.disconnect();
+  }, [services.length]);
 
   return (
-    <section className="stage px-6 py-28 sm:py-36">
-      <div
-        className="bloom"
-        style={{ '--bloom-x': '50%', '--bloom-y': '22%' } as React.CSSProperties}
-      />
-      <LightForm kind="orb" />
-
+    <section className="stage px-6 pb-24 pt-16 sm:pb-32 sm:pt-24">
       <div className="mx-auto w-full max-w-6xl">
-        <div className="mx-auto max-w-[34ch] pt-24 text-center sm:pt-40">
-          <BlurIn as="h2" className="headline text-[clamp(2rem,5vw,3.5rem)] leading-[1.05]">
-            What we take on
-          </BlurIn>
-          <p className="mt-5 text-[16px] leading-relaxed text-muted-foreground">
-            Product work we run ourselves, and project work we hand over with
-            the source and the documents.
-          </p>
+        {/*
+          `min-w-0 flex-1` on the heading block, not just a max-width. A flex
+          item defaults to `min-width: auto`, so a heading beside anything else
+          shrinks to its longest *word* and comes out as a column of one-word
+          lines — which is exactly what this did before the `flex-1`.
+        */}
+        <div className="flex items-start justify-between gap-10">
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">What we take on</p>
+            <ToneReveal
+              sentence={SERVICES_HEADING}
+              className="headline mt-6 max-w-[20ch] text-[clamp(1.9rem,4.6vw,3.25rem)] leading-[1.08]"
+            />
+          </div>
+
+          <DrawIn className="hidden shrink-0 text-primary/60 sm:block" delay={0.2}>
+            <MarkSpark className="size-10" />
+          </DrawIn>
         </div>
 
-        <ul className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
-            <li key={service.id}>
-              <Link
-                href={`/services/${service.slug}`}
-                className="group block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              >
-                <article className="section-frame flex h-full flex-col p-6 transition-[border-color,box-shadow,transform] duration-200 group-hover:-translate-y-1 group-hover:border-primary/35 group-hover:shadow-float">
-                  <span className="numeric text-[11px] tracking-[0.2em] text-muted-foreground">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
+        <div
+          ref={ref}
+          className="mt-16 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-20"
+        >
+          {/*
+            `self-start` is what gives the sticky child something to stick
+            inside: a grid item stretched to the full row height has no room to
+            move within, which is the usual reason a sticky panel does nothing.
+          */}
+          <div className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
+            <div className="relative">
+              {services.map((service, index) => {
+                const Still = stillFor(service.slug);
 
-                  <h3 className="headline mt-6 text-[20px]">{service.title}</h3>
+                return (
+                  <div
+                    key={service.id}
+                    className={`transition-opacity duration-500 ease-out ${
+                      index === 0 ? 'relative' : 'absolute inset-0'
+                    } ${index === active ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                  >
+                    <Still />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-                  {service.summary ? (
-                    <p className="mt-3 text-[14.5px] leading-relaxed text-muted-foreground">
-                      {service.summary}
-                    </p>
-                  ) : null}
+          <div>
+            {services.map((service, index) => {
+              const Still = stillFor(service.slug);
 
-                  <span className="mt-auto pt-8 text-[13px] font-medium text-primary">
-                    Read more
-                  </span>
-                </article>
-              </Link>
-            </li>
-          ))}
-        </ul>
+              return (
+                <ServiceStep
+                  key={service.id}
+                  index={index}
+                  active={index === active}
+                  title={service.title}
+                  summary={service.summary}
+                  href={`/services/${service.slug}`}
+                >
+                  {/*
+                    On a phone there is no room to hold a panel beside anything,
+                    so each step carries its own still underneath it. Dropping
+                    them below `lg` would take the demonstration away from
+                    exactly the readers most likely to be on the site — this is
+                    Nepal, and the traffic is phones.
+                  */}
+                  <Still />
+                </ServiceStep>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </section>
   );

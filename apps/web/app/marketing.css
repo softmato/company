@@ -555,3 +555,199 @@ html[data-nav='over-dark'] header {
     transform: none;
   }
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ * Section grammar, taken from the second reference film (Eduwerks).
+ *
+ * That film is a competitor's brand and none of its identity comes across —
+ * not the glossy multi-colour blobs, not the violet, not the doodled smiley.
+ * What transfers is how it *builds a page*: dark chapters that slide up over
+ * light ones behind a large radius, headlines whose words are set in two
+ * tones, one enormous idea per section and a different shape for every one of
+ * them. Frames are at `docs/reference/film-2/`.
+ *
+ * The rule that governs everything below: **every section is a different
+ * shape.** This page is the portfolio for a company that sells websites, and a
+ * repeating card grid reads as one work sample shown eight times.
+ * ---------------------------------------------------------------------------
+ */
+@layer components {
+  /*
+   * A dark chapter on a light page.
+   *
+   * The join is the point. The film never butts a dark section against a light
+   * one on a straight edge — the dark panel has a large top radius and reads as
+   * a sheet sliding up over the section above, which is what makes two dark
+   * bands on one page read as chapters rather than as stripes. A hard edge at
+   * the same two positions reads as a striped page, which is why the earlier
+   * build allowed only one.
+   *
+   * `margin-top: -1px` closes the hairline the radius otherwise leaves against
+   * the section above at fractional device pixel ratios.
+   */
+  .band-dark {
+    position: relative;
+    margin-top: -1px;
+    border-start-start-radius: clamp(1.5rem, 4vw, 3.5rem);
+    border-start-end-radius: clamp(1.5rem, 4vw, 3.5rem);
+    background: var(--ink);
+  }
+
+  /*
+   * The closing chapter has no section under it — the footer follows — so it
+   * keeps its top radius and squares off at the bottom.
+   */
+  .band-dark-end {
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  /*
+   * A word set in the quiet tone.
+   *
+   * The film's headlines alternate between full-contrast and washed-out words
+   * inside one sentence — it is the single most recognisable thing about its
+   * typography and it costs nothing. Ours uses the muted foreground rather than
+   * a transparency, so the value is the same one every other secondary string
+   * on the page uses and it stays legible on `--surface`.
+   */
+  .tone-dim {
+    color: var(--muted-foreground);
+  }
+
+  .tone-dim-invert {
+    color: rgba(255, 255, 255, 0.42);
+  }
+
+  /*
+   * A soft disc holding one short label — the film's stat bubbles.
+   *
+   * Ours carry no figures. Nothing on this site states a number about the
+   * business that the founder has not given, and the film's "800 schools" is
+   * exactly that kind of number. What the disc is actually doing is
+   * typographic: a large word floating in a circle of slightly warmer ground,
+   * set at a height its neighbours do not share. A craft name does that job and
+   * is true.
+   */
+  .disc {
+    display: grid;
+    place-content: center;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--surface) 78%, transparent);
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  /*
+   * A physics pill. See `components/motion/pill-pile.tsx` — these are dropped
+   * and settled by Matter.js, which owns `transform` from the moment it starts.
+   *
+   * Until then the transform comes from `--pill-x/y/r`, set inline by the
+   * section from a pre-computed settled layout. That is what the reader sees
+   * with no bundle, with a failed bundle, and under `prefers-reduced-motion`:
+   * the same heap, already at rest. A pile that only exists once a physics
+   * engine has downloaded is fourteen words stacked in the top-left corner
+   * until it does.
+   */
+  .pill-tag {
+    position: absolute;
+    left: var(--pill-x, 50%);
+    top: var(--pill-y, 50%);
+    transform: translate(-50%, -50%) rotate(var(--pill-r, 0deg));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.6rem 1.15rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .pill-tag-solid {
+    background: var(--glow);
+    color: var(--ink);
+  }
+
+  .pill-tag-ink {
+    background: var(--ink);
+    color: #ffffff;
+  }
+
+  .pill-tag-quiet {
+    background: var(--surface-strong);
+    color: var(--foreground);
+  }
+
+  /*
+   * A synthetic product still: the panel the services section holds up while
+   * its copy scrolls past.
+   *
+   * The film shows its own dashboard here. Ours shows the kind of screen the
+   * service produces — a ledger, a checkout, a records list — drawn in the
+   * product's own tokens rather than photographed, because no screenshot of
+   * this exists yet and a grey rectangle with a camera icon is worse than a
+   * drawing that is honest about being one.
+   */
+  .still {
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) * 1.4);
+    background: var(--card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /*
+   * The film's link: underlined text with a ringed arrow after it. Used where a
+   * pill would be too loud — a section's secondary exit, not its call to
+   * action.
+   */
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-heading);
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .link-arrow > span:first-child {
+    border-bottom: 1.5px solid currentColor;
+    padding-bottom: 0.15rem;
+  }
+
+  .link-arrow svg {
+    flex: none;
+    transition: transform 200ms ease-out;
+  }
+
+  .link-arrow:hover svg {
+    transform: translateX(4px);
+  }
+
+  /*
+   * A hand-drawn mark: the annotation strokes under the film's key words and
+   * the doodles in its margins.
+   *
+   * Drawn by `DrawIn` with `stroke-dashoffset`, so the default state here is
+   * the finished one — a mark that is fully drawn before any JavaScript runs.
+   * Same rule as everything else in this file.
+   */
+  .mark-stroke {
+    fill: none;
+    /*
+     * The marks take the colour of wherever they are used — `--primary` on a
+     * light section, `--glow` on a dark one — so the stroke is `currentColor`
+     * and the caller sets a text colour. Omitting it renders nothing at all:
+     * an SVG shape with no `stroke` and `fill: none` is invisible, which is a
+     * failure that looks exactly like "the animation has not run yet".
+     */
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+}

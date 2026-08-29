@@ -1,18 +1,25 @@
 import Link from 'next/link';
 
 import { StaggerIn } from '@/components/motion/stagger-in';
+import { MarkArrow } from '@/components/public/marks';
 import { BsDate } from '@/components/ui/bs-date';
 import { listPublishedPosts } from '@/lib/cms/public-queries';
 
 /**
  * The three most recent posts.
  *
- * A quiet, ruled list rather than three more cards: the page has already spent
- * two sections on framed panels, and the writing is the one thing here that
- * wants to look like reading rather than like a product.
+ * A quiet, ruled list rather than three more cards. By this point the page has
+ * spent a sticky panel, a dark band, a ladder and a physics pile on being
+ * looked at, and the writing is the one thing here that wants to look like
+ * reading. It is deliberately the plainest thing on the page after the tier
+ * ladder — the last beat before the close should let the reader's eye rest, or
+ * the close has nothing to land against.
  *
- * Returns null when nothing is published — a "Latest writing" heading over an
- * empty state on a marketing page advertises that nobody has written anything.
+ * The only motion is the number sliding aside on hover, which is the reference
+ * film's treatment of a list row and costs one transform.
+ *
+ * Returns null when nothing is published — a "Writing" heading over an empty
+ * state on a marketing page advertises that nobody has written anything.
  */
 export async function RecentPosts() {
   const posts = (await listPublishedPosts()).slice(0, 3);
@@ -20,7 +27,7 @@ export async function RecentPosts() {
   if (posts.length === 0) return null;
 
   return (
-    <section className="stage px-6 py-24 sm:py-32">
+    <section className="stage px-6 pb-28 pt-16 sm:pb-36 sm:pt-24">
       <div className="mx-auto w-full max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -32,29 +39,38 @@ export async function RecentPosts() {
 
           <Link
             href="/blog"
-            className="text-[14px] font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="link-arrow text-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            All posts
+            <span>All posts</span>
+            <MarkArrow className="size-5" />
           </Link>
         </div>
 
-        <StaggerIn onScroll className="mt-12 divide-y divide-border border-t border-border">
-          {posts.map((post) => (
-            <article key={post.id}>
+        <StaggerIn
+          as="ul"
+          onScroll
+          className="mt-12 divide-y divide-border border-t border-border"
+        >
+          {posts.map((post, index) => (
+            <li key={post.id}>
               <Link
                 href={`/blog/${post.slug}`}
-                className="group flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 py-7 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                className="group flex flex-wrap items-baseline gap-x-8 gap-y-3 py-8 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                <div className="min-w-0 flex-1">
-                  <h3 className="headline text-[20px] transition-colors duration-200 group-hover:text-primary">
+                <span className="numeric w-8 flex-none text-[11px] tracking-[0.2em] text-muted-foreground transition-transform duration-300 ease-out group-hover:translate-x-1">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="headline block text-[clamp(1.15rem,2.2vw,1.5rem)] transition-colors duration-200 group-hover:text-primary">
                     {post.title}
-                  </h3>
+                  </span>
                   {post.excerpt ? (
-                    <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-muted-foreground">
+                    <span className="mt-2 block max-w-[62ch] text-[14.5px] leading-relaxed text-muted-foreground">
                       {post.excerpt}
-                    </p>
+                    </span>
                   ) : null}
-                </div>
+                </span>
 
                 {post.publishedAt ? (
                   <BsDate
@@ -63,7 +79,7 @@ export async function RecentPosts() {
                   />
                 ) : null}
               </Link>
-            </article>
+            </li>
           ))}
         </StaggerIn>
       </div>

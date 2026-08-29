@@ -1,5 +1,17 @@
 # Visual reference — the founder's reference film
 
+> **There are two films now.** This file covers the first one (ArgusVPN), which
+> supplies the *light-form language* — one enormous luminous object per section.
+> The second (Eduwerks, supplied 2026-08-29) supplies the *layout grammar* — how
+> chapters divide, join and vary — and lives at
+> [`film-2/README.md`](./film-2/README.md). Read that one before changing the
+> shape of a section; read this one before changing what is lit inside it.
+>
+> Two things below are now out of date and are corrected there: warning 4 says
+> the page has two dark exceptions, and it has three (hero, products, close);
+> and the note that `Statement` and `RecentPosts` "have no counterpart in the
+> film" was true of the first film only.
+
 Stills pulled from the reference film the founder supplied (an ArgusVPN concept
 piece, 18s, 1600×1200). They live here so a session working on the marketing
 surface can look at the thing directly instead of re-extracting frames from a
