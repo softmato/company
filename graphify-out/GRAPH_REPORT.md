@@ -5,7 +5,7 @@
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1730 nodes · 3352 edges · 94 communities (88 shown, 6 thin omitted)
+- 1730 nodes · 3352 edges · 95 communities (88 shown, 7 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -91,10 +91,11 @@
 - [[_COMMUNITY_Community 73|Community 73]]
 - [[_COMMUNITY_Community 74|Community 74]]
 - [[_COMMUNITY_Community 75|Community 75]]
-- [[_COMMUNITY_Community 77|Community 77]]
-- [[_COMMUNITY_Community 79|Community 79]]
-- [[_COMMUNITY_Community 81|Community 81]]
-- [[_COMMUNITY_Community 83|Community 83]]
+- [[_COMMUNITY_Community 76|Community 76]]
+- [[_COMMUNITY_Community 78|Community 78]]
+- [[_COMMUNITY_Community 80|Community 80]]
+- [[_COMMUNITY_Community 82|Community 82]]
+- [[_COMMUNITY_Community 84|Community 84]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 78 edges
@@ -120,7 +121,7 @@
 - `updateApplicationAction()` --calls--> `updateApplication()`  [INFERRED]
   apps/web/app/(admin)/admin/products/actions.ts → packages/payment-core/applications/manage.ts
 
-## Communities (94 total, 6 thin omitted)
+## Communities (95 total, 7 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -139,20 +140,20 @@ Cohesion: 0.06
 Nodes (47): BlogPostSeed, blogPostSeeds, PageSeed, pageSeeds, ProductPageSeed, productPageSeeds, ServiceSeed, serviceSeeds (+39 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.1
-Nodes (30): auditActions(), AuditRow, listAuditEntries(), NUMERIC_FIELDS, ActivityEntry, recentActivity(), unbalancedJournalCount(), AdminDashboard() (+22 more)
-
-### Community 5 - "Community 5"
-Cohesion: 0.08
-Nodes (33): covering, DarkNavZone(), PLACE_COORDINATES, PLACE_PHOTO, PlaceSection(), CLOSING_HEADING, PRINCIPLES_HEADING, PRODUCTS_HEADING (+25 more)
-
-### Community 6 - "Community 6"
 Cohesion: 0.06
 Nodes (39): AccountingError, allocateDocumentNo(), allocateSequence(), COLUMN, formatDocumentNo(), SequenceKind, TABLE, WIDTH (+31 more)
 
-### Community 7 - "Community 7"
+### Community 5 - "Community 5"
 Cohesion: 0.06
 Nodes (40): Application, APPLICATION_SCOPES, applications, ApplicationScope, Customer, customers, Invoice, InvoiceLine (+32 more)
+
+### Community 6 - "Community 6"
+Cohesion: 0.1
+Nodes (32): auditActions(), AuditRow, listAuditEntries(), NUMERIC_FIELDS, ActivityEntry, recentActivity(), unbalancedJournalCount(), AdminDashboard() (+24 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.08
+Nodes (31): BuildTiers(), CraftConstellation(), CRAFT_DISCS, CraftDisc, Hero(), PrinciplesSection(), ProductsSection(), RecentPosts() (+23 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.11
@@ -195,52 +196,52 @@ Cohesion: 0.07
 Nodes (28): 10. Comments, 11. Commits, 12. Formatting, 1. TypeScript, 2. Money in code, 3. Validation, 4. Database access, 5. API routes (+20 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.18
-Nodes (12): BLOOM_LAYERS, EXIT_DX, HeroArc(), CRESCENT_LAYERS, HeroEye(), EXIT_DX, heroStart(), HERO (+4 more)
+Cohesion: 0.11
+Nodes (19): ClosingCta(), covering, DarkNavZone(), PLACE_COORDINATES, PLACE_PHOTO, PlaceSection(), ServiceStep(), ServicesChapter() (+11 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.16
 Nodes (18): SettingsForm(), saveSettings(), SettingsResult, SETTING_DEFINITIONS, SETTING_GROUPS, SETTING_KEYS, SettingDefinition, SettingKind (+10 more)
 
 ### Community 20 - "Community 20"
+Cohesion: 0.1
+Nodes (18): Account, accountClass, normalBalance, Product, productKind, products, vProductPl, vTrialBalance (+10 more)
+
+### Community 21 - "Community 21"
 Cohesion: 0.14
 Nodes (18): PAYMENT_ERROR_STATUS, PaymentError, PaymentErrorCode, PUBLIC_MESSAGE, assertTransition(), canTransition(), PAYABLE, SessionStatus (+10 more)
 
-### Community 21 - "Community 21"
+### Community 22 - "Community 22"
 Cohesion: 0.12
 Nodes (19): Glyph(), IconBell(), IconCamera(), IconDownload(), IconFingerprint(), IconHome(), IconOffline(), IconPin() (+11 more)
 
-### Community 22 - "Community 22"
-Cohesion: 0.08
-Nodes (24): Added, Added, Added, Added, Added, Changed, Changed, Changed (+16 more)
-
 ### Community 23 - "Community 23"
-Cohesion: 0.09
-Nodes (23): Added, Added, Added, Added, Added, Added, Added, Added (+15 more)
+Cohesion: 0.08
+Nodes (24): Added, Added, Added, Added, Added, Added, Added, Added (+16 more)
 
 ### Community 24 - "Community 24"
+Cohesion: 0.09
+Nodes (23): Added, Added, Added, Added, Added, Changed, Changed, Changed (+15 more)
+
+### Community 25 - "Community 25"
 Cohesion: 0.12
 Nodes (15): FiscalPeriod, fiscalPeriods, periodStatus, entryDirection, journalEntries, JournalEntry, journalSource, ledgerEntries (+7 more)
 
-### Community 25 - "Community 25"
+### Community 26 - "Community 26"
 Cohesion: 0.1
 Nodes (13): closeDb(), db, DbLike, DbTx, isNeon, draft, effectiveAt, live (+5 more)
 
-### Community 26 - "Community 26"
+### Community 27 - "Community 27"
 Cohesion: 0.14
 Nodes (19): IssuedCredential, registerApplication(), RegisterInput, revokeApplication(), rotateSecret(), RotationResult, updateApplication(), Actor (+11 more)
 
-### Community 27 - "Community 27"
+### Community 28 - "Community 28"
 Cohesion: 0.1
 Nodes (21): Blocked on external parties, Blocked on the founder, code:bash (pnpm install && pnpm dev      # localhost:3000, admin.localh), code:markdown (### Session N — YYYY-MM-DD), Current status, Decisions made, Deviations from the docs, Memory (+13 more)
 
-### Community 28 - "Community 28"
+### Community 29 - "Community 29"
 Cohesion: 0.09
 Nodes (21): 10. Reading order if more depth is needed, 1. The company shape (this drives every decision), 2. Why a product talks to the parent platform at all, 3. The integration contract, 4. Why the callback exists, and why a redirect is not it, 5. What happens to the money on our side, 6. The guarantees the database enforces, 7. Finance operations around the billing flow (+13 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.12
-Nodes (16): Account, accountClass, normalBalance, Product, productKind, products, vProductPl, vTrialBalance (+8 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.1
@@ -251,20 +252,20 @@ Cohesion: 0.1
 Nodes (19): 1. The company, 2. The problem, 3. What we're building, 4. Users, 5.1 Public site, 5.2 Payment platform, 5.3 Accounting, 5.4 Subscriptions (+11 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.12
-Nodes (12): AccountSeed, accountSeeds, audited, entry, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS (+4 more)
-
-### Community 33 - "Community 33"
 Cohesion: 0.18
 Nodes (15): hasProvider(), providerAdapter(), registeredProviders(), registerProvider(), REGISTRY, resetProviderRegistry(), InitiateResult, isProviderId() (+7 more)
 
-### Community 34 - "Community 34"
+### Community 33 - "Community 33"
 Cohesion: 0.13
 Nodes (18): 1. Local setup, 2. Variables, 3. File storage, 4. Environments, 5. Deployment, 6. Cron, 7. Cost, 8. Secrets (+10 more)
 
+### Community 34 - "Community 34"
+Cohesion: 0.29
+Nodes (5): TextTag, prefersReducedMotion(), registerMotionPlugins(), StaggerTag, TextTag
+
 ### Community 35 - "Community 35"
-Cohesion: 0.15
-Nodes (12): CraftConstellation(), CRAFT_DISCS, CraftDisc, DisciplineCluster(), Discipline, DISCIPLINES, Satellite, Drift() (+4 more)
+Cohesion: 0.22
+Nodes (9): BLOOM_LAYERS, EXIT_DX, HeroArc(), CRESCENT_LAYERS, HeroEye(), EXIT_DX, heroStart(), HERO (+1 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.11
@@ -291,24 +292,24 @@ Cohesion: 0.22
 Nodes (10): isPastExpiry(), isSessionIdShape(), expireIfDue(), loadPayableSession(), loadSession(), isPayable(), now, session (+2 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.18
-Nodes (11): formatBsNumeric(), BuildTiers(), ClosingCta(), Hero(), PrinciplesSection(), ProductsSection(), RecentPosts(), Statement() (+3 more)
-
-### Community 43 - "Community 43"
 Cohesion: 0.2
 Nodes (12): authenticateApplication(), AuthenticatedApplication, bearerToken(), matchSecret(), unauthenticated(), CreatedSession, createSession(), CreateSessionInput (+4 more)
 
-### Community 44 - "Community 44"
+### Community 43 - "Community 43"
 Cohesion: 0.16
 Nodes (11): accounts, transactions, PaymentProvider, paymentProviders, ReconciliationItem, reconciliationItems, ReconciliationRun, reconciliationRuns (+3 more)
 
-### Community 45 - "Community 45"
-Cohesion: 0.14
-Nodes (7): AuditActorType, AuditEntry, redact(), REDACTED_KEYS, authorize(), credentialsSchema, { handlers, auth, signIn, signOut }
+### Community 44 - "Community 44"
+Cohesion: 0.16
+Nodes (10): audited, entry, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS, receipts, sent (+2 more)
 
-### Community 46 - "Community 46"
+### Community 45 - "Community 45"
 Cohesion: 0.44
 Nodes (11): publishContent(), unpublishContent(), saveContent(), ActionResult, databaseMessage(), parseId(), requireAdmin(), requireKind() (+3 more)
+
+### Community 46 - "Community 46"
+Cohesion: 0.14
+Nodes (7): AuditActorType, AuditEntry, redact(), REDACTED_KEYS, authorize(), credentialsSchema, { handlers, auth, signIn, signOut }
 
 ### Community 47 - "Community 47"
 Cohesion: 0.14
@@ -351,28 +352,28 @@ Cohesion: 0.18
 Nodes (10): code:block1 (marketplace: claude-video   (github: bradautomates/claude-vi), code:block2 (/watch "C:/Users/Aanand/Downloads/some-video.mp4" what happe), code:bash (PYTHONIOENCODING=utf-8 python \), code:bash (node scripts/shot.mjs hero /            0     1440 900   # v), How to use it, Related: seeing the site itself, Setup state, Three things a fresh session needs to know (+2 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.43
-Nodes (4): TierRow(), Tier, TIERS, TierSide
-
-### Community 58 - "Community 58"
-Cohesion: 0.32
-Nodes (5): QUALITIES, Quality, QualityPile(), TONE_CLASS, PillPile()
-
-### Community 59 - "Community 59"
 Cohesion: 0.29
 Nodes (6): AdminUser, adminUsers, AuditLog, auditLogs, PlatformSetting, platformSettings
 
-### Community 60 - "Community 60"
+### Community 58 - "Community 58"
 Cohesion: 0.25
 Nodes (7): code:bash (ffmpeg -i "$VIDEO" -vf "fps=4,scale=860:-1" -q:v 4 out/f_%03), Read these two warnings first, The closing form, which is ours, The five rules the film actually teaches, The frames, and what each one is for, Visual reference — the second film (layout grammar), What we deliberately did not take
 
-### Community 61 - "Community 61"
+### Community 59 - "Community 59"
 Cohesion: 0.33
 Nodes (6): config, proxy(), SUBDOMAIN_SURFACE, Surface, SURFACE_PREFIX, surfaceFor()
 
-### Community 62 - "Community 62"
+### Community 60 - "Community 60"
 Cohesion: 0.29
 Nodes (5): dmSans, inter, metadata, outfit, plexMono
+
+### Community 61 - "Community 61"
+Cohesion: 0.33
+Nodes (5): DisciplineCluster(), Discipline, DISCIPLINES, Satellite, Parallax()
+
+### Community 62 - "Community 62"
+Cohesion: 0.33
+Nodes (5): QUALITIES, Quality, QualityPile(), TONE_CLASS, PillPile()
 
 ### Community 63 - "Community 63"
 Cohesion: 0.29
@@ -406,31 +407,31 @@ Nodes (4): Before you end a session, Before you start a session, Softmato Platfo
 Cohesion: 0.5
 Nodes (3): envPath, [, key, rawValue], match
 
-### Community 73 - "Community 73"
+### Community 74 - "Community 74"
 Cohesion: 0.5
 Nodes (3): JWT, Session, User
 
-### Community 74 - "Community 74"
+### Community 75 - "Community 75"
 Cohesion: 0.5
 Nodes (3): envPath, [, key, rawValue], match
 
-### Community 75 - "Community 75"
+### Community 76 - "Community 76"
 Cohesion: 0.5
 Nodes (3): Changelog, code:markdown (## [Phase N] — YYYY-MM-DD), Entry template
 
 ## Knowledge Gaps
 - **643 isolated node(s):** `eslintConfig`, `RemotePatterns`, `TRUSTED_IMAGE_HOSTS`, `nextConfig`, `config` (+638 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `submitContact()` connect `Community 1` to `Community 2`, `Community 29`?**
+- **Why does `submitContact()` connect `Community 1` to `Community 2`, `Community 20`?**
   _High betweenness centrality (0.099) - this node is a cross-community bridge._
-- **Why does `headers` connect `Community 29` to `Community 1`?**
+- **Why does `headers` connect `Community 20` to `Community 1`?**
   _High betweenness centrality (0.099) - this node is a cross-community bridge._
-- **Why does `cn()` connect `Community 4` to `Community 0`, `Community 1`, `Community 2`, `Community 35`, `Community 5`, `Community 69`, `Community 10`, `Community 42`, `Community 18`, `Community 19`, `Community 21`, `Community 58`?**
+- **Why does `cn()` connect `Community 6` to `Community 0`, `Community 1`, `Community 2`, `Community 34`, `Community 69`, `Community 7`, `Community 73`, `Community 10`, `Community 18`, `Community 19`, `Community 22`, `Community 61`, `Community 62`?**
   _High betweenness centrality (0.096) - this node is a cross-community bridge._
 - **What connects `eslintConfig`, `RemotePatterns`, `TRUSTED_IMAGE_HOSTS` to the rest of the system?**
   _643 weakly-connected nodes found - possible documentation gaps or missing edges._

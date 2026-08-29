@@ -21,6 +21,7 @@
 Reference material:
 
 - [`CHART_OF_ACCOUNTS.md`](./CHART_OF_ACCOUNTS.md) — account codes and every posting rule
+- [`EMAIL_SYSTEM.md`](./EMAIL_SYSTEM.md) — sender identity, categories, and every trigger
 - [`schema.sql`](./schema.sql) — full PostgreSQL DDL
 
 ---

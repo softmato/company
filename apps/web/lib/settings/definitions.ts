@@ -35,6 +35,7 @@ export const SETTING_GROUPS = [
   'Support',
   'Website',
   'Company',
+  'Email',
 ] as const;
 
 export const SETTING_DEFINITIONS: SettingDefinition[] = [
@@ -208,6 +209,80 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     group: 'Company',
     label: 'PAN',
     help: 'Permanent Account Number. Required on every tax invoice.',
+    kind: 'text',
+    default: '',
+  },
+
+  /* ── Email ──────────────────────────────────────────────── */
+  /*
+   * How outgoing mail signs itself. The sending domain is deliberately absent:
+   * it must match what Resend verified, so it lives in `EMAIL_DOMAIN` where a
+   * typo is a deploy rather than a form submission (docs/EMAIL_SYSTEM.md §3).
+   *
+   * Every key here ships blank and blank means "use the default", so an empty
+   * settings table still sends correctly branded mail from the right mailboxes.
+   */
+  {
+    key: 'email.sender_name',
+    group: 'Email',
+    label: 'Sender name',
+    help: 'The name recipients see, before the per-category suffix — "Softmato" becomes "Softmato Billing" on an invoice. Blank uses Softmato.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.reply_to',
+    group: 'Email',
+    label: 'Reply-to address',
+    help: 'Where replies land. Leave blank: info@ on the sending domain is derived, and that is an address we are certain we own. Anything typed here must be a mailbox that actually receives — a wrong one sends every reply into a bounce and reports nothing.',
+    kind: 'email',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_info',
+    group: 'Email',
+    label: 'Info mailbox',
+    help: 'Local-part for ordinary mail — notices, confirmations. Also the mailbox replies are derived from, so this is the one to create a forwarding alias for first. Blank uses info.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_alert',
+    group: 'Email',
+    label: 'Alert mailbox',
+    help: 'Local-part for mail that needs attention now — a failed payout, a gateway that is down. Blank uses alert.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_billing',
+    group: 'Email',
+    label: 'Billing mailbox',
+    help: 'Local-part for money — invoices, receipts, reminders, refunds. Blank uses billing.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_security',
+    group: 'Email',
+    label: 'Security mailbox',
+    help: 'Local-part for credentials and account safety — codes, resets, new logins. Blank uses security.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_support',
+    group: 'Email',
+    label: 'Support mailbox',
+    help: 'Local-part for mail a person is expected to reply to — enquiries, support threads. Blank uses support.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'email.mailbox_noreply',
+    group: 'Email',
+    label: 'No-reply mailbox',
+    help: 'Local-part for machine mail with nothing to say back to. Mail from here carries no reply address at all. Blank uses noreply.',
     kind: 'text',
     default: '',
   },

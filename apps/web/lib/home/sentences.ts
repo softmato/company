@@ -19,20 +19,35 @@ import type { ToneSentence } from './tone';
  * word.
  */
 
-/** The opening statement, under the hero. */
+/**
+ * The opening statement, under the hero.
+ *
+ * An earlier draft read "We build software we would be willing to run
+ * ourselves — and then we run it." Two things were wrong with it. "Willing to"
+ * is a hedge, and a hedge in the largest type on the page is the one word the
+ * reader remembers. And "we build software", unqualified, is a claim to build
+ * anything, which is a promise nobody should make in a headline. This one
+ * claims a duration instead of a capability: we are still here afterwards.
+ */
 export const STATEMENT: ToneSentence = [
-  { text: 'We build software' },
-  { text: 'we would be willing to', tone: 'dim' },
-  { text: 'run ourselves' },
-  { text: '— and then we run it.', tone: 'dim' },
+  { text: 'We stay on the software' },
+  { text: 'we build,', tone: 'dim' },
+  { text: 'long after it ships.' },
 ];
 
-/** The services chapter. */
+/**
+ * The services chapter.
+ *
+ * It used to open "Three kinds of work". The chapter's steps come from the CMS
+ * and the discipline cluster above them names four, so the headline was a count
+ * that the section under it contradicted — and it would have gone wrong again
+ * the first time a founder published a fifth service. A headline should not
+ * have to be edited because a row was added to a table.
+ */
 export const SERVICES_HEADING: ToneSentence = [
-  { text: 'Three kinds of work,' },
-  { text: 'and the same', tone: 'dim' },
-  { text: 'standard' },
-  { text: 'under all of them.', tone: 'dim' },
+  { text: 'The work changes,' },
+  { text: 'the', tone: 'dim' },
+  { text: 'standard does not.' },
 ];
 
 /** The products chapter, on the dark band. */

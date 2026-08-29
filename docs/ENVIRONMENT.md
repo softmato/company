@@ -23,7 +23,7 @@ http://payment.localhost:3000    checkout      → payment.softmato.com
 http://agency.localhost:3000     client portal → agency.softmato.com
 ```
 
-`middleware.ts` reads the leftmost label of the `Host` header, so the same code
+`proxy.ts` reads the leftmost label of the `Host` header, so the same code
 handles `admin.localhost` and `admin.softmato.com` with no environment
 branching.
 
@@ -122,7 +122,8 @@ R2_PRIVATE_BUCKET=softmato-data-private
 
 # ── Services ───────────────────────────────────────────────
 RESEND_API_KEY=
-EMAIL_FROM="Softmato <no-reply@softmato.com>"
+EMAIL_DOMAIN=softmato.com     # bare hostname; must be verified in Resend
+EMAIL_REPLY_TO=               # optional override; info@EMAIL_DOMAIN is derived
 SENTRY_DSN=
 ```
 
@@ -136,10 +137,22 @@ than a failure at the first use:
 - **R2** — `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
   `R2_PUBLIC_BUCKET`, `R2_PUBLIC_BASE_URL`. With none of them set, CMS image
   fields stay plain URL inputs and uploading is simply unavailable.
-- **Email** — `RESEND_API_KEY`, `EMAIL_FROM`, `COMPANY_EMAIL`. With none of
+- **Email** — `RESEND_API_KEY`, `EMAIL_DOMAIN`, `COMPANY_EMAIL`. With none of
   them set, the contact form still writes every enquiry to the database and
-  only skips the notification. `EMAIL_FROM` must sit on a domain verified in
-  the Resend account, or the provider rejects the send.
+  only skips the notification.
+
+  There is no `EMAIL_FROM`. The sender is assembled per message from the
+  domain and the message's category, so a receipt leaves as `Softmato Billing
+  <billing@softmato.com>` and an alert as `Softmato Alerts <alert@…>` —
+  docs/EMAIL_SYSTEM.md has the full table. `EMAIL_DOMAIN` is a **bare
+  hostname**, not an address, and it must be verified in the Resend account or
+  the provider rejects the send. Unset, it falls back to `softmato.com`.
+
+  The domain is the only part of the sender that lives here. The display name,
+  the reply address and the mailbox local-parts are all in **Admin →
+  Settings → Email**, because they are branding the founder should be able to
+  change at 11pm without a deploy. The domain is not branding: it has to match
+  what Resend verified, and a settings form is where that gets mistyped.
 
 Never commit `.env*`. Keep `.env.example` current with every new variable.
 

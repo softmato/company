@@ -10,9 +10,10 @@
  * prefix (`/admin/...`) that lives inside the group's folder. The browser URL
  * never changes.
  *
- * This runs on the edge: no database access, no Node crypto. The session guard
- * here is a cheap first gate; the authoritative check is in the admin layout,
- * which can reach the database.
+ * This runs on every matched request on the Node.js runtime (the `proxy` file
+ * convention, which replaced `middleware` in Next 16, has no edge variant).
+ * Keep it cheap and free of database access anyway: the authoritative session
+ * check belongs in the admin layout, which can reach the database.
  */
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -48,7 +49,7 @@ function surfaceFor(hostname: string): Surface {
   return SUBDOMAIN_SURFACE[labels[0] ?? ''] ?? 'public';
 }
 
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const surface = surfaceFor(request.headers.get('host') ?? '');
 

@@ -45,6 +45,7 @@ export function paymentReceiptEmail(receipt: Receipt): EmailTemplate {
   );
 
   return {
+    category: 'billing',
     subject: `Payment received — ${amount} (${receipt.receiptNo})`,
     html: layout({
       eyebrow: 'Payment receipt',

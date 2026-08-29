@@ -7,6 +7,7 @@ import { ToneReveal } from '@/components/motion/tone-reveal';
 import { MarkSpark } from '@/components/public/marks';
 import { SERVICES_HEADING } from '@/lib/home/sentences';
 
+import { DisciplineCluster } from './discipline-cluster';
 import { ServiceStep } from './service-step';
 import { stillFor } from './stills';
 
@@ -93,9 +94,20 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
           </DrawIn>
         </div>
 
+        {/*
+          The short answer, before the long one. The steps below take a full
+          screen each to say what one kind of work involves, which is the right
+          depth for a reader who has already decided to stay — but it is four
+          screens before the page has named all four disciplines. This names
+          them in one, and gives the section the parallax it otherwise has none
+          of: the sticky panel deliberately does not move, so without this the
+          whole chapter is static while the copy scrolls past it.
+        */}
+        <DisciplineCluster />
+
         <div
           ref={ref}
-          className="mt-16 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-20"
+          className="mt-24 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-20"
         >
           {/*
             `self-start` is what gives the sticky child something to stick

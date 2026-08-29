@@ -24,11 +24,11 @@ softmato/
 
 ## `apps/web`
 
-One Next.js app. Subdomains map to route groups via `middleware.ts`.
+One Next.js app. Subdomains map to route groups via `proxy.ts`.
 
 ```
 apps/web/
-├── middleware.ts                 subdomain → route group rewriting
+├── proxy.ts                      subdomain → route group rewriting
 ├── vercel.json                   { "regions": ["bom1"] }
 ├── app/
 │   ├── (public)/                 softmato.com

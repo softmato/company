@@ -21,10 +21,17 @@ export function Parallax({
   children,
   speed = 0.2,
   className,
+  style,
 }: {
   children: ReactNode;
   speed?: number;
   className?: string | undefined;
+  /**
+   * For placement the caller cannot express in a class — a satellite pinned to
+   * a percentage of its host's height, say. GSAP only ever writes `transform`
+   * here, so anything set through this survives the tween.
+   */
+  style?: React.CSSProperties | undefined;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -60,7 +67,7 @@ export function Parallax({
   }, [speed]);
 
   return (
-    <div ref={ref} className={cn('will-change-transform', className)}>
+    <div ref={ref} className={cn('will-change-transform', className)} style={style}>
       {children}
     </div>
   );

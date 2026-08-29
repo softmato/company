@@ -12,8 +12,14 @@ import { env } from '@/lib/env';
  * contact form writes to the database first and mails second for that reason.
  */
 
-/** True when a send can actually reach a mailbox. */
-export const emailConfigured = Boolean(env.RESEND_API_KEY && env.EMAIL_FROM);
+/**
+ * True when a send can actually reach a mailbox.
+ *
+ * The key is the only hard requirement. The domain has a shipped default
+ * (`softmato.com`, the one Resend verifies), so an unset `EMAIL_DOMAIN` is a
+ * deployment accepting that default rather than a deployment with email off.
+ */
+export const emailConfigured = Boolean(env.RESEND_API_KEY);
 
 let client: Resend | null = null;
 

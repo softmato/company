@@ -23,7 +23,7 @@ Nothing works yet, but everything stands on this.
   numbering
 - Auth.js: email + argon2id + mandatory TOTP, encrypted TOTP secrets
 - Audit logging helper
-- `middleware.ts` subdomain routing, all four route groups reachable
+- `proxy.ts` subdomain routing, all four route groups reachable
 - Admin shell: navigation, layout, session guard
 - GitHub Actions: typecheck, lint, test, migrate-check
 - Sentry

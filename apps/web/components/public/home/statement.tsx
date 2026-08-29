@@ -47,8 +47,10 @@ export function Statement() {
         />
 
         <p className="mt-10 max-w-[46ch] text-[16px] leading-relaxed text-muted-foreground">
-          Small team, direct contact. You talk to the people writing the code,
-          not to an account manager relaying messages.
+          You talk to the people writing the code, not to an account manager
+          relaying messages. Scope, decisions and what changed are written
+          down, so a handover is a document rather than a conversation you have
+          to remember.
         </p>
 
         <CraftConstellation />

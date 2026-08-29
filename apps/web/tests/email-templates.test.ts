@@ -21,6 +21,19 @@ const enquiry = {
   message: 'We need Khalti and eSewa.\nCan we talk this week?',
 };
 
+const receipt: Receipt = {
+  receiptNo: 'TXN-2083/84-00000001',
+  invoiceNo: 'INV-2083/84-000001',
+  payerName: 'Bina Shrestha',
+  payerEmail: 'bina@example.com',
+  amountMinor: 12_000_00n,
+  currency: 'NPR',
+  providerName: 'Fonepay',
+  providerRef: 'fp_abc123',
+  paidAt: new Date('2026-08-16T10:00:00Z'),
+  journalNo: 'JE-2083/84-000042',
+};
+
 describe('escapeHtml', () => {
   test('neutralises the characters that start a tag or close an attribute', () => {
     expect(escapeHtml(`<script>alert("x")</script>`)).toBe(
@@ -36,6 +49,21 @@ describe('escapeHtml', () => {
 describe('paragraph', () => {
   test('keeps typed line breaks but not typed markup', () => {
     expect(paragraph('one\ntwo <b>')).toBe('one<br />two &lt;b&gt;');
+  });
+});
+
+/**
+ * The category decides which mailbox the message leaves from, and it lives on
+ * the template because the call site is the one place that cannot see the
+ * whole message (docs/EMAIL_SYSTEM.md §2).
+ */
+describe('categories', () => {
+  test('a receipt is billing mail', () => {
+    expect(paymentReceiptEmail(receipt).category).toBe('billing');
+  });
+
+  test('an enquiry is support mail — it exists to be replied to', () => {
+    expect(contactEnquiryEmail(enquiry).category).toBe('support');
   });
 });
 
@@ -90,19 +118,6 @@ describe('contactEnquiryEmail', () => {
 });
 
 describe('paymentReceiptEmail', () => {
-  const receipt: Receipt = {
-    receiptNo: 'TXN-2083/84-00000001',
-    invoiceNo: 'INV-2083/84-000001',
-    payerName: 'Bina Shrestha',
-    payerEmail: 'bina@example.com',
-    amountMinor: 12_000_00n,
-    currency: 'NPR',
-    providerName: 'Fonepay',
-    providerRef: 'fp_abc123',
-    paidAt: new Date('2026-08-16T10:00:00Z'),
-    journalNo: 'JE-2083/84-000042',
-  };
-
   test('states the amount in NPR with lakh–crore grouping', () => {
     const { html, text, subject } = paymentReceiptEmail({
       ...receipt,
@@ -128,7 +143,10 @@ describe('paymentReceiptEmail', () => {
   });
 
   test('a missing provider reference renders as a dash, not "null"', () => {
-    const { html, text } = paymentReceiptEmail({ ...receipt, providerRef: null });
+    const { html, text } = paymentReceiptEmail({
+      ...receipt,
+      providerRef: null,
+    });
 
     expect(html).not.toContain('null');
     expect(text).not.toContain('null');

@@ -1,8 +1,8 @@
 /**
  * admin.softmato.com — session guard + navigation.
  *
- * This is the authoritative gate. `middleware.ts` runs on the edge and is a
- * cheap first pass; this layout runs on the server and is what actually decides
+ * This is the authoritative gate. `proxy.ts` runs on every matched request and
+ * is a deliberately cheap first pass; this layout is what actually decides
  * whether a request sees admin data.
  *
  * `mfa` is checked explicitly rather than assumed from the presence of a

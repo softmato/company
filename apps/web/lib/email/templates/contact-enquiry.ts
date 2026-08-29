@@ -30,6 +30,12 @@ export function contactEnquiryEmail(enquiry: ContactEnquiry): EmailTemplate {
   const footer = `Submission #${enquiry.id} · reply to this email to answer ${enquiry.name}`;
 
   return {
+    /*
+     * `support`, not `info`: this is the one email in the product whose entire
+     * purpose is to be replied to, and the reply goes to the enquirer rather
+     * than to us — see `notify.ts`.
+     */
+    category: 'support',
     subject: enquiry.subject
       ? `Contact: ${enquiry.subject}`
       : `Contact from ${enquiry.name}`,

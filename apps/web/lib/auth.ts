@@ -6,8 +6,10 @@
  * state that can be mishandled, and `admin_users` cannot represent an active
  * admin without TOTP anyway (docs/DATABASE.md §2.4).
  *
- * JWT sessions, not database sessions: `middleware.ts` runs on the edge and
- * must be able to check a session without a database round trip.
+ * JWT sessions, not database sessions: `proxy.ts` runs on every matched
+ * request and checks a session without a database round trip. (It runs on the
+ * Node.js runtime since the `proxy` rename, so a query is now possible — the
+ * point is that it should not need one.)
  */
 import 'server-only';
 import NextAuth, { type NextAuthConfig } from 'next-auth';

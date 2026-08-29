@@ -269,7 +269,7 @@ production.** Replace it before the first real deployment.
 | Ledger tests                      | `packages/db/tests/ledger.test.ts`                  |
 | Auth (argon2id + TOTP)            | `apps/web/lib/auth.ts`                              |
 | Encryption at rest                | `apps/web/lib/crypto.core.ts`                       |
-| Subdomain routing                 | `apps/web/middleware.ts`                            |
+| Subdomain routing                 | `apps/web/proxy.ts`                                 |
 | Admin shell                       | `apps/web/app/(admin)/admin/`                       |
 
 ```bash
@@ -399,7 +399,7 @@ mistake.
   a different problem with different latency requirements — do not assume this
   choice carries over.
 - **Admin sign-in used to 404 on the admin subdomain.** The admin layout
-  redirects to `/login`; `middleware.ts` rewrote that to `/admin/login`, which
+  redirects to `/login`; the subdomain rewrite turned that into `/admin/login`, which
   does not exist. Signing in only worked through the public host, so nobody hit
   it in Phase 1. `/login` is now excluded from surface rewriting alongside
   `/api/auth`. Any other route that must be reachable from more than one
@@ -497,20 +497,27 @@ divergence between docs and code is how a project loses its plan.
 - **Local hostnames are `*.localhost`, not `*.softmato.local`.**
   `ENVIRONMENT.md` §1 originally required four hosts-file entries. Browsers
   resolve any `*.localhost` name to 127.0.0.1 with no configuration, so the
-  hosts step is gone and the doc is updated. `middleware.ts` only reads the
+  hosts step is gone and the doc is updated. `proxy.ts` only reads the
   leftmost label, so `admin.localhost` and `admin.softmato.com` follow the same
   path with no environment branching.
 - **Route groups need a path prefix.** `FOLDER_STRUCTURE.md` shows
   `(admin)/page.tsx`, `(checkout)/…`, and `(portal)/…` each owning `/`. Next
   cannot resolve two route groups that both define the same path, so the
   surfaces live at `(admin)/admin/…`, `(checkout)/checkout/…`, and
-  `(portal)/portal/…`, and `middleware.ts` rewrites the subdomain to that
+  `(portal)/portal/…`, and `proxy.ts` rewrites the subdomain to that
   prefix. Browser URLs are unchanged — `admin.softmato.com/payments` still
   reads as `/payments`.
-- **`middleware.ts` is deprecated in Next 16** in favour of `proxy.ts`. The
-  file still works and emits a warning on every dev start. Left as
-  `middleware.ts` to match `ARCHITECTURE.md` and `FOLDER_STRUCTURE.md`; rename
-  both the file and the docs together when convenient, before Next removes it.
+- **`middleware.ts` is now `proxy.ts`** (Next 16 deprecated the `middleware`
+  file convention; the old name warned on every dev start). The file and every
+  doc reference were renamed together. Two things the rename is not cosmetic
+  about: the exported function must be named `proxy`, not `middleware` — Next
+  reads `mod.proxy || mod.default` for a proxy file and throws if neither
+  exists — and **proxy always runs on the Node.js runtime**, with no edge
+  variant. `export const runtime = …` in `proxy.ts` is a build error. The
+  session guard there is still deliberately cheap and database-free because it
+  runs on every matched request, not because the runtime forbids it; the
+  authoritative check stays in the admin layout.
+  Dated session logs below still say `middleware.ts` — same file, old name.
 - **Local development runs against Neon, not Docker.** `ENVIRONMENT.md` assumes
   a local Docker Postgres. The development machine has neither Docker nor
   Postgres, so `DATABASE_URL` points at a Neon branch. `docker-compose.yml` is

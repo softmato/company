@@ -34,8 +34,9 @@ hand it over.
 
 ## How we work
 
-Small team, direct contact. You talk to the people writing the code, not to an
-account manager relaying messages.
+You talk to the people writing the code, not to an account manager relaying
+messages. The person who answers your question is the person who can change the
+thing you are asking about.
 
 We are careful about money and data. Payments run through providers licensed by
 Nepal Rastra Bank; card numbers and wallet PINs never touch our servers. Every

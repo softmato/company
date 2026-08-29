@@ -31,7 +31,7 @@ PostgreSQL database, two supporting services.
       public:  CMS assets
 ```
 
-Subdomain routing happens in `middleware.ts`, rewriting to route groups. One
+Subdomain routing happens in `proxy.ts`, rewriting to route groups. One
 deployment, one build, one set of shared types.
 
 ---

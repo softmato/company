@@ -629,15 +629,140 @@ html[data-nav='over-dark'] header {
    * typographic: a large word floating in a circle of slightly warmer ground,
    * set at a height its neighbours do not share. A craft name does that job and
    * is true.
+   *
+   * It used to be `--surface` at 78% opacity, which on `--background` is a
+   * four-point difference in lightness: on a laptop screen at an angle the
+   * circles were not there at all, and a scatter you cannot see is four labels
+   * at odd heights. So the fill is opaque `--surface-strong` now, lit from the
+   * top by a trace of the interface green and closed with a hairline ring —
+   * the ring is what actually draws the edge, and it survives being viewed
+   * badly in a way a soft fill never does.
    */
   .disc {
     display: grid;
     place-content: center;
     aspect-ratio: 1;
     border-radius: 999px;
-    background: color-mix(in oklab, var(--surface) 78%, transparent);
     padding: 1.5rem;
     text-align: center;
+
+    background:
+      radial-gradient(
+        110% 110% at 50% 0%,
+        color-mix(in oklab, var(--primary) 6%, var(--surface-strong)) 0%,
+        var(--surface-strong) 62%,
+        color-mix(in oklab, var(--surface-strong) 82%, var(--background)) 100%
+      );
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 24px 48px -32px color-mix(in oklab, var(--foreground) 45%, transparent);
+
+    /*
+     * Transform is free here — `Drift` floats the wrapper, not this. Both the
+     * lift and the float are transform-only so a hover mid-bob composites
+     * rather than relaying out.
+     */
+    transition:
+      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .disc:hover {
+    transform: scale(1.025);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--primary) 26%, var(--border)),
+      0 30px 56px -30px color-mix(in oklab, var(--foreground) 55%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .disc {
+      transition: box-shadow 420ms ease;
+    }
+
+    .disc:hover {
+      transform: none;
+    }
+  }
+
+  /*
+   * A discipline box in the services chapter, and the small satellite that
+   * overhangs two of them.
+   *
+   * Same construction as `.disc` — opaque fill, hairline ring, a shadow that
+   * lifts it off the ground — because they are the same family of object seen
+   * two sections apart, and a ring that reads on one ground reads on the other.
+   * The difference is the corner: the scatter under the opening statement is
+   * circles, this is the catalogue, and the two clusters need to be tellable
+   * apart at a glance or the page looks like it is repeating itself.
+   *
+   * The box is bottom-aligned. Four labels of different lengths hung from the
+   * top of four boxes leave four different amounts of air underneath, and the
+   * row stops looking like a row.
+   */
+  .capability {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: clamp(8.5rem, 15vw, 11.5rem);
+    border-radius: calc(var(--radius) * 1.75);
+    padding: 1.35rem 1.25rem 1.5rem;
+
+    background: radial-gradient(
+      120% 120% at 50% 0%,
+      color-mix(in oklab, var(--primary) 6%, var(--surface-strong)) 0%,
+      var(--surface-strong) 62%,
+      color-mix(in oklab, var(--surface-strong) 82%, var(--background)) 100%
+    );
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 24px 48px -34px color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+
+  /*
+   * The satellite sits on `--card`, not on the same fill as its host. It is
+   * overhanging one box onto another and it has to read as being *in front of*
+   * both; a third value of the same green would have read as a hole in the row.
+   * The heavier shadow does the rest of that job.
+   */
+  .capability-sat {
+    border-radius: calc(var(--radius) * 1.2);
+    padding: 0.7rem 0.85rem 0.8rem;
+    background: var(--card);
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 20px 38px -22px color-mix(in oklab, var(--foreground) 55%, transparent);
+  }
+
+  /*
+   * Where the satellite sits inside its host, set per satellite in
+   * `lib/home/disciplines.ts`.
+   */
+  .capability-sat-anchor {
+    top: var(--sat-top, 14%);
+  }
+
+  /*
+   * Below the four-column layout there is no safe height inside a box.
+   *
+   * At two columns the boxes are barely taller than the words in them, and the
+   * parallax leaves neighbours at different heights, so any percentage that
+   * clears one box's label lands on the other's. Rather than tune a number that
+   * only holds for one viewport, the satellite moves *out* of the row: pinned
+   * to the top edge and lifted half its own height, it overhangs the top
+   * corners of both boxes and can cover nothing, whatever the parallax has done
+   * to either of them.
+   *
+   * The lift is on the satellite itself, not on the anchor — GSAP owns the
+   * anchor's transform for the parallax and would overwrite this on first tick.
+   */
+  @media (width < 64rem) {
+    .capability-sat-anchor {
+      top: 0;
+    }
+
+    .capability-sat {
+      transform: translateY(-52%);
+    }
   }
 
   /*
