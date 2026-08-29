@@ -8,6 +8,10 @@ import {
   publishedSlugs,
 } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
+import { isIndexableLegalDocument } from '@/lib/cms/legal-readiness';
+import { breadcrumbList } from '@/lib/seo/breadcrumbs';
+import { legalPageNode } from '@/lib/seo/content';
+import { JsonLd } from '@/lib/seo/json-ld';
 import { extractHeadings } from '@/lib/cms/headings';
 import { formatBsWithAd } from '@/lib/format/date';
 import { LegalToc } from '@/components/public/legal-toc';
@@ -25,7 +29,27 @@ export async function generateMetadata({
   const { slug } = await params;
   const doc = await getLegalDocument(slug);
 
-  return doc ? metadataFor(doc) : { title: 'Not found' };
+  if (!doc) return { title: 'Not found' };
+
+  /*
+   * A policy that still carries its "not yet reviewed" banner or an unfilled
+   * `[confirm: …]` marker is reachable, linked from the footer and rendering
+   * fine — and is not something a search engine should keep a copy of.
+   * Publishing is the founder's call; indexing is a separate and much harder
+   * thing to undo, because the placeholder text goes on appearing in results
+   * long after the document is fixed.
+   *
+   * `follow: true` so the links out of the page still carry weight. The guard
+   * clears itself the moment the markers are edited out — see
+   * lib/cms/legal-readiness.ts, the same rule `pnpm legal:check` enforces
+   * before a deploy.
+   */
+  const indexable = isIndexableLegalDocument(doc.body);
+
+  return {
+    ...metadataFor(doc, { path: `/legal/${slug}` }),
+    ...(indexable ? {} : { robots: { index: false, follow: true } }),
+  };
 }
 
 export default async function LegalDocumentPage({
@@ -43,6 +67,9 @@ export default async function LegalDocumentPage({
 
   return (
     <article className="mx-auto max-w-3xl">
+      <JsonLd id="breadcrumbs" data={breadcrumbList([{ name: doc.title }])} />
+      <JsonLd id="policy" data={legalPageNode(doc)} />
+
       <PageHeader eyebrow="Legal" title={doc.title} />
 
       {/*
@@ -65,9 +92,7 @@ export default async function LegalDocumentPage({
           aria-label="Other policies"
           className="section-frame mt-12 rounded-lg p-5"
         >
-          <p className="eyebrow">
-            Other policies
-          </p>
+          <p className="eyebrow">Other policies</p>
 
           <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {others.map((other) => (

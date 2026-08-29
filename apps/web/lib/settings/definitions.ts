@@ -14,7 +14,7 @@
  * must not be able to move posted money or authenticate anything.
  */
 export type SettingKind =
-  'integer' | 'decimal' | 'boolean' | 'text' | 'email' | 'phone';
+  'integer' | 'decimal' | 'boolean' | 'text' | 'email' | 'phone' | 'url';
 
 export interface SettingDefinition {
   key: string;
@@ -210,6 +210,48 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     label: 'PAN',
     help: 'Permanent Account Number. Required on every tax invoice.',
     kind: 'text',
+    default: '',
+  },
+
+  /*
+   * Social profiles, for `sameAs` in the site's structured data.
+   *
+   * These are the only way to tell a search engine that softmato.com and a
+   * LinkedIn page are the same organisation rather than two that share a name.
+   * All blank by default: a `sameAs` pointing at a profile we do not control
+   * is worse than no `sameAs` at all, so nothing is guessed from the company
+   * name here — the founder pastes the real URLs or the array stays empty.
+   */
+  {
+    key: 'company.linkedin_url',
+    group: 'Company',
+    label: 'LinkedIn page',
+    help: 'Full URL of the company LinkedIn page. Used in structured data so search engines link the profile to this site.',
+    kind: 'url',
+    default: '',
+  },
+  {
+    key: 'company.github_url',
+    group: 'Company',
+    label: 'GitHub organisation',
+    help: 'Full URL of the company GitHub organisation, if it is public.',
+    kind: 'url',
+    default: '',
+  },
+  {
+    key: 'company.x_url',
+    group: 'Company',
+    label: 'X profile',
+    help: 'Full URL of the company profile on X. Leave blank if there is none.',
+    kind: 'url',
+    default: '',
+  },
+  {
+    key: 'company.facebook_url',
+    group: 'Company',
+    label: 'Facebook page',
+    help: 'Full URL of the company Facebook page. Worth setting in Nepal, where it is often the first place a client looks.',
+    kind: 'url',
     default: '',
   },
 

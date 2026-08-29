@@ -13,13 +13,23 @@ is lost — fill in the rest as you build.
 **Phase:** 1 accepted. **Phase 2 in progress** (needs a verified email sender
 and a founder publishing the content). **Phase 3 in progress** — the
 `payment-core` foundation is built and enforced; no payment path is open yet.
-**Last session:** 2026-08-28 (session 9)
+**Last session:** 2026-08-29 (session 10)
 
 **Public services, as of 2026-08-29:** product engineering, web applications and
 **mobile apps** (new) are published. **Payment integration is back to draft** on
 the founder's instruction — off the site until a gateway is live behind it (see
 question 17). The copy is intact; republishing is one toggle in the admin panel.
 Its `/services/payment-integration` URL 404s in the meantime.
+
+**⚠ The six legal documents are published and live at softmato.com, and none of
+them is finished.** Every one still carries the "Draft — not yet reviewed"
+banner and between 6 and 15 unfilled `[confirm: …]` markers — registered
+address, PAN, registration number, contact email, phone. `pnpm legal:check`
+reports all six as blocking. As of session 10 they render `noindex, follow` and
+are kept out of the sitemap, so a crawler will not keep a copy; they are still
+readable by anyone who follows the footer link. **This is the highest-priority
+content task: fill the markers, delete the banners, set effective dates.** The
+guard lifts itself automatically once a document is clean.
 
 **Repo:** `origin/main` (`SiddTheCoder/soft-cuddle`)
 
@@ -40,6 +50,42 @@ type taken from its magic bytes and a one-year immutable cache header.
 `sendEmail()` that never throws, and pure templates that render HTML and text.
 `lib/contact/notify.ts` is now a thin caller. Everything but the live send is
 covered by tests; the send itself is **unverified** (see below).
+
+**Done in session 10 (2026-08-29) — SEO and brand assets:**
+
+The site went live at softmato.com and the founder asked for the full search
+layer. Delivered in `apps/web/lib/seo/`: canonical URLs everywhere (there were
+none), `metadataBase`, a title template, Twitter cards, article times on posts,
+and JSON-LD on every page type — Organization and WebSite emitted once on the
+home page with everything else referencing them by `@id`. Also a generated
+1200×630 social card, a web manifest, and a much stricter robots.txt.
+
+Three things worth remembering:
+
+1. **No page had an `og:image` before this.** Next's `opengraph-image` file
+   convention only fills in `openGraph.images` for a segment that has not
+   declared an `openGraph` object of its own, and every public page declares one
+   through `metadataFor`. The default card is now referenced explicitly
+   (`DEFAULT_OG_IMAGE`). Do not "simplify" that back to the implicit form.
+2. **The JSON-LD escape was a no-op** — `'<'` with one backslash is just
+   `<` after TypeScript compiles it. Fixed, and tested.
+3. **Nothing in the structured data asserts a price, rating or review.** The
+   founder has given no such figures, and `tests/seo.test.ts` fails if someone
+   adds them. When real review data exists, add `offers`/`aggregateRating` then.
+
+**Brand assets are wired but not yet present.** The founder supplied three
+images in chat on 2026-08-29 — the horizontal lockup, the standalone S mark and
+the circular invoice stamp. They must be saved by hand as
+`apps/web/public/brand/logo.png`, `mark.png` and `stamp.png`, after which
+`pnpm brand:build` generates the favicon, the Apple touch icon and both
+manifest icons. Until then the social card falls back to a text wordmark and
+`/brand/*.png` 404s. The stamp is stored for receipts and invoices only — it
+reads as a seal of issue and must never appear on a marketing page.
+
+**Contact details are still blank in platform settings**, so the Organization
+structured data carries no address, phone or email. Filling the Company section
+at `/admin/settings` populates it on the next request — no deploy needed. The
+four new `company.*_url` settings feed `sameAs`.
 
 **Done in session 8 (2026-08-28) — rebrand + motion:**
 
@@ -68,7 +114,7 @@ whose every section is built around one enormous violet light-form — and asked
 for the same treatment on a **light ground with our green**, with no invented
 data. The frames were pulled with `ffmpeg` and the choreography read off them
 directly, which is worth knowing: the hero is not a stroke being drawn, it is a
-bowl of light *expanding from a sliver*, with a spark travelling out along each
+bowl of light _expanding from a sliver_, with a spark travelling out along each
 half and the letters lighting as it passes them. Reproducing it as a plain
 draw-on looked nothing like the reference.
 
@@ -86,7 +132,7 @@ Four things worth remembering:
 
 1. **Inverting a glow design onto white is not a colour swap.** On black a glow
    is additive and free; on white it has to be built from a tinted ground and a
-   silhouette lit *from behind*. The WebGL key light is behind the forms for
+   silhouette lit _from behind_. The WebGL key light is behind the forms for
    exactly this reason — lit from the front on a white page they are grey
    smudges.
 2. **The bloom's alphas are a contrast budget.** Secondary copy sits over the
@@ -102,7 +148,7 @@ Four things worth remembering:
 4. **The seeder cannot fix a development database seeded before the copy
    existed** — it correctly refuses to overwrite published rows, so ours still
    held "Placeholder tagline." and two fictional team members. `pnpm
-   cms:sync-copy` is the local-only escape hatch; it replaces team members only
+cms:sync-copy` is the local-only escape hatch; it replaces team members only
    when every row is a known placeholder.
 
 **Data decisions the founder made this session, and they are not the
@@ -217,7 +263,7 @@ hostels) and the support-retainer price list (25,000 / 75,000 / 2,40,000 per
 month), taken verbatim from the founder's mockup so the page matches it. They
 are **claims about the business and its prices, stated in public, and nobody
 has checked them.** Read every figure and correct it before the site is
-published. The VAT rate is *not* in that file — it is read from
+published. The VAT rate is _not_ in that file — it is read from
 `billing.vat_rate_percent` in platform settings, because the legal documents
 quote it too.
 
@@ -232,45 +278,45 @@ production.** Replace it before the first real deployment.
 
 ## Where the code is
 
-| What                              | Where                                               |
-| --------------------------------- | --------------------------------------------------- |
-| **Selection → payment attempt**    | `packages/payment-core/transactions/start.ts`       |
-| **Settlement (the money path)**    | `packages/payment-core/transactions/complete.ts`    |
-| Receipt value + sender contract    | `packages/payment-core/receipts/receipt.ts`         |
-| Receipt email template             | `apps/web/lib/email/templates/payment-receipt.ts`   |
-| Receipt delivery (app side)        | `apps/web/lib/payments/send-receipt.ts`             |
-| Posting rule §9.2 (payment)        | `packages/accounting/rules/payment-received.ts`     |
-| **Only writer of session status** | `packages/payment-core/sessions/transition.ts`      |
-| Session read + expiry settlement  | `packages/payment-core/sessions/load.ts`            |
-| Session TTL and clock rules       | `packages/payment-core/sessions/expiry.ts`          |
-| Provider adapter registry         | `packages/payment-core/providers/registry.ts`       |
+| What                              | Where                                                            |
+| --------------------------------- | ---------------------------------------------------------------- |
+| **Selection → payment attempt**   | `packages/payment-core/transactions/start.ts`                    |
+| **Settlement (the money path)**   | `packages/payment-core/transactions/complete.ts`                 |
+| Receipt value + sender contract   | `packages/payment-core/receipts/receipt.ts`                      |
+| Receipt email template            | `apps/web/lib/email/templates/payment-receipt.ts`                |
+| Receipt delivery (app side)       | `apps/web/lib/payments/send-receipt.ts`                          |
+| Posting rule §9.2 (payment)       | `packages/accounting/rules/payment-received.ts`                  |
+| **Only writer of session status** | `packages/payment-core/sessions/transition.ts`                   |
+| Session read + expiry settlement  | `packages/payment-core/sessions/load.ts`                         |
+| Session TTL and clock rules       | `packages/payment-core/sessions/expiry.ts`                       |
+| Provider adapter registry         | `packages/payment-core/providers/registry.ts`                    |
 | Session/transaction state tables  | `packages/payment-core/{sessions,transactions}/state-machine.ts` |
-| Ledger primitive                  | `packages/accounting/post-journal.ts`               |
-| Gapless numbering                 | `packages/accounting/numbering.ts`                  |
-| Schema (12 modules)               | `packages/db/schema/`                               |
-| CMS content models                | `packages/db/schema/cms.ts`                         |
-| CMS registry (add a kind here)    | `apps/web/lib/cms/kinds/`                           |
-| CMS admin editors                 | `apps/web/app/(admin)/admin/cms/`                   |
-| **Public reads (published only)** | `apps/web/lib/cms/public-queries.ts`                |
-| Admin reads (returns drafts)      | `apps/web/lib/cms/queries.ts`                       |
-| Public pages                      | `apps/web/app/(public)/`                            |
-| Contact form                      | `apps/web/app/(public)/contact/`, `lib/contact/`    |
-| BS date formatting                | `apps/web/lib/format/date.ts`                       |
-| Upload validation (magic bytes)   | `apps/web/lib/storage/image-validation.ts`          |
-| R2 object key layout              | `apps/web/lib/storage/object-key.ts`                |
-| R2 client (public bucket only)    | `apps/web/lib/storage/r2.ts`                        |
-| Email client, send path           | `apps/web/lib/email/`                               |
-| Email templates (pure)            | `apps/web/lib/email/templates/`                     |
-| **Platform settings (authority)** | `apps/web/lib/settings/definitions.ts`              |
-| Settings admin page               | `apps/web/app/(admin)/admin/settings/`              |
-| Marketing copy seeds              | `packages/db/seed/marketing/`                       |
-| Legal document seeds              | `packages/db/seed/legal/`                           |
-| The four guarantees               | `packages/db/migrations/0001_ledger_guarantees.sql` |
-| Ledger tests                      | `packages/db/tests/ledger.test.ts`                  |
-| Auth (argon2id + TOTP)            | `apps/web/lib/auth.ts`                              |
-| Encryption at rest                | `apps/web/lib/crypto.core.ts`                       |
-| Subdomain routing                 | `apps/web/proxy.ts`                                 |
-| Admin shell                       | `apps/web/app/(admin)/admin/`                       |
+| Ledger primitive                  | `packages/accounting/post-journal.ts`                            |
+| Gapless numbering                 | `packages/accounting/numbering.ts`                               |
+| Schema (12 modules)               | `packages/db/schema/`                                            |
+| CMS content models                | `packages/db/schema/cms.ts`                                      |
+| CMS registry (add a kind here)    | `apps/web/lib/cms/kinds/`                                        |
+| CMS admin editors                 | `apps/web/app/(admin)/admin/cms/`                                |
+| **Public reads (published only)** | `apps/web/lib/cms/public-queries.ts`                             |
+| Admin reads (returns drafts)      | `apps/web/lib/cms/queries.ts`                                    |
+| Public pages                      | `apps/web/app/(public)/`                                         |
+| Contact form                      | `apps/web/app/(public)/contact/`, `lib/contact/`                 |
+| BS date formatting                | `apps/web/lib/format/date.ts`                                    |
+| Upload validation (magic bytes)   | `apps/web/lib/storage/image-validation.ts`                       |
+| R2 object key layout              | `apps/web/lib/storage/object-key.ts`                             |
+| R2 client (public bucket only)    | `apps/web/lib/storage/r2.ts`                                     |
+| Email client, send path           | `apps/web/lib/email/`                                            |
+| Email templates (pure)            | `apps/web/lib/email/templates/`                                  |
+| **Platform settings (authority)** | `apps/web/lib/settings/definitions.ts`                           |
+| Settings admin page               | `apps/web/app/(admin)/admin/settings/`                           |
+| Marketing copy seeds              | `packages/db/seed/marketing/`                                    |
+| Legal document seeds              | `packages/db/seed/legal/`                                        |
+| The four guarantees               | `packages/db/migrations/0001_ledger_guarantees.sql`              |
+| Ledger tests                      | `packages/db/tests/ledger.test.ts`                               |
+| Auth (argon2id + TOTP)            | `apps/web/lib/auth.ts`                                           |
+| Encryption at rest                | `apps/web/lib/crypto.core.ts`                                    |
+| Subdomain routing                 | `apps/web/proxy.ts`                                              |
+| Admin shell                       | `apps/web/app/(admin)/admin/`                                    |
 
 ```bash
 pnpm install && pnpm dev      # localhost:3000, admin.localhost:3000
@@ -291,17 +337,17 @@ production.** Replace it before the first real deployment.
 
 ## Phase progress
 
-| Phase                         | Status         | Notes                                                                                                                                        |
-| ----------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 — Foundation                | ✅ Accepted    | All seven criteria pass. 1–6 verified end to end against Neon 18.4; 7 verified by running every CI step locally — see session 3.             |
-| 2 — Public site + CMS         | 🟡 In progress | Everything built and Lighthouse passing (a11y 100, perf 93–97). Left: a verified email domain, and a founder reading and publishing the real content — including the unchecked figures in `lib/home/content.ts`. |
+| Phase                         | Status         | Notes                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 — Foundation                | ✅ Accepted    | All seven criteria pass. 1–6 verified end to end against Neon 18.4; 7 verified by running every CI step locally — see session 3.                                                                                                                                                                                                           |
+| 2 — Public site + CMS         | 🟡 In progress | Everything built and Lighthouse passing (a11y 100, perf 93–97). Left: a verified email domain, and a founder reading and publishing the real content — including the unchecked figures in `lib/home/content.ts`.                                                                                                                           |
 | 3 — Payment core              | 🟡 In progress | Applications, idempotency, invoices, sessions, both state machines, provider registry, transaction start, **settlement + receipts**. Manual QR removed 2026-08-16. Webhooks, SDK and jobs still to build — and **no provider can take a payment until one has credentials and an adapter** (question 17). All uncommitted — see session 7. |
-| 4 — Khalti                    | ⬜ Not started |                                                                                                                                              |
-| 5 — eSewa                     | ⬜ Not started |                                                                                                                                              |
-| 6 — Invoicing + subscriptions | ⬜ Not started |                                                                                                                                              |
-| 7 — Accounting depth          | ⬜ Not started |                                                                                                                                              |
-| 8 — Client portal             | ⬜ Not started |                                                                                                                                              |
-| 9 — Fonepay                   | ⬜ Blocked     | Awaiting bank credentials                                                                                                                    |
+| 4 — Khalti                    | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 5 — eSewa                     | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 6 — Invoicing + subscriptions | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 7 — Accounting depth          | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 8 — Client portal             | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 9 — Fonepay                   | ⬜ Blocked     | Awaiting bank credentials                                                                                                                                                                                                                                                                                                                  |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ accepted · 🔴 blocked
 
@@ -311,24 +357,24 @@ Legend: ⬜ not started · 🟡 in progress · ✅ accepted · 🔴 blocked
 
 Nothing proceeds past the listed phase until these are answered.
 
-| #   | Question                                                                                                                                                         | Blocks       | Status                                                                                                           |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------- |
-| 1   | Bank name for the account 1020 label                                                                                                                             | Phase 1 seed | ⬜ Open                                                                                                          |
-| 2   | Go-live date — to seed fiscal periods                                                                                                                            | Phase 1 seed | ✅ Answered 2026-08-12 — seed the fiscal year already in progress, 2083/84 (17 Jul 2026 – 16 Jul 2027)           |
-| 3   | Opening balances (no accountant engaged yet)                                                                                                                     | Phase 7      | ⬜ Open                                                                                                          |
-| 4   | Are setup fees (4050) earned immediately or deferred?                                                                                                            | Phase 6      | ⬜ Open                                                                                                          |
-| 5   | Keep or relax `refund_needs_second_person` with one founder?                                                                                                     | Phase 4      | ⬜ Open                                                                                                          |
-| 6   | Import historical manual transactions, or start fresh with opening balances? _(recommendation: fresh)_                                                           | Phase 7      | ⬜ Open                                                                                                          |
-| 7   | Design direction in `DESIGN.md` — approve or change?                                                                                                             | Phase 2      | ✅ **Re-answered 2026-08-16 — white, black and emerald.** Supersedes the 2026-08-14 answer (Jiwan-Mijhar warm paper + terracotta). See the decisions table. |
-| 8   | Team member names, roles, bios, photos for the public site                                                                                                       | Phase 2      | 🟡 Placeholders seeded (draft) so the editors work. **Real names, bios and photos still needed before launch.**  |
-| 13  | Verified BS→AD boundaries for the go-live fiscal year's twelve months. Needed alongside #2; the seeder refuses to guess.                                         | Phase 1 seed | ✅ Answered 2026-08-12 — generated by `scripts/gen-bs-calendar.ts` from published BS tables, baked into the seed |
-| 14  | Should a journal with zero lines be rejected by the database?                                                                                                    | Phase 1      | ✅ Answered 2026-08-12 — yes. Migration `0002` adds the deferred constraint trigger                              |
-| 15  | Per-transaction wallet limits for each provider, to populate `max_amount_minor`. Left NULL — no document states the numbers, so routing currently hides nothing. | Phase 3      | ⬜ Open                                                                                                          |
-| 16  | ~~The company QR and the account name it pays into~~                                                                                                                                                                                                                     | —            | ✅ **Moot from 2026-08-16** — the manual QR flow was removed                                                     |
-| 17  | **Which gateway do we get live first?** Nothing can take a payment until one of Fonepay, eSewa or Khalti has both merchant credentials and an adapter. Fonepay is now primary but is the most gated (Phase 9, needs the bank's integration document). eSewa and Khalti credentials are already applied for. | Phase 3 go-live | ⬜ Open — **blocks every payment**                                                                            |
-| 18  | **Does the accountant require a separate receipt number series**, distinct from the invoice series? Receipts currently reuse `txn_no`, which is already gapless per fiscal year. If a distinct series is needed this grows a table and a sequence; nothing else changes. | Phase 3      | ⬜ Open — not blocking                                                                                            |
-| 19  | **Confirm the static / advanced / custom definitions.** Drafted on 2026-08-29 and live on the home page as placeholder copy (`apps/web/lib/home/tiers.ts`). The axis chosen is *what the software has to answer to*, not size: static = nothing changes after launch; advanced = someone on the client's side changes it without us; custom = the software enforces rules of its own. First yes wins, same ladder for web and app. Correct the wording, the four bullets per cell, or the axis itself. | Phase 2 launch | 🟡 Drafted, awaiting confirmation |
-| 20  | **Confirm the contact form's questions.** Proposed 2026-08-29: name, email, phone/WhatsApp, then three selects — *what is it* (website / app / both / payment or billing / not sure), *where is it now* (idea / plan or designs / exists and needs work / exists and needs replacing), *when does it go live* (no date / within a month / 1–3 months / fixed deadline) — then one required "tell us about it". Drops the current free-text Subject. **Not built yet**; the form still has the old fields. | Phase 2 launch | 🟡 Proposed, awaiting confirmation |
+| #   | Question                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Blocks          | Status                                                                                                                                                      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Bank name for the account 1020 label                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Phase 1 seed    | ⬜ Open                                                                                                                                                     |
+| 2   | Go-live date — to seed fiscal periods                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Phase 1 seed    | ✅ Answered 2026-08-12 — seed the fiscal year already in progress, 2083/84 (17 Jul 2026 – 16 Jul 2027)                                                      |
+| 3   | Opening balances (no accountant engaged yet)                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Phase 7         | ⬜ Open                                                                                                                                                     |
+| 4   | Are setup fees (4050) earned immediately or deferred?                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Phase 6         | ⬜ Open                                                                                                                                                     |
+| 5   | Keep or relax `refund_needs_second_person` with one founder?                                                                                                                                                                                                                                                                                                                                                                                                                                              | Phase 4         | ⬜ Open                                                                                                                                                     |
+| 6   | Import historical manual transactions, or start fresh with opening balances? _(recommendation: fresh)_                                                                                                                                                                                                                                                                                                                                                                                                    | Phase 7         | ⬜ Open                                                                                                                                                     |
+| 7   | Design direction in `DESIGN.md` — approve or change?                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Phase 2         | ✅ **Re-answered 2026-08-16 — white, black and emerald.** Supersedes the 2026-08-14 answer (Jiwan-Mijhar warm paper + terracotta). See the decisions table. |
+| 8   | Team member names, roles, bios, photos for the public site                                                                                                                                                                                                                                                                                                                                                                                                                                                | Phase 2         | 🟡 Placeholders seeded (draft) so the editors work. **Real names, bios and photos still needed before launch.**                                             |
+| 13  | Verified BS→AD boundaries for the go-live fiscal year's twelve months. Needed alongside #2; the seeder refuses to guess.                                                                                                                                                                                                                                                                                                                                                                                  | Phase 1 seed    | ✅ Answered 2026-08-12 — generated by `scripts/gen-bs-calendar.ts` from published BS tables, baked into the seed                                            |
+| 14  | Should a journal with zero lines be rejected by the database?                                                                                                                                                                                                                                                                                                                                                                                                                                             | Phase 1         | ✅ Answered 2026-08-12 — yes. Migration `0002` adds the deferred constraint trigger                                                                         |
+| 15  | Per-transaction wallet limits for each provider, to populate `max_amount_minor`. Left NULL — no document states the numbers, so routing currently hides nothing.                                                                                                                                                                                                                                                                                                                                          | Phase 3         | ⬜ Open                                                                                                                                                     |
+| 16  | ~~The company QR and the account name it pays into~~                                                                                                                                                                                                                                                                                                                                                                                                                                                      | —               | ✅ **Moot from 2026-08-16** — the manual QR flow was removed                                                                                                |
+| 17  | **Which gateway do we get live first?** Nothing can take a payment until one of Fonepay, eSewa or Khalti has both merchant credentials and an adapter. Fonepay is now primary but is the most gated (Phase 9, needs the bank's integration document). eSewa and Khalti credentials are already applied for.                                                                                                                                                                                               | Phase 3 go-live | ⬜ Open — **blocks every payment**                                                                                                                          |
+| 18  | **Does the accountant require a separate receipt number series**, distinct from the invoice series? Receipts currently reuse `txn_no`, which is already gapless per fiscal year. If a distinct series is needed this grows a table and a sequence; nothing else changes.                                                                                                                                                                                                                                  | Phase 3         | ⬜ Open — not blocking                                                                                                                                      |
+| 19  | **Confirm the static / advanced / custom definitions.** Drafted on 2026-08-29 and live on the home page as placeholder copy (`apps/web/lib/home/tiers.ts`). The axis chosen is _what the software has to answer to_, not size: static = nothing changes after launch; advanced = someone on the client's side changes it without us; custom = the software enforces rules of its own. First yes wins, same ladder for web and app. Correct the wording, the four bullets per cell, or the axis itself.    | Phase 2 launch  | 🟡 Drafted, awaiting confirmation                                                                                                                           |
+| 20  | **Confirm the contact form's questions.** Proposed 2026-08-29: name, email, phone/WhatsApp, then three selects — _what is it_ (website / app / both / payment or billing / not sure), _where is it now_ (idea / plan or designs / exists and needs work / exists and needs replacing), _when does it go live_ (no date / within a month / 1–3 months / fixed deadline) — then one required "tell us about it". Drops the current free-text Subject. **Not built yet**; the form still has the old fields. | Phase 2 launch  | 🟡 Proposed, awaiting confirmation                                                                                                                          |
 
 ## Blocked on external parties
 
@@ -346,24 +392,24 @@ Nothing proceeds past the listed phase until these are answered.
 Record every decision here with its reason. Future sessions must not relitigate
 these — if one looks wrong, ask before changing it.
 
-| Date       | Decision                                                                                | Why                                                                                                                                                                                                                                                                      |
-| ---------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-08-12 | PostgreSQL, not MongoDB                                                                 | Balance constraint, immutability, and gapless numbering must be enforced by the database. MongoDB cannot express a cross-document balance rule.                                                                                                                          |
-| 2026-08-12 | Vercel-only, no VPS                                                                     | eSewa and Khalti authenticate by signature/secret key, not source IP. The only hard blocker didn't apply.                                                                                                                                                                |
-| 2026-08-12 | Drizzle, not Prisma                                                                     | Explicit SQL control needed for ledger transactions and `FOR UPDATE`.                                                                                                                                                                                                    |
-| 2026-08-12 | Cloudflare R2, not Vercel Blob                                                          | Zero egress, generous permanent free tier, S3-compatible, no platform lock-in.                                                                                                                                                                                           |
-| 2026-08-12 | One monorepo, one Next.js app                                                           | Two founders. Shared types are the biggest bug-prevention win available.                                                                                                                                                                                                 |
-| 2026-08-12 | No auto-debit subscriptions                                                             | Nepali wallets have no reliable server-initiated charge. Customer initiates each payment.                                                                                                                                                                                |
-| 2026-08-12 | ~~`manual_qr` as a first-class provider~~ **Reversed 2026-08-16 — see below.**           | ~~Replaces today's flow and stays as a permanent fallback when a gateway is down.~~                                                                                                                                                                                      |
-| 2026-08-16 | **Manual QR removed. Fonepay primary, eSewa and Khalti secondary. A confirmed payment sends the payer a receipt.** | Founder's decision, reversing 2026-08-12. Every payment now goes through a gateway and nothing is credited on a person's say-so. **Two costs were stated and accepted:** there is no longer a fallback when a gateway is down, and since `manual_qr` was the only provider needing no external credentials, **nothing can take a payment until Fonepay, eSewa or Khalti has both credentials and an adapter.** Fonepay is also the most gated of the three (Phase 9, bank integration document). |
-| 2026-08-12 | No platform fee between products                                                        | One legal entity — an inter-product fee nets to zero. Product P&L via ledger dimension instead.                                                                                                                                                                          |
-| 2026-08-14 | CMS: one typed table per content kind, not a generic `content_entries` with a JSON body | A founder editing the refund policy should meet a form with the right fields on it; a public page should read a column, not validate a blob. Phase 2 acceptance turns on editing _every_ page and legal document, which is exactly where a generic table gets expensive. |
-| 2026-08-14 | Marketing product pages are a separate table referencing `products`                     | `products` is a ledger dimension — `ledger_entries.product_id` drives product-level P&L. Renaming a product for a campaign must not be able to move posted revenue.                                                                                                      |
-| 2026-08-14 | Legal documents are versioned rows, superseded not overwritten                          | What a customer agreed to on a given date has to stay knowable. Other content kinds carry one row.                                                                                                                                                                       |
-| 2026-08-16 | **Palette narrowed to white, black and emerald.** Terracotta `--accent-strong`, the cream ground, `--teal`, `--sky` and `.glass-panel` removed from `globals.css`. | The founder's UI mockups (`docs/handoff/`) came back on this palette and the handoff states the terracotta and cream are not used. Reverses the 2026-08-14 direction. `--credit` `#1B6B4A`, `--flag` `#A81E12` and `--sidebar` `#E2E6E3` were already correct and did not move. |
-| 2026-08-16 | One named external image host (`images.unsplash.com`), never a wildcard                 | Marketing imagery has to come from somewhere until the company has its own photography, and `next/image` needs the host allow-listed. A wildcard would make the optimiser an open image proxy — the list lives in `lib/images/trusted-hosts.ts` and is shared by `next.config.ts` and `CmsImage` so the two cannot disagree. |
-| 2026-08-16 | No stock photographs of people anywhere on the site                                     | A stock portrait under a colleague's name is a false claim about who works at the company. Team members keep an initials tile until a real photograph is uploaded — which is why the no-photo state was designed first. |
-| 2026-08-12 | Fiscal periods seeded, not computed                                                     | BS month boundaries don't align with Gregorian and month lengths vary.                                                                                                                                                                                                   |
+| Date       | Decision                                                                                                                                                           | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-08-12 | PostgreSQL, not MongoDB                                                                                                                                            | Balance constraint, immutability, and gapless numbering must be enforced by the database. MongoDB cannot express a cross-document balance rule.                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-08-12 | Vercel-only, no VPS                                                                                                                                                | eSewa and Khalti authenticate by signature/secret key, not source IP. The only hard blocker didn't apply.                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-08-12 | Drizzle, not Prisma                                                                                                                                                | Explicit SQL control needed for ledger transactions and `FOR UPDATE`.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2026-08-12 | Cloudflare R2, not Vercel Blob                                                                                                                                     | Zero egress, generous permanent free tier, S3-compatible, no platform lock-in.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 2026-08-12 | One monorepo, one Next.js app                                                                                                                                      | Two founders. Shared types are the biggest bug-prevention win available.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2026-08-12 | No auto-debit subscriptions                                                                                                                                        | Nepali wallets have no reliable server-initiated charge. Customer initiates each payment.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2026-08-12 | ~~`manual_qr` as a first-class provider~~ **Reversed 2026-08-16 — see below.**                                                                                     | ~~Replaces today's flow and stays as a permanent fallback when a gateway is down.~~                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2026-08-16 | **Manual QR removed. Fonepay primary, eSewa and Khalti secondary. A confirmed payment sends the payer a receipt.**                                                 | Founder's decision, reversing 2026-08-12. Every payment now goes through a gateway and nothing is credited on a person's say-so. **Two costs were stated and accepted:** there is no longer a fallback when a gateway is down, and since `manual_qr` was the only provider needing no external credentials, **nothing can take a payment until Fonepay, eSewa or Khalti has both credentials and an adapter.** Fonepay is also the most gated of the three (Phase 9, bank integration document). |
+| 2026-08-12 | No platform fee between products                                                                                                                                   | One legal entity — an inter-product fee nets to zero. Product P&L via ledger dimension instead.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2026-08-14 | CMS: one typed table per content kind, not a generic `content_entries` with a JSON body                                                                            | A founder editing the refund policy should meet a form with the right fields on it; a public page should read a column, not validate a blob. Phase 2 acceptance turns on editing _every_ page and legal document, which is exactly where a generic table gets expensive.                                                                                                                                                                                                                         |
+| 2026-08-14 | Marketing product pages are a separate table referencing `products`                                                                                                | `products` is a ledger dimension — `ledger_entries.product_id` drives product-level P&L. Renaming a product for a campaign must not be able to move posted revenue.                                                                                                                                                                                                                                                                                                                              |
+| 2026-08-14 | Legal documents are versioned rows, superseded not overwritten                                                                                                     | What a customer agreed to on a given date has to stay knowable. Other content kinds carry one row.                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2026-08-16 | **Palette narrowed to white, black and emerald.** Terracotta `--accent-strong`, the cream ground, `--teal`, `--sky` and `.glass-panel` removed from `globals.css`. | The founder's UI mockups (`docs/handoff/`) came back on this palette and the handoff states the terracotta and cream are not used. Reverses the 2026-08-14 direction. `--credit` `#1B6B4A`, `--flag` `#A81E12` and `--sidebar` `#E2E6E3` were already correct and did not move.                                                                                                                                                                                                                  |
+| 2026-08-16 | One named external image host (`images.unsplash.com`), never a wildcard                                                                                            | Marketing imagery has to come from somewhere until the company has its own photography, and `next/image` needs the host allow-listed. A wildcard would make the optimiser an open image proxy — the list lives in `lib/images/trusted-hosts.ts` and is shared by `next.config.ts` and `CmsImage` so the two cannot disagree.                                                                                                                                                                     |
+| 2026-08-16 | No stock photographs of people anywhere on the site                                                                                                                | A stock portrait under a colleague's name is a false claim about who works at the company. Team members keep an initials tile until a real photograph is uploaded — which is why the no-photo state was designed first.                                                                                                                                                                                                                                                                          |
+| 2026-08-12 | Fiscal periods seeded, not computed                                                                                                                                | BS month boundaries don't align with Gregorian and month lengths vary.                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ---
 
@@ -577,7 +623,7 @@ checkout page is still the "payments are not open yet" placeholder, and no
   `sessions/expiry.ts`.
 - **`session_expiry_future` (`expires_at > created_at`) means the database will
   not accept a session born already expired** — correct, and it means an
-  expired *fixture* has to be aged, with `created_at` set explicitly before its
+  expired _fixture_ has to be aged, with `created_at` set explicitly before its
   deadline rather than defaulted.
 - **`DbTx` was too narrow for reads.** The API path reads a session inside the
   transaction `withIdempotency` owns; a server component rendering the checkout
@@ -628,7 +674,7 @@ the screenshot then matches no transaction anybody is looking for and the money
 sits in the company account belonging to nobody. A reload returns the existing
 attempt, with the same reference and QR (kept in `metadata.initiate`, which
 doubles as the record of what was displayed if a payment is ever disputed). A
-*terminal* attempt is left behind as the record that it happened; trying again
+_terminal_ attempt is left behind as the record that it happened; trying again
 opens a new row rather than resurrecting one.
 
 Also: the amount comes from the session, which recomputed it from the invoice —
@@ -701,7 +747,7 @@ be opened without a gateway** — see question 17.
   the attempt that discovered them.
 - **`&&` between two Drizzle conditions is not `and()`.** Both operands are
   truthy objects, so `a && b` silently evaluates to `b` — a compare-and-set
-  written that way loses its `id` predicate and updates *every* row in the
+  written that way loses its `id` predicate and updates _every_ row in the
   matching state. Caught while writing it; worth knowing it fails silently
   rather than as a type error.
 

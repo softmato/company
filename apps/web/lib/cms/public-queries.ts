@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { and, asc, desc, eq } from 'drizzle-orm';
 import {
   blogPosts,
@@ -26,7 +27,17 @@ import {
 const published = <T extends { status: unknown }>(table: T) =>
   eq(table.status as never, 'published');
 
-export async function getPage(slug: string) {
+/**
+ * A published page by slug.
+ *
+ * Wrapped in React's per-request `cache`, because a single render asks for the
+ * same row up to three times: `generateMetadata` for the title and canonical,
+ * the page body for its content, and the structured data for its description.
+ * Deduped they are one query; undeduped they were three, and the third only
+ * appeared when the SEO work landed. This is a request-scoped memo, not a time
+ * cache — an edit in the admin panel is visible on the very next request.
+ */
+export const getPage = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(pages)
@@ -34,7 +45,7 @@ export async function getPage(slug: string) {
     .limit(1);
 
   return row ?? null;
-}
+});
 
 export async function listPublishedServices() {
   return db
@@ -44,7 +55,7 @@ export async function listPublishedServices() {
     .orderBy(asc(services.sortOrder), asc(services.title));
 }
 
-export async function getService(slug: string) {
+export const getService = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(services)
@@ -52,7 +63,7 @@ export async function getService(slug: string) {
     .limit(1);
 
   return row ?? null;
-}
+});
 
 /** Only members who are both published and still with the company. */
 export async function listPublishedTeam() {
@@ -71,7 +82,7 @@ export async function listPublishedProducts() {
     .orderBy(asc(productPages.sortOrder), asc(productPages.title));
 }
 
-export async function getProductPage(slug: string) {
+export const getProductPage = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(productPages)
@@ -79,7 +90,7 @@ export async function getProductPage(slug: string) {
     .limit(1);
 
   return row ?? null;
-}
+});
 
 export async function listPublishedPosts() {
   return db
@@ -89,7 +100,7 @@ export async function listPublishedPosts() {
     .orderBy(desc(blogPosts.publishedAt));
 }
 
-export async function getPost(slug: string) {
+export const getPost = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(blogPosts)
@@ -97,7 +108,7 @@ export async function getPost(slug: string) {
     .limit(1);
 
   return row ?? null;
-}
+});
 
 /**
  * The current version of a legal document.
@@ -106,7 +117,7 @@ export async function getPost(slug: string) {
  * stay readable by version, so what a customer agreed to on a given date can
  * still be produced — that is the point of versioning them.
  */
-export async function getLegalDocument(slug: string) {
+export const getLegalDocument = cache(async (slug: string) => {
   const [row] = await db
     .select()
     .from(legalDocuments)
@@ -115,7 +126,7 @@ export async function getLegalDocument(slug: string) {
     .limit(1);
 
   return row ?? null;
-}
+});
 
 export async function listPublishedLegalDocuments() {
   /*

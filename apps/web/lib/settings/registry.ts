@@ -22,6 +22,15 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE = /^\+?[0-9][0-9\s-]{6,19}$/;
 
 /**
+ * Absolute http(s) only.
+ *
+ * A `url` setting ends up in a `sameAs` array in the site's structured data,
+ * where a relative or scheme-less value is not a claim about a profile — it is
+ * a broken identifier that makes the whole Organization block suspect.
+ */
+const URL_PATTERN = /^https?:\/\/[^\s]+\.[^\s]+$/;
+
+/**
  * Checks a submitted value against its definition and returns what to store.
  *
  * An empty string is allowed for text-ish settings and means "not set yet" —
@@ -67,6 +76,15 @@ export function validate(key: string, raw: string): ValidationResult {
         return {
           ok: false,
           message: 'That does not look like an email address.',
+        };
+      }
+      return { ok: true, value };
+
+    case 'url':
+      if (value !== '' && !URL_PATTERN.test(value)) {
+        return {
+          ok: false,
+          message: 'Enter a full address, starting with https://.',
         };
       }
       return { ok: true, value };

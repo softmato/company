@@ -9,14 +9,20 @@
  */
 import { closeDb, db, legalDocuments } from '@softmato/db';
 
+import { legalReadiness } from '../apps/web/lib/cms/legal-readiness';
+
 const rows = await db.select().from(legalDocuments);
 
 let blocking = 0;
 
 for (const r of rows) {
-  const confirms = (r.body.match(/\[confirm:/g) ?? []).length;
-  const banner = r.body.includes('Draft — not yet reviewed');
-  const bad = r.status === 'published' && (confirms > 0 || banner);
+  /*
+   * The same rule the public pages use to decide whether a crawler may index
+   * a policy — see apps/web/lib/cms/legal-readiness.ts. Shared rather than
+   * repeated, so this check and the site cannot drift apart.
+   */
+  const { unconfirmed: confirms, draftBanner: banner } = legalReadiness(r.body);
+  const bad = r.status === 'published' && !legalReadiness(r.body).ready;
 
   if (bad) blocking += 1;
 

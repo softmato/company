@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 
 import { getPost, publishedSlugs } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
+import { breadcrumbList } from '@/lib/seo/breadcrumbs';
+import { blogPostingNode } from '@/lib/seo/content';
+import { JsonLd } from '@/lib/seo/json-ld';
 import { formatBsWithAd } from '@/lib/format/date';
 import { CmsImageFill } from '@/components/public/cms-image';
 import { Markdown } from '@/components/public/markdown';
@@ -19,7 +22,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPost(slug);
 
-  return post ? metadataFor(post) : { title: 'Not found' };
+  /*
+   * `type: 'article'` rather than the default website: it is what puts the
+   * published and modified times into the preview card, which is most of what
+   * makes a shared post look current rather than undated.
+   */
+  return post
+    ? metadataFor(post, {
+        path: `/blog/${slug}`,
+        type: 'article',
+        publishedTime: post.publishedAt,
+        modifiedTime: post.updatedAt,
+      })
+    : { title: 'Not found' };
 }
 
 export default async function BlogPostPage({
@@ -32,6 +47,15 @@ export default async function BlogPostPage({
 
   return (
     <article>
+      <JsonLd
+        id="breadcrumbs"
+        data={breadcrumbList([
+          { name: 'Blog', path: '/blog' },
+          { name: post.title },
+        ])}
+      />
+      <JsonLd id="post" data={blogPostingNode(post)} />
+
       <PageHeader
         eyebrow={
           post.publishedAt ? formatBsWithAd(post.publishedAt) : undefined

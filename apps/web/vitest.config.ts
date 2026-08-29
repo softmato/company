@@ -18,6 +18,20 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
   },
   resolve: {
-    alias: { '@': resolve(__dirname) },
+    alias: {
+      '@': resolve(__dirname),
+      /*
+       * `server-only` throws on import unless the bundler resolves it under
+       * React's `react-server` condition, which vitest does not set. Without
+       * this alias every module that guards itself with it — the CMS queries,
+       * the metadata builders, the whole SEO layer — is untestable, which is
+       * exactly backwards: those are the modules where a mistake ships
+       * silently to a crawler rather than failing loudly in a browser.
+       *
+       * Aliasing to the package's own empty entry point, not to a stub of our
+       * own, so this cannot drift from what `server-only` actually exports.
+       */
+      'server-only': resolve(__dirname, 'tests/stubs/server-only.ts'),
+    },
   },
 });

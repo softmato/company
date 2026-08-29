@@ -18,6 +18,7 @@
     "admin:create": "tsx --env-file-if-exists=.env.local ./scripts/create-admin.mts",
     "cms:publish-all": "tsx --env-file-if-exists=.env.local ./scripts/publish-all.mts",
     "cms:sync-copy": "tsx --env-file-if-exists=.env.local ./scripts/sync-cms-copy.mts",
+    "brand:build": "tsx ./scripts/build-brand-assets.mts",
     "legal:check": "tsx --env-file-if-exists=.env.local ./scripts/check-legal.mts",
     "legal:todo": "tsx --env-file-if-exists=.env.local ./scripts/legal-todo.mts",
     "predeploy": "pnpm typecheck && pnpm test && pnpm legal:check",

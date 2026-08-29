@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 
 import { getProductPage, publishedSlugs } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
+import { breadcrumbList } from '@/lib/seo/breadcrumbs';
+import { productNode } from '@/lib/seo/content';
+import { JsonLd } from '@/lib/seo/json-ld';
 import { CmsImageFill } from '@/components/public/cms-image';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
@@ -18,7 +21,9 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProductPage(slug);
 
-  return product ? metadataFor(product) : { title: 'Not found' };
+  return product
+    ? metadataFor(product, { path: `/products/${slug}` })
+    : { title: 'Not found' };
 }
 
 export default async function ProductPage({
@@ -31,6 +36,15 @@ export default async function ProductPage({
 
   return (
     <article>
+      <JsonLd
+        id="breadcrumbs"
+        data={breadcrumbList([
+          { name: 'Products', path: '/products' },
+          { name: product.title },
+        ])}
+      />
+      <JsonLd id="product" data={productNode(product)} />
+
       <PageHeader
         eyebrow="Product"
         title={product.title}

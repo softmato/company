@@ -14,6 +14,69 @@ this file tracks what was delivered.
 
 ### Added
 
+- **A search-engine layer across every public page** (`apps/web/lib/seo/`).
+  Canonical URLs on all twelve public routes, a `metadataBase` so relative
+  images resolve at all, a `%s · Softmato` title template, `summary_large_image`
+  Twitter cards, and `og:type: article` with published/modified times on posts.
+  JSON-LD throughout: Organization and WebSite once on the home page, with
+  every other page pointing at them by `@id`, plus BreadcrumbList, Service,
+  SoftwareApplication, BlogPosting, CollectionPage, ContactPage and Person for
+  the team. Nothing in it asserts a price, a rating or a review — a test fails
+  if someone adds one.
+- **A generated 1200×630 social card** (`app/opengraph-image.tsx`) on the site's
+  light ground, carrying the brand lockup when `public/brand/logo.png` is
+  present and a wordmark when it is not. Every page now has an `og:image`;
+  previously none did.
+- **`app/manifest.ts`** — name, icons and theme colour for Android home screens.
+  `display: 'browser'`, deliberately: this origin has a login and a checkout on
+  it, and hiding the URL bar from someone about to type a password is a bad
+  trade for a marketing site.
+- **Brand assets as a pipeline** (`public/brand/`, `lib/brand/assets.ts`,
+  `pnpm brand:build`). Three masters — the horizontal lockup, the S mark and the
+  invoice stamp — with the favicon, Apple touch icon and both manifest icons
+  generated from the mark by script rather than hand-cut and left to drift.
+- **Social profile settings** (`company.linkedin_url`, `github_url`, `x_url`,
+  `facebook_url`) and a `url` setting kind to hold them. They become `sameAs` in
+  the Organization block, which is what connects softmato.com to a LinkedIn page
+  as one organisation rather than two that share a name. All blank by default.
+
+### Changed
+
+- **`robots.txt`** now excludes `/login` and the `utm_`/`fbclid`/`gclid`
+  parameter forms, and declares `Host`. The root layout carries a matching
+  `robots` meta tag: `Disallow` stops a crawler _fetching_ a URL, only `noindex`
+  keeps it out of the index, and a URL can be indexed from an inbound link
+  without ever being fetched.
+- **The sitemap** carries `lastModified`, `changeFrequency` and `priority`, and
+  includes `/blog` — a real, linked, 200-response route that has no `pages` row
+  behind it and so had never been listed. It returns empty on any non-production
+  deployment.
+- **`getPage`, `getService`, `getProductPage`, `getPost` and `getLegalDocument`
+  are wrapped in React's per-request `cache`.** A single render asked for the
+  same row two or three times — metadata, body, structured data. Now one query.
+- **`vitest.config.ts` aliases `server-only`** to an empty stub. It throws
+  unless the bundler resolves it under React's `react-server` condition, which
+  vitest does not set, so every module guarded by it — the CMS queries, the
+  metadata builders, the whole SEO layer — had been untestable.
+
+### Fixed
+
+- **JSON-LD did not escape `<`.** `.replace(/</g, '<')` was written with a
+  single backslash, which TypeScript resolves at compile time into a no-op
+  replacing `<` with `<`. A founder pasting `</script>` into a post excerpt
+  would have closed the tag early and put the rest of the excerpt into the
+  document as markup. Caught by the test written to prove the escaping worked.
+
+### Security
+
+- **Published legal documents that are not finished are no longer indexable.**
+  All six policies are live while still carrying their "not yet reviewed"
+  banner and 6–15 unfilled `[confirm: …]` markers each. They now render with
+  `noindex, follow` and are excluded from the sitemap, by the same rule
+  `pnpm legal:check` already enforced before a deploy
+  (`lib/cms/legal-readiness.ts`, shared between the two so they cannot drift).
+  The guard clears itself when the placeholders are edited out.
+
 - **The home page's chapters below the hero, rebuilt against a second reference
   film** (Eduwerks, supplied 2026-08-29; stills and the rules taken from it at
   `docs/reference/film-2/`). The first film gave the site its light-form
@@ -75,7 +138,7 @@ this file tracks what was delivered.
 
 - **No light-form had ever mounted — not one, on any page.** `LightForm` decides
   whether WebGL is available with `useSyncExternalStore` and returns `null` while
-  it does not know, so the first client render (which uses the *server* snapshot,
+  it does not know, so the first client render (which uses the _server_ snapshot,
   `false`) produced no element. `useNearViewport`'s effect ran against that
   commit, found `ref.current === null`, bailed, and never ran again — its
   dependency array had no reason to change when the second render finally mounted
@@ -184,7 +247,7 @@ this file tracks what was delivered.
 - **A floating pill navigation** fixed to the bottom of the viewport, replacing
   the header's link list. The header is now the wordmark and one action.
 - **`pnpm legal:check` and `pnpm legal:todo`**, plus a `predeploy` script.
-  `legal:check` fails when a *published* legal document still carries its
+  `legal:check` fails when a _published_ legal document still carries its
   "not yet reviewed" banner or an unfilled `[confirm: …]` marker.
 
 ### Changed
@@ -192,7 +255,7 @@ this file tracks what was delivered.
 - **Palette rebranded from white/black/emerald to violet, near-black and a set
   of bright display accents**, at the founder's direction (2026-08-27). This
   supersedes `docs/DESIGN.md` §1–§2. `--credit` and `--flag` were deliberately
-  *not* folded into the brand accents: telling money in from money out at a
+  _not_ folded into the brand accents: telling money in from money out at a
   glance is a legibility requirement on a product that moves real money.
 - **`body` now uses `overflow-x: clip` rather than `hidden`.** `hidden`
   computes the other axis to `auto`, which made the body a scroll container;
@@ -260,7 +323,7 @@ this file tracks what was delivered.
   attempt is returned unchanged, with the same reference code and QR the
   customer was already shown. Without this a customer could pay quoting the
   first reference while the page displayed a second, and the screenshot would
-  match no transaction anyone was looking for. A *failed* attempt is left
+  match no transaction anyone was looking for. A _failed_ attempt is left
   behind as the record that it happened; trying again opens a new one.
 - **The `manual_qr` adapter**, the first provider behind the registry. It
   produces the company QR and a reference code for the payment remark, and its

@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { getPage } from '@/lib/cms/public-queries';
+import { SITE_TITLE, siteUrl } from '@/lib/seo/site';
 import { metadataFor } from '@/lib/cms/metadata';
+import { JsonLd } from '@/lib/seo/json-ld';
+import { siteGraph } from '@/lib/seo/organization';
 import { splitLede } from '@/lib/markdown/lede';
 import { homeTagline } from '@/lib/home/tagline';
 import { BuildTiers } from '@/components/public/home/build-tiers';
@@ -17,7 +20,16 @@ import { Statement } from '@/components/public/home/statement';
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage('home');
-  return page ? metadataFor(page) : { title: 'Home' };
+
+  /*
+   * `title: { absolute }` so the root layout's "%s · Softmato" template does
+   * not run on the one page whose title already is the company name.
+   */
+  const base = page
+    ? metadataFor(page, { path: '/' })
+    : { title: SITE_TITLE, alternates: { canonical: siteUrl('/') } };
+
+  return { ...base, title: { absolute: page?.metaTitle ?? SITE_TITLE } };
 }
 
 /**
@@ -59,6 +71,14 @@ export default async function HomePage() {
 
   return (
     <>
+      {/*
+        The home page is the only page that carries the Organization and
+        WebSite blocks. Everything else points at them by `@id` — repeating
+        them per page does not make the company more credible to a crawler, it
+        just creates more copies that can disagree with each other.
+      */}
+      <JsonLd id="site-graph" data={await siteGraph()} />
+
       <Hero tagline={homeTagline(page.title, page.metaTitle)} lede={lede} />
       <Statement />
       <ServicesSection />
