@@ -292,6 +292,20 @@ Deliberately weak, local only — `pnpm admin:create` refuses a password under 1
 characters unless `APP_ENV=local`. **This account must never exist in preview or
 production.** Replace it before the first real deployment.
 
+**Sign in at `admin.localhost:3000`, not `localhost:3000`.** `AUTH_URL` is the
+admin host, so a sign-in started on the apex sets its session cookie on
+`localhost` and then redirects to `admin.localhost`, which does not receive
+that cookie — you land back on the login form having authenticated
+successfully. The audit log shows `admin.login` while the browser shows the
+form again, which is the confusing part. Same-host start, no problem.
+
+**Lost the authenticator?** `pnpm admin:totp -- --email <email>` re-displays
+the existing enrolment (the secret is encrypted, not hashed, so it is
+recoverable with `ENCRYPTION_KEY`). `--rotate` mints a new one. A signed-in
+admin can self-serve at `/admin/security`. `pnpm admin:enrol -- --email <email>
+--reset` deactivates and issues a fresh `/enrol` link — destructive, since they
+cannot sign in until they finish it.
+
 ---
 
 ## Where the code is
@@ -350,6 +364,20 @@ pnpm admin:create -- --email <email> --name <name>   # ADMIN_PASSWORD in env
 Deliberately weak, local only — `pnpm admin:create` refuses a password under 12
 characters unless `APP_ENV=local`. **This account must never exist in preview or
 production.** Replace it before the first real deployment.
+
+**Sign in at `admin.localhost:3000`, not `localhost:3000`.** `AUTH_URL` is the
+admin host, so a sign-in started on the apex sets its session cookie on
+`localhost` and then redirects to `admin.localhost`, which does not receive
+that cookie — you land back on the login form having authenticated
+successfully. The audit log shows `admin.login` while the browser shows the
+form again, which is the confusing part. Same-host start, no problem.
+
+**Lost the authenticator?** `pnpm admin:totp -- --email <email>` re-displays
+the existing enrolment (the secret is encrypted, not hashed, so it is
+recoverable with `ENCRYPTION_KEY`). `--rotate` mints a new one. A signed-in
+admin can self-serve at `/admin/security`. `pnpm admin:enrol -- --email <email>
+--reset` deactivates and issues a fresh `/enrol` link — destructive, since they
+cannot sign in until they finish it.
 
 ---
 

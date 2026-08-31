@@ -1,20 +1,25 @@
 /**
- * Creates the first admin. Run once per environment:
+ * Creates an admin and prints their enrolment link. Run per person:
  *
  *   pnpm admin:create -- --email you@example.com --name "Your Name"
  *
  * The password is read from ADMIN_PASSWORD in the environment, never from an
  * argument — arguments land in shell history and process listings.
  *
- * The user is inserted with TOTP already enrolled, because `admin_users`
- * cannot represent an active admin without it (docs/DATABASE.md §2.4). The
- * enrolment URI is printed once and never stored in plaintext.
+ * The row is created **inactive with no TOTP secret**, which is the one shape
+ * `admin_users` allows an un-enrolled admin to take: the constraint is
+ * `NOT is_active OR totp_enabled` (docs/DATABASE.md §2.4), so inactive is
+ * exactly the gap enrolment lives in. Opening the printed link, scanning the
+ * QR and confirming a code is what sets the secret and activates the account.
+ *
+ * Until then the account cannot sign in — `authorize()` rejects `!isActive`
+ * before it looks at anything else.
  */
-import { hash as argon2Hash } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
 
 import { adminUsers, closeDb, db } from '@softmato/db';
-import { createTotpEnrolment } from '../apps/web/lib/totp.core';
+import { mintEnrolmentToken } from '../apps/web/lib/enrolment/token';
+import { hashPassword, passwordMinLength } from '../apps/web/lib/password.core';
 
 function arg(name: string): string | undefined {
   const index = process.argv.indexOf(`--${name}`);
@@ -29,13 +34,8 @@ if (!email || !name) {
   throw new Error('Usage: pnpm admin:create -- --email <email> --name <name>');
 }
 
-/**
- * 12 characters everywhere that matters. Local development may use something
- * shorter — a throwaway password on a throwaway database is a convenience, not
- * a risk — but the exception is scoped to APP_ENV=local so it cannot follow the
- * account into preview or production.
- */
-const MIN_LENGTH = process.env.APP_ENV === 'local' ? 8 : 12;
+// Shared with `/admin/security` so the two cannot disagree on the rule.
+const MIN_LENGTH = passwordMinLength();
 
 if (!password || password.length < MIN_LENGTH) {
   throw new Error(
@@ -61,14 +61,7 @@ if (existing) {
   throw new Error(`An admin with email ${email} already exists.`);
 }
 
-// OWASP-recommended argon2id parameters: 19 MiB, 2 iterations, 1 lane.
-const passwordHash = await argon2Hash(password, {
-  memoryCost: 19456,
-  timeCost: 2,
-  parallelism: 1,
-});
-
-const enrolment = createTotpEnrolment(email);
+const passwordHash = await hashPassword(password);
 
 const [created] = await db
   .insert(adminUsers)
@@ -76,19 +69,35 @@ const [created] = await db
     email,
     name,
     passwordHash,
-    totpSecret: enrolment.encryptedSecret,
-    totpEnabled: true,
-    isActive: true,
+    totpSecret: null,
+    totpEnabled: false,
+    isActive: false,
     role: 'founder',
   })
   .returning({ id: adminUsers.id });
 
-console.log(`\nAdmin created: ${email} (id ${created!.id})\n`);
-console.log('Add this to your authenticator app now — it is shown once:\n');
-console.log(`  ${enrolment.otpauthUri}\n`);
+const subject = {
+  id: created!.id,
+  email,
+  isActive: false,
+  totpEnabled: false,
+};
+
+const { token, expiresAt } = mintEnrolmentToken(subject);
+
+const base =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ??
+  'http://localhost:3000';
+
+console.log(`\nAdmin created: ${email} (id ${created!.id})`);
+console.log('Status: inactive — cannot sign in until enrolment completes.\n');
+console.log('Send them this link. It expires', expiresAt.toISOString(), '\n');
+console.log(`  ${base}/enrol?token=${token}\n`);
 console.log(
-  'Turn it into a QR code if your app cannot take a URI directly.\n' +
-    'The secret is stored encrypted; it cannot be recovered from the database.\n',
+  'The link stops working the moment it is used. If it expires first,\n' +
+    're-issue one with:  pnpm admin:enrol -- --email ' +
+    email +
+    '\n',
 );
 
 await closeDb();

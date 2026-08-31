@@ -14,13 +14,13 @@
 import 'server-only';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { verify as verifyArgon2 } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { adminUsers, db } from '@softmato/db';
 
 import { recordAudit } from './audit';
+import { verifyPassword } from './password.core';
 import { verifyTotp } from './totp';
 
 const credentialsSchema = z.object({
@@ -60,10 +60,10 @@ export const authConfig = {
           .limit(1);
 
         // Constant work whether or not the account exists.
-        const passwordOk = await verifyArgon2(
+        const passwordOk = await verifyPassword(
           user?.passwordHash ?? DUMMY_HASH,
           password,
-        ).catch(() => false);
+        );
 
         if (!user || !user.isActive || !passwordOk) {
           await recordAudit({

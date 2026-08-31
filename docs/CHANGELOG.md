@@ -14,6 +14,60 @@ this file tracks what was delivered.
 
 ### Added
 
+- **TOTP enrolment as a flow rather than a line of CLI output** — a new admin
+  now scans a QR in the browser instead of copying an `otpauth://` URI out of a
+  terminal. `pnpm admin:create` writes the row **inactive with no secret**,
+  which is the one shape `admin_users` allows an un-enrolled admin to take
+  (`NOT is_active OR totp_enabled`), and prints a one-time `/enrol` link. The
+  page shows the QR and setup key, takes one code to prove the scan landed, and
+  activates the account.
+- **`/admin/security`** — password change and authenticator replacement for the
+  signed-in admin. Both re-authenticate with the current password *and* a
+  current code: a session cookie alone must not be enough to change the
+  credentials it was issued against. Rotating the authenticator only commits
+  the new secret after a code from the **new** device verifies, so the old one
+  keeps working until the swap is proven and closing the page changes nothing.
+  There was previously no way to change a password short of a direct database
+  update.
+- **`lib/password.core.ts`** — argon2id parameters and the length rule in one
+  place, shared by `auth.ts`, `/admin/security` and `pnpm admin:create`. The
+  parameters were previously duplicated between the CLI and the app, which is
+  how an account created by the script ends up unverifiable by the application.
+- **`pnpm admin:totp`** re-displays or rotates an enrolment from the CLI, and
+  **`pnpm admin:enrol`** re-issues an expired link (`--reset` forces a fresh
+  enrolment for someone already active). Between them there is now a recovery
+  path for a lost phone; previously the URI was printed once and, if lost, the
+  account was unrecoverable through any supported route.
+- `qrcode` (server-rendered to inline SVG). Added under the RULES.md §4
+  ask-first rule. The QR is inlined rather than given an `img src` because the
+  URI it encodes contains the shared secret, and a secret in a URL reaches the
+  access log, the history and the referrer.
+
+### Changed
+
+- `/enrol` joins `/login` in the set of paths `proxy.ts` never rewrites. Under
+  the admin surface it would have become `/admin/enrol`, hit the layout's
+  session guard, and bounce a new admin to a login they cannot yet pass — the
+  same trap `/login` was already excluded for.
+- The sign-in page said sessions last 12 hours; `authConfig.maxAge` is 8. The
+  copy now matches the code.
+- Sign-in renders a confirmation when arriving from a completed enrolment.
+  Without it the redirect landed on a blank form that read as the enrolment
+  having been thrown away.
+
+### Security
+
+- **Changing a password does not sign other devices out.** Sessions are JWTs
+  with no server-side revocation, so one issued before the change stays valid
+  until it expires (8 hours). Fixing it needs a token version on `admin_users`
+  and a check in the jwt callback — a migration, so it is noted rather than
+  done. Rotating TOTP *does* take effect immediately, which is the lever to
+  pull if a session is believed compromised.
+- An enrolment token is bound to the admin's `isActive` and `totpEnabled`, so
+  completing enrolment invalidates the link that authorised it — single-use
+  with no token table to leak or fail to clean up. `verifyEnrolmentToken` also
+  refuses any already-enrolled subject outright, so a token minted against an
+  active admin cannot be used to replace their second factor.
 - **A search-engine layer across every public page** (`apps/web/lib/seo/`).
   Canonical URLs on all twelve public routes, a `metadataBase` so relative
   images resolve at all, a `%s · Softmato` title template, `summary_large_image`

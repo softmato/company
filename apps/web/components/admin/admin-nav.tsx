@@ -54,6 +54,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: 'Content', href: '/admin/cms' },
       { label: 'Clients', phase: 8 },
       { label: 'Audit log', href: '/admin/audit' },
+      { label: 'Security', href: '/admin/security' },
       { label: 'Settings', href: '/admin/settings' },
     ],
   },

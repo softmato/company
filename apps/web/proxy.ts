@@ -53,11 +53,19 @@ export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const surface = surfaceFor(request.headers.get('host') ?? '');
 
-  // Auth endpoints and the sign-in page are shared across surfaces and must not
-  // be rewritten. Without /login here, the admin layout's redirect('/login')
-  // lands on admin.softmato.com/login, gets rewritten to /admin/login, and
-  // 404s — leaving no way to sign in from the admin subdomain at all.
-  if (pathname.startsWith('/api/auth') || pathname === '/login') {
+  // Auth endpoints, the sign-in page and TOTP enrolment are shared across
+  // surfaces and must not be rewritten. Without /login here, the admin layout's
+  // redirect('/login') lands on admin.softmato.com/login, gets rewritten to
+  // /admin/login, and 404s — leaving no way to sign in from the admin subdomain
+  // at all. /enrol is the same trap: the link is opened on whichever host the
+  // recipient was sent, and under the admin surface it would become
+  // /admin/enrol, hit the layout's session guard, and bounce a new admin to a
+  // login they cannot yet pass.
+  if (
+    pathname.startsWith('/api/auth') ||
+    pathname === '/login' ||
+    pathname === '/enrol'
+  ) {
     return NextResponse.next();
   }
 

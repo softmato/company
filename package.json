@@ -16,6 +16,8 @@
     "db:migrate": "pnpm --filter @softmato/db migrate",
     "db:seed": "pnpm --filter @softmato/db seed",
     "admin:create": "tsx --env-file-if-exists=.env.local ./scripts/create-admin.mts",
+    "admin:totp": "tsx --env-file-if-exists=.env.local ./scripts/admin-totp.mts",
+    "admin:enrol": "tsx --env-file-if-exists=.env.local ./scripts/admin-enrol.mts",
     "cms:publish-all": "tsx --env-file-if-exists=.env.local ./scripts/publish-all.mts",
     "cms:sync-copy": "tsx --env-file-if-exists=.env.local ./scripts/sync-cms-copy.mts",
     "brand:build": "tsx ./scripts/build-brand-assets.mts",

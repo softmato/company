@@ -15,8 +15,9 @@ import { Wordmark } from '@/components/public/wordmark';
 export default async function LoginPage({
   searchParams,
 }: PageProps<'/login'>) {
-  const { error } = await searchParams;
+  const { error, enrolled } = await searchParams;
   const failed = error === '1';
+  const justEnrolled = enrolled === '1';
 
   async function authenticate(formData: FormData): Promise<void> {
     'use server';
@@ -46,8 +47,22 @@ export default async function LoginPage({
       <Card className="mt-5 px-6 py-6">
         <h1 className="headline text-[22px]">Sign in</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          Staff accounts only. Sessions last 12 hours.
+          Staff accounts only. Sessions last 8 hours.
         </p>
+
+        {/*
+          Arriving from a completed enrolment. Without this the redirect lands
+          on a blank form that looks like the enrolment was thrown away — the
+          same failure the `?error=1` banner below exists to prevent.
+        */}
+        {justEnrolled ? (
+          <p
+            role="status"
+            className="mt-4 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-[13px] text-primary"
+          >
+            Authenticator set up. Sign in with your password and a code from it.
+          </p>
+        ) : null}
 
         {/*
           The error is rendered, not just redirected to. The signIn catch
@@ -121,8 +136,14 @@ export default async function LoginPage({
         </form>
       </Card>
 
+      {/*
+        Deliberately not a link. Every recovery route needs either a working
+        second factor or shell access to the database, so there is nothing here
+        a locked-out person could usefully click.
+      */}
       <p className="mt-4 text-center text-[13px] text-muted-foreground">
-        Locked out? Ask the other admin to reset you.
+        Lost your authenticator? Another admin can re-issue you an enrolment
+        link.
       </p>
     </main>
   );

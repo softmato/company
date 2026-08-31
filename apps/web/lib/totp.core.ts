@@ -30,13 +30,22 @@ export interface TotpEnrolment {
   otpauthUri: string;
 }
 
+/**
+ * The enrolment URI for a secret an authenticator app already has, or is about
+ * to be given. Kept here rather than rebuilt by callers: an issuer, algorithm
+ * or period that disagrees with `verifyTotp` produces codes we reject, and the
+ * failure looks like a wrong password.
+ */
+export function enrolmentUri(secretBase32: string, label: string): string {
+  return totpFor(secretBase32, label).toString();
+}
+
 export function createTotpEnrolment(email: string): TotpEnrolment {
   const secret = new Secret({ size: 20 }); // 160 bits, per RFC 4226
-  const totp = totpFor(secret.base32, email);
 
   return {
     encryptedSecret: encryptSecret(secret.base32),
-    otpauthUri: totp.toString(),
+    otpauthUri: enrolmentUri(secret.base32, email),
   };
 }
 
