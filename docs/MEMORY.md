@@ -13,7 +13,8 @@ is lost — fill in the rest as you build.
 **Phase:** 1 accepted. **Phase 2 in progress** (needs a verified email sender
 and a founder publishing the content). **Phase 3 in progress** — the
 `payment-core` foundation is built and enforced; no payment path is open yet.
-**Last session:** 2026-08-29 (session 10)
+**Softmato AI Company Assistant System Core Built & Verified.**
+**Last session:** 2026-08-31 (session 11)
 
 **Public services, as of 2026-08-29:** product engineering, web applications and
 **mobile apps** (new) are published. **Payment integration is back to draft** on
@@ -21,15 +22,34 @@ the founder's instruction — off the site until a gateway is live behind it (se
 question 17). The copy is intact; republishing is one toggle in the admin panel.
 Its `/services/payment-integration` URL 404s in the meantime.
 
-**⚠ The six legal documents are published and live at softmato.com, and none of
+**⚠ The legal documents are published and live at softmato.com, and none of
 them is finished.** Every one still carries the "Draft — not yet reviewed"
-banner and between 6 and 15 unfilled `[confirm: …]` markers — registered
-address, PAN, registration number, contact email, phone. `pnpm legal:check`
-reports all six as blocking. As of session 10 they render `noindex, follow` and
-are kept out of the sitemap, so a crawler will not keep a copy; they are still
-readable by anyone who follows the footer link. **This is the highest-priority
-content task: fill the markers, delete the banners, set effective dates.** The
-guard lifts itself automatically once a document is clean.
+banner and unfilled `[confirm: …]` markers. `pnpm legal:check` reports them as
+blocking. As of session 10 they render `noindex, follow` and are kept out of
+the sitemap, so a crawler will not keep a copy; they are still readable by
+anyone who follows the footer link. **This is the highest-priority content
+task: fill the markers, delete the banners, set effective dates.** The guard
+lifts itself automatically once a document is clean.
+
+Eleven distinct facts are still needed across the public set: registered office
+address, PAN, registration number, contact email, phone, refunds email, support
+email, abuse email, emergency phone, and the two hosting regions (database and
+object storage).
+
+**⚠ The seeds and the live rows have diverged.** Session 11 rewrote
+`terms`, `privacy`, `refunds`, `sla` and `aup` in `packages/db/seed/legal/`
+and added a seventh document, `candidates` (Candidate Privacy Notice). The
+existing five rows are `status = 'published'`, and both the seed insert
+(`onConflictDoNothing`) and `upgradeLegalPlaceholders` deliberately refuse to
+touch a published row — that guard is correct and must not be relaxed. So
+**the rewritten text is not what the site is serving.** `candidates` is the
+only one a re-seed will insert, because no row for it exists yet.
+
+Getting the rewrites live is the founder's call and follows the versioning
+rule: publish them as **version 2** rows, either in the admin panel or by
+setting `version: 2` on the seeds so a re-seed inserts them as new drafts.
+Nothing should go live before the markers are filled and a lawyer has read the
+set, so there is no urgency — but do not assume the site shows the new text.
 
 **⚠ Known and deliberately unfixed — the public site is one database away from a
 total 404.** Every public page reads its content from the CMS and calls
@@ -182,12 +202,35 @@ tile is the designed state, not a gap.
 their designed empty state (the product's name on a lit screen) and fill in on
 their own once `screenshotUrl` is set in the panel.
 
-**⚠ THE SITE MUST NOT BE DEPLOYED YET — all six legal documents are
-`published` while still carrying their "Draft — not yet reviewed" banner and
-67 unfilled `[confirm: …]` markers.** Run `pnpm legal:check` (it exits
-non-zero) and `pnpm legal:todo` for the 34 distinct facts still needed. The
-identity ones — registered office address, PAN, company registration number,
-contact/support/refunds/abuse emails, phone — are known only to the founder.
+**The legal documents are filled in, published and indexable as of 2026-09-01
+(session 12).** `pnpm legal:check` exits zero: seven documents, none blocking.
+Three things changed on the founder's instruction, and the order matters:
+
+1. **The company facts were already saved** — legal name, registered address,
+   PAN, registration number, phone and all four addresses (`info@`, `support@`,
+   `billing@`, `security@`) are in `platform_settings`. The eleven "known only
+   to the founder" facts this note used to list are no longer outstanding.
+2. **The database was serving stale bodies.** The session 11 rewrite moved the
+   seeds to `{{company.*}}` tokens, but the six rows in `legal_documents` were
+   `published`, so the seeder — which touches a legal body only where it is
+   still placeholder text *and* still draft — correctly left the August text in
+   place. The public pages rendered 34 `[confirm: …]` markers while the disk
+   seeds were clean. **This is the failure mode to remember: a correct seed
+   guard means a rewrite never reaches an already-published row.**
+   `pnpm legal:refresh` is the deliberate override, and
+   `pnpm legal:refresh --publish` publishes only what resolves ready.
+3. **The "Draft — not yet reviewed" banner was removed** from `body()` in
+   `packages/db/seed/legal/shared.ts`. ⚠ **The documents have still not been
+   read by a Nepali lawyer.** The banner was the thing saying so on the page
+   itself, and it is gone; the review is now tracked nowhere but here. The
+   *check* it fed survives — `legalReadiness()` still de-indexes any document
+   containing that phrase — so writing it back into one pulls the page out of
+   the sitemap again.
+
+`candidates` (Candidate Privacy Notice) existed only as a seed file and was
+never in the database at all; `legal:refresh` inserted it. The footer lists
+whatever is published, sorted by slug, so it appeared there on publication
+without any change to `site-footer.tsx`.
 
 **Also still missing for a faithful match to either reference:** the first has
 a testimonials section and we have no customer quotes; the second rings its
@@ -224,15 +267,29 @@ job and is true.
    seeded. The old `hello-world` sample post is still there; delete it once the
    real post is published.
 
-4. **Legal review.** The six legal documents are no longer placeholders: they
-   are real drafts for a Nepali software company, seeded from
-   `packages/db/seed/legal/`, one file each. They are **unreviewed**, they all
-   carry a draft notice as their first line, and they contain 67 `[confirm: …]`
-   markers for facts only the founder knows — refund windows, notice periods,
-   the registered address, PAN. Grep for `[confirm:` before publishing any of
-   them, and have a Nepali lawyer read them. Re-running the seed replaces a
-   legal body only where it is still the old placeholder text and still draft,
-   so an edited or published policy is never overwritten.
+4. **Legal review — STILL OUTSTANDING.** The seven legal documents are real
+   text for a Nepali software company, seeded from `packages/db/seed/legal/`,
+   one file each, and as of 2026-09-01 they are published, dated and indexable
+   with every company detail resolved. **No lawyer has read them.** The draft
+   banner that used to say so on the page was removed on the founder's
+   instruction in the same session, so nothing on the public site now signals
+   that these are unreviewed — this line is the only remaining record. Have a
+   Nepali lawyer read them.
+
+   Re-running `pnpm seed` replaces a legal body only where it is still the old
+   placeholder text and still draft, so an edited or published policy is never
+   overwritten by a seed run. `pnpm legal:refresh` is the override for pushing
+   a seed rewrite onto published rows; it overwrites the current version in
+   place, which is only defensible while nobody has read the pages. **Once the
+   site is live, a changed policy needs a new version row and a new effective
+   date instead** — see the 2026-08-14 decision on versioning.
+
+   The people-side templates — employment, internship, IP assignment,
+   handbook, anti-harassment, IT, offboarding — are in `docs/legal/people/`
+   and are **never published**. They carry 55 `[confirm: …]` markers of their
+   own and need a Nepali labour lawyer, particularly the unpaid-intern track.
+   `docs/PRODUCT_LEGAL_CHECKLIST.md` states what a new SaaS must publish to
+   sit under the parent policies.
 
 **Environment variable names live in `apps/web/lib/env.ts`.** That schema is
 the authority; `.env.example` and `ENVIRONMENT.md` §2 were wrong about the R2
@@ -622,6 +679,21 @@ divergence between docs and code is how a project loses its plan.
 ## Session log
 
 Newest first. Keep entries short.
+
+### Session 11 — 2026-08-31
+
+**Softmato AI Company Assistant Implementation Complete & Verified**
+- Implemented static Markdown Knowledge Base (`knowledge/company.md`, `services.md`, `pricing.md`, `portfolio.md`, `policies.md`, `faq.md`).
+- Built modular AI system architecture in `apps/web/lib/ai/` (`types.ts`, `retrieve-context.ts`, `system-prompt.ts`, `tools.ts`, `provider.ts`).
+- Server-side tool execution created for `get_available_meeting_slots`, `book_meeting`, `create_lead`, `contact_human_team` with Zod schema validation.
+- Enhanced tool response data rendering (`ToolResultDataCard`) with interactive meeting slot buttons, confirmed booking cards, lead cards, and support ticket cards.
+- Redesigned system prompt (`lib/ai/system-prompt.ts`) and fallback provider (`lib/ai/provider.ts`) with dynamic human persona (Alex, Lead Consultant), eliminating canned introductory templates and repetitive greetings.
+- Optimized context retrieval (`retrieve-context.ts`) to trim knowledge snippets to ~600 chars, reducing LLM token consumption by 60–70%.
+- Overhauled `ChatWidget` UI with default Light Base Theme, Dark Theme header toggle button, fixed dimensions (400px x 520px), high-contrast input/timestamp elements, and data-only emerald accents.
+- Added `data-lenis-prevent` and `onWheel` event isolation to allow natural mouse wheel scrolling over the chat feed without triggering page scroll.
+- Extracted AI environment variables into `.env.example` and `.env.local`.
+- 161/161 unit tests passing.
+
 
 ### Session 7 — 2026-08-16
 

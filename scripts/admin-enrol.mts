@@ -20,6 +20,7 @@
 import { eq } from 'drizzle-orm';
 
 import { adminUsers, closeDb, db } from '@softmato/db';
+import { enrolmentUrl } from '../apps/web/lib/enrolment/link';
 import { mintEnrolmentToken } from '../apps/web/lib/enrolment/token';
 
 function arg(name: string): string | undefined {
@@ -83,11 +84,7 @@ if (reset && (user.isActive || user.totpEnabled)) {
 
 const { token, expiresAt } = mintEnrolmentToken(subject);
 
-const base =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ??
-  'http://localhost:3000';
-
 console.log(`Enrolment link for ${email} — expires ${expiresAt.toISOString()}\n`);
-console.log(`  ${base}/enrol?token=${token}\n`);
+console.log(`  ${enrolmentUrl(token)}\n`);
 
 await closeDb();

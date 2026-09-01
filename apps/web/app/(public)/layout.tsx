@@ -1,6 +1,7 @@
 import { SmoothScroll } from '@/components/motion/smooth-scroll';
 import { SiteFooter } from '@/components/public/site-footer';
 import { SiteHeader } from '@/components/public/site-header';
+import { ChatWidget } from '@/components/public/chat-widget';
 
 /**
  * The public shell.
@@ -21,11 +22,12 @@ import { SiteHeader } from '@/components/public/site-header';
  */
 export default function PublicLayout({ children }: LayoutProps<'/'>) {
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-background text-foreground">
+    <div className="flex min-h-dvh flex-1 flex-col bg-background text-foreground">
       <SmoothScroll />
       <SiteHeader />
       <main className="w-full flex-1">{children}</main>
       <SiteFooter />
+      <ChatWidget />
     </div>
   );
 }

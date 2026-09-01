@@ -9,8 +9,6 @@ import { SubmitButton } from '@/components/admin/submit-button';
 
 interface RotateTotpFormProps {
   children: React.ReactNode;
-  /** Sealed candidate secret, minted server-side for this render. */
-  pending: string;
 }
 
 /**
@@ -20,14 +18,16 @@ interface RotateTotpFormProps {
  * into two steps would need somewhere to keep "this person already proved the
  * old factor", and a half-completed rotation is exactly the state that leaves
  * an admin with neither device working.
+ *
+ * The candidate secret is not carried in a hidden field. The action derives it
+ * from the secret being replaced, so a failed attempt re-rendering this form
+ * cannot swap out the QR the person is holding a phone up to.
  */
-export function RotateTotpForm({ children, pending }: RotateTotpFormProps) {
+export function RotateTotpForm({ children }: RotateTotpFormProps) {
   const [state, action] = useActionState(rotateTotp, undefined);
 
   return (
     <form action={action} className="mt-6 grid max-w-md gap-4">
-      <input type="hidden" name="pending" value={pending} />
-
       {state?.message ? (
         <p
           role="alert"

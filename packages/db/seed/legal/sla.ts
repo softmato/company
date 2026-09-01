@@ -4,9 +4,14 @@ export const sla: LegalDocumentSeed = {
   slug: 'sla',
   title: 'Service Level Agreement',
   body: body(
-    `This agreement applies to paid hosted products. Free plans, trials, beta
-features, and project work in development are excluded — for those we do our
-best, but we promise nothing measurable.`,
+    `This agreement applies to **paid hosted products we run ourselves**. Free
+plans, trials, beta features, and project work in development are excluded —
+for those we do our best, but we promise nothing measurable.
+
+A site or application we built for you and handed over is **not** covered here.
+Once it runs on your own hosting it is yours to keep running. Where we continue
+to host or maintain it for you, the commitments are the ones written into that
+maintenance agreement, not these.`,
 
     `## 1. Availability
 
@@ -20,7 +25,8 @@ have set the number where we can keep it rather than where it sounds best.
 The following do not count against availability:
 
 - **Scheduled maintenance**, announced in advance (section 3).
-- Failure of a payment provider, bank, or other upstream service we do not run.
+- Failure of an upstream service we do not run — a payment provider, a bank, a
+  hosting platform, or a third-party service the product depends on.
 - Failure of your own network, device, or internet connection.
 - Suspension for non-payment or for breach of the Acceptable Use Policy.
 - Events outside our reasonable control — power failure, telecom outage, bandh,
@@ -28,13 +34,14 @@ The following do not count against availability:
 
     `## 2. Support
 
-**Critical issues are answered around the clock, every day of the year.** Money
-stops moving at inconvenient hours, and a payment platform that answers only in
-office hours is not one you can build a business on.
+**Critical issues are answered around the clock, every day of the year.** A
+hosted product does not stop running outside office hours and the businesses
+depending on it do not stop trading, so our response to a critical failure does
+not wait for the morning either.
 
 | Severity | What it means | We respond within |
 | --- | --- | --- |
-| **P1 — Critical** | Service down, or payments cannot be completed | 1 hour, any day, any hour |
+| **P1 — Critical** | Service down, data at risk, or no user can complete a core task | 1 hour, any day, any hour |
 | **P2 — High** | A major feature is unusable, no workaround | 4 hours, any day |
 | **P3 — Normal** | A feature is impaired, or there is a workaround | 1 business day |
 | **P4 — Low** | Question, cosmetic issue, feature request | 3 business days |
@@ -46,8 +53,8 @@ These are **response** targets, not resolution targets: the first is a promise
 we can keep, the second depends on what broke. For a P1 we will keep you
 informed at least every **2 hours** until it is resolved.
 
-Report an issue to **[confirm: support email]**. A P1 outside office hours may
-also be raised at **[confirm: emergency phone number]**.`,
+Report an issue to **{{company.support_email}}**.
+A P1 outside office hours may also be raised at **{{company.emergency_phone?}}**.`,
 
     `## 3. Maintenance
 

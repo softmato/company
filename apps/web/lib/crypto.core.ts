@@ -12,6 +12,7 @@
 import {
   createCipheriv,
   createDecipheriv,
+  createHmac,
   randomBytes,
   timingSafeEqual,
 } from 'node:crypto';
@@ -30,6 +31,23 @@ function key(): Buffer {
   }
 
   return Buffer.from(raw, 'hex');
+}
+
+/**
+ * A deterministic 32 bytes derived from `ENCRYPTION_KEY` and `info`.
+ *
+ * For secondary secrets that must come out the same every time they are
+ * computed rather than being stored between computations. `info` is the domain
+ * separator: two callers with different labels can never derive the same
+ * bytes, so one use of this cannot be replayed against another.
+ *
+ * Keyed on `ENCRYPTION_KEY` and not `AUTH_SECRET` on purpose. Anything derived
+ * here is of the same kind as the secrets this module encrypts, so it must sit
+ * behind the same key — deriving a second factor from the session secret would
+ * mean one leak costs both.
+ */
+export function deriveFromKey(info: string): Buffer {
+  return createHmac('sha256', key()).update(info).digest();
 }
 
 /**

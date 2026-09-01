@@ -77,6 +77,11 @@ export {
   resetProviderRegistry,
 } from './providers/registry';
 
+export { KhaltiProviderAdapter, type KhaltiConfig } from './providers/khalti';
+export { EsewaProviderAdapter, type EsewaConfig } from './providers/esewa';
+export { FonepayProviderAdapter, type FonepayConfig } from './providers/fonepay';
+export { MockProviderAdapter } from './providers/mock';
+
 
 export {
   assertTransition as assertTxnTransition,

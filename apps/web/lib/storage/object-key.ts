@@ -47,3 +47,30 @@ export function cmsImageKey(
 ): string {
   return `${CMS_IMAGE_PREFIX}/${uuid}-${slugify(name)}.${extension}`;
 }
+
+const CMS_IMAGE_KEY = new RegExp(
+  `^${CMS_IMAGE_PREFIX}/` +
+    /* uuid */ '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' +
+    /* slug */ '-[a-z0-9-]{1,60}' +
+    /* ext  */ '\\.([a-z0-9]{2,4})$',
+);
+
+/**
+ * Recognises a key this module produced, and hands back its extension.
+ *
+ * The confirm half of a presigned upload is told which key to go and look at,
+ * and that key arrives from the browser. Reading, and especially *deleting*,
+ * whatever an argument names is not something to do on trust — so a key is
+ * only acted on if it has the exact shape `cmsImageKey` emits. Anything
+ * else — another prefix, a traversal, a bare object name — returns null and
+ * the caller refuses.
+ *
+ * The extension comes back because it is the server's own record of the type
+ * it agreed to sign, which the confirm step checks the real bytes against.
+ */
+export function parseCmsImageKey(key: string): { extension: string } | null {
+  const match = CMS_IMAGE_KEY.exec(key);
+  if (!match) return null;
+
+  return { extension: match[1]! };
+}

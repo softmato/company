@@ -3,8 +3,9 @@
 import { redirect } from 'next/navigation';
 
 import { recordAudit } from '@/lib/audit';
-import { openPendingSecret } from '@/lib/enrolment/pending';
+import { encryptSecret } from '@/lib/crypto';
 import { activateWithSecret, findEnrolmentSubject } from '@/lib/enrolment/queries';
+import { enrolmentSecret } from '@/lib/enrolment/secret';
 import { claimedAdminId, verifyEnrolmentToken } from '@/lib/enrolment/token';
 import { verifyTotp } from '@/lib/totp';
 
@@ -17,10 +18,14 @@ import { verifyTotp } from '@/lib/totp';
  * The token is verified against the row's *current* state, so an enrolment that
  * already succeeded cannot be replayed — activating flips the two flags the
  * signature covers. See `lib/enrolment/token.ts`.
+ *
+ * The secret is re-derived from the token rather than carried back from the
+ * page, so the code being checked is the one behind the QR that was actually
+ * scanned however long ago and however many reloads later. See
+ * `lib/enrolment/secret.ts`.
  */
 export async function confirmEnrolment(form: FormData): Promise<void> {
   const token = String(form.get('token') ?? '');
-  const sealed = String(form.get('pending') ?? '');
   const code = String(form.get('code') ?? '');
 
   const back = `/enrol?token=${encodeURIComponent(token)}&error=1`;
@@ -33,8 +38,7 @@ export async function confirmEnrolment(form: FormData): Promise<void> {
     redirect('/enrol?error=1');
   }
 
-  const encryptedSecret = openPendingSecret(id, sealed);
-  if (!encryptedSecret) redirect(back);
+  const encryptedSecret = encryptSecret(enrolmentSecret(token));
 
   if (!verifyTotp(encryptedSecret, code)) {
     await recordAudit({

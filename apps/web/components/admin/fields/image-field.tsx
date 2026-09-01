@@ -1,22 +1,22 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 
-import { uploadCmsImage } from '@/app/(admin)/admin/cms/actions/upload';
+import { ImageUploader } from '@/components/admin/uploads';
 
 import { describedBy, FieldShell, inputClass } from './field-shell';
 import type { FieldProps } from './types';
 
 /**
- * An image URL, with an upload alongside it when R2 is configured.
+ * An image URL, with the global uploader alongside it when R2 is configured.
  *
- * The URL input is always present and always authoritative — the upload just
+ * The URL input is always present and always authoritative — the uploader just
  * fills it in. That keeps the field usable before storage exists, and lets an
  * image hosted elsewhere be pasted in without a second code path.
  *
- * The upload is a nested form's action rather than the parent form's, because
- * a file input inside the content form would post the whole editor on every
- * image change.
+ * Everything about *how* a file reaches storage lives in the uploader
+ * (`components/admin/uploads`), so this stays a field: a labelled text input
+ * that happens to have a drop zone under it.
  */
 export function ImageField({
   spec,
@@ -25,21 +25,12 @@ export function ImageField({
   uploadEnabled = false,
 }: FieldProps & { uploadEnabled?: boolean | undefined }) {
   const [url, setUrl] = useState(defaultValue);
-  const [state, action, pending] = useActionState(uploadCmsImage, undefined);
+  /* What the uploader last put here, so its thumbnail is not drawn twice. */
+  const [uploadedUrl, setUploadedUrl] = useState('');
 
-  /*
-   * A finished upload fills the URL input; the founder still has to Save.
-   *
-   * Adjusted during render rather than in an effect. The value has to remain
-   * editable afterwards, so it cannot simply be derived — and an effect would
-   * render once with the stale URL before correcting itself.
-   * https://react.dev/learn/you-might-not-need-an-effect
-   */
-  const [lastHandled, setLastHandled] = useState(state);
-
-  if (state !== lastHandled) {
-    setLastHandled(state);
-    if (state?.ok && state.url) setUrl(state.url);
+  function takeUploadedUrl(next: string) {
+    setUploadedUrl(next);
+    setUrl(next);
   }
 
   return (
@@ -62,39 +53,19 @@ export function ImageField({
       />
 
       {uploadEnabled ? (
-        <div className="mt-2 flex flex-wrap items-center gap-3">
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            aria-label={`Upload ${spec.label.toLowerCase()}`}
-            className="text-xs"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-
-              const data = new FormData();
-              data.set('file', file);
-              data.set('slug', file.name);
-              action(data);
-            }}
-          />
-
-          {pending ? (
-            <span className="text-xs text-muted-foreground">Uploading…</span>
-          ) : null}
-
-          {state?.message ? (
-            <span
-              role="status"
-              className={`text-xs ${state.ok ? 'text-muted-foreground' : 'text-destructive'}`}
-            >
-              {state.message}
-            </span>
-          ) : null}
-        </div>
+        <ImageUploader
+          label={`Upload ${spec.label.toLowerCase()}`}
+          onChange={takeUploadedUrl}
+        />
       ) : null}
 
-      {url ? (
+      {/*
+        Only for a URL the uploader is not already showing. Pasting a link is
+        the other half of this field and deserves the same look-see before
+        saving, but the uploader draws its own thumbnail for what it sent, and
+        two previews of one image reads as a bug.
+      */}
+      {url && url !== uploadedUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={url}

@@ -208,10 +208,59 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     key: 'company.pan',
     group: 'Company',
     label: 'PAN',
-    help: 'Permanent Account Number. Required on every tax invoice.',
+    help: 'Permanent Account Number. Required on every tax invoice, so keep it filled — it is deliberately not printed on the public policies.',
     kind: 'text',
     default: '',
   },
+  {
+    key: 'company.legal_name',
+    group: 'Company',
+    label: 'Registered legal name',
+    help: 'The exact name on the certificate of incorporation, including the "Pvt Ltd". Every policy opens by naming it — a contract that does not identify the entity behind it is a weaker contract.',
+    kind: 'text',
+    default: 'Softmato Technology Pvt Ltd',
+  },
+  {
+    key: 'company.registration_number',
+    group: 'Company',
+    label: 'Company registration number',
+    help: 'As issued by the Office of the Company Registrar. Held for invoices and correspondence — deliberately not printed on the public policies, which show name, address and email only.',
+    kind: 'text',
+    default: '',
+  },
+  {
+    key: 'company.contact_email',
+    group: 'Company',
+    label: 'General contact email',
+    help: 'The address at the foot of every policy, for anything that is not support, refunds, or abuse.',
+    kind: 'email',
+    default: '',
+  },
+  {
+    key: 'company.emergency_phone',
+    group: 'Company',
+    label: 'Emergency phone',
+    help: 'Reachable out of hours for a P1 outage. Printed in the SLA. Only set this if someone will actually answer it — an unanswered number is worse than none.',
+    kind: 'phone',
+    default: '',
+  },
+
+  /*
+   * There are deliberately no `company.data_region_*` settings.
+   *
+   * The Privacy Policy's processor table says "Outside Nepal" for every system
+   * that is not payment processing, which is true of all of them and stays true
+   * when a provider moves data between locations — as R2 does under an
+   * automatic location hint. A per-region setting would be a field a founder
+   * has to keep in step with a provider console, printed into a policy that
+   * asserts it, and wrong the day the provider rebalances.
+   *
+   * Naming exact regions is not a statutory duty either: no clause of the
+   * Individual Privacy Act, 2075 is known to oblige a Nepali company to name
+   * the country its data sits in, the way GDPR Article 13 obliges a European
+   * one. Where a customer needs specifics, the policy tells them to ask, and
+   * the answer is given for the day it is asked.
+   */
 
   /*
    * Social profiles, for `sameAs` in the site's structured data.

@@ -110,14 +110,32 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false, date: false, address: false },
 };
 
+/**
+ * **`<html>` carries no height, and must not.**
+ *
+ * It used to be `h-full`, which pins the document element's box to the
+ * viewport for ever. Lenis keeps its scroll limit fresh with a
+ * `ResizeObserver` on that element, and a `ResizeObserver` reports the *box*,
+ * not `scrollHeight` — so with a fixed height it never fires, no matter how
+ * much taller the page gets. Anything that grew the document after Lenis
+ * measured it (a late webfont, an image settling, a reveal adding height) left
+ * Lenis clamping the wheel to a stale limit: the page dead-stopped partway
+ * down while the scrollbar still reached the end, and a reload "fixed" it.
+ *
+ * `min-h-dvh` on `<body>` gives the same full-viewport floor a short page
+ * needs, without making any ancestor's height definite, so the document is
+ * free to grow and the observer fires. `lenis/dist/lenis.css` (imported from
+ * `globals.css`) enforces the same thing via `html.lenis { height: auto }` as
+ * a backstop.
+ */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
       lang="en"
       suppressHydrationWarning
-      className={`h-full antialiased ${inter.variable} ${outfit.variable} ${plexMono.variable}`}
+      className={`antialiased ${inter.variable} ${outfit.variable} ${plexMono.variable}`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-dvh flex-col">{children}</body>
     </html>
   );
 }

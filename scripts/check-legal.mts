@@ -6,10 +6,29 @@
  * `[confirm: …]` markers. That is fine on localhost and is a live legal
  * document that lies about itself in production, so this is the check that
  * runs before a deploy.
+ *
+ * Company details are `{{settings.key}}` tokens resolved at render time, so the
+ * check runs against the **resolved** text rather than the stored body. A
+ * document whose every marker has been replaced by a token would otherwise
+ * look clean here while rendering `[confirm: Registered address]` to a reader,
+ * which is the exact failure this script exists to catch.
  */
-import { closeDb, db, legalDocuments } from '@softmato/db';
+import {
+  closeDb,
+  db,
+  legalDocuments,
+  platformSettings,
+} from '@softmato/db';
 
 import { legalReadiness } from '../apps/web/lib/cms/legal-readiness';
+import { resolveTokens } from '../apps/web/lib/cms/tokens';
+import { resolve } from '../apps/web/lib/settings/registry';
+
+const stored = await db
+  .select({ key: platformSettings.key, value: platformSettings.value })
+  .from(platformSettings);
+
+const settings = resolve(new Map(stored.map((row) => [row.key, row.value])));
 
 const rows = await db.select().from(legalDocuments);
 
@@ -21,15 +40,18 @@ for (const r of rows) {
    * a policy — see apps/web/lib/cms/legal-readiness.ts. Shared rather than
    * repeated, so this check and the site cannot drift apart.
    */
-  const { unconfirmed: confirms, draftBanner: banner } = legalReadiness(r.body);
-  const bad = r.status === 'published' && !legalReadiness(r.body).ready;
+  const { ready, unconfirmed: confirms, draftBanner: banner } = legalReadiness(
+    resolveTokens(r.body, settings),
+  );
+
+  const bad = r.status === 'published' && !ready;
 
   if (bad) blocking += 1;
 
   console.log(
     [
       bad ? 'BLOCK' : '  ok ',
-      r.slug.padEnd(9),
+      r.slug.padEnd(11),
       `v${r.version}`,
       r.status.padEnd(9),
       r.effectiveAt ? String(r.effectiveAt).slice(0, 10) : 'no-date   ',

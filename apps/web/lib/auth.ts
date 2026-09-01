@@ -20,8 +20,9 @@ import { z } from 'zod';
 import { adminUsers, db } from '@softmato/db';
 
 import { recordAudit } from './audit';
+import { LoginFailure } from './auth-failure';
 import { verifyPassword } from './password.core';
-import { verifyTotp } from './totp';
+import { checkTotp } from './totp';
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -49,7 +50,7 @@ export const authConfig = {
       },
       async authorize(raw) {
         const parsed = credentialsSchema.safeParse(raw);
-        if (!parsed.success) return null;
+        if (!parsed.success) throw new LoginFailure('credentials');
 
         const { email, password, totp } = parsed.data;
 
@@ -73,7 +74,7 @@ export const authConfig = {
             resourceId: email.toLowerCase(),
             afterState: { reason: 'invalid_credentials' },
           });
-          return null;
+          throw new LoginFailure('credentials');
         }
 
         // The database forbids an active admin without TOTP; this is the
@@ -86,19 +87,31 @@ export const authConfig = {
             resourceId: String(user.id),
             afterState: { reason: 'totp_not_enrolled' },
           });
-          return null;
+          throw new LoginFailure('not_enrolled');
         }
 
-        if (!verifyTotp(user.totpSecret, totp)) {
+        // Past this point the password has already been verified, so
+        // naming the failure cannot help anyone enumerate admins — and
+        // 'unreadable' is a deployment fault the operator has to be told
+        // about rather than a code they can retype.
+        const totpCheck = checkTotp(user.totpSecret, totp);
+
+        if (totpCheck !== 'ok') {
+          const reason =
+            totpCheck === 'unreadable' ? 'totp_unreadable' : 'invalid_totp';
+
           await recordAudit({
             actorType: 'admin',
             actorId: String(user.id),
             action: 'admin.login_failed',
             resourceType: 'admin_user',
             resourceId: String(user.id),
-            afterState: { reason: 'invalid_totp' },
+            afterState: { reason },
           });
-          return null;
+
+          throw new LoginFailure(
+            totpCheck === 'unreadable' ? 'totp_unreadable' : 'totp_invalid',
+          );
         }
 
         await db

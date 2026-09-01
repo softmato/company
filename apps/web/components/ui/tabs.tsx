@@ -15,55 +15,75 @@ import { cn } from '@/lib/cn';
 export function Tabs({
   tabs,
   className,
+  activeIndex,
+  onActiveChange,
 }: {
   tabs: Array<{ label: string; content: React.ReactNode }>;
   className?: string;
+  /** Optional controlled state for tabs that need to react to actions elsewhere on the page. */
+  activeIndex?: number;
+  onActiveChange?: (index: number) => void;
 }) {
-  const [active, setActive] = useState(0);
+  const [uncontrolledActive, setUncontrolledActive] = useState(0);
+  const active = activeIndex ?? uncontrolledActive;
   const id = useId();
   const listRef = useRef<HTMLDivElement>(null);
 
+  function activate(index: number) {
+    setUncontrolledActive(index);
+    onActiveChange?.(index);
+  }
+
   function onKeyDown(event: React.KeyboardEvent) {
-    const delta =
-      event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-    if (!delta) return;
+    const next =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? tabs.length - 1
+          : event.key === 'ArrowRight'
+            ? (active + 1) % tabs.length
+            : event.key === 'ArrowLeft'
+              ? (active - 1 + tabs.length) % tabs.length
+              : null;
+    if (next === null) return;
 
     event.preventDefault();
-    const next = (active + delta + tabs.length) % tabs.length;
-
-    setActive(next);
+    activate(next);
     listRef.current?.querySelectorAll('button')[next]?.focus();
   }
 
   return (
     <div className={className}>
-      <div
-        ref={listRef}
-        role="tablist"
-        onKeyDown={onKeyDown}
-        className="inline-flex h-9 items-center gap-1 rounded-lg bg-muted p-[3px]"
-      >
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.label}
-            type="button"
-            role="tab"
-            id={`${id}-tab-${index}`}
-            aria-selected={index === active}
-            aria-controls={`${id}-panel-${index}`}
-            tabIndex={index === active ? 0 : -1}
-            onClick={() => setActive(index)}
-            className={cn(
-              'h-full rounded-md px-3 text-sm font-medium transition-colors duration-150',
-              'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-              index === active
-                ? 'bg-background text-foreground shadow-card'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="max-w-full overflow-x-auto pb-1">
+        <div
+          ref={listRef}
+          role="tablist"
+          aria-orientation="horizontal"
+          onKeyDown={onKeyDown}
+          className="flex h-9 min-w-max items-center gap-1 rounded-lg bg-muted p-[3px]"
+        >
+          {tabs.map((tab, index) => (
+            <button
+              key={tab.label}
+              type="button"
+              role="tab"
+              id={`${id}-tab-${index}`}
+              aria-selected={index === active}
+              aria-controls={`${id}-panel-${index}`}
+              tabIndex={index === active ? 0 : -1}
+              onClick={() => activate(index)}
+              className={cn(
+                'h-full shrink-0 rounded-md px-3 text-sm font-medium transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                index === active
+                  ? 'bg-background text-foreground shadow-card'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tabs.map((tab, index) => (

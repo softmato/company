@@ -27,11 +27,11 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
   const name = session.user.name ?? email;
 
   return (
-    <div className="flex min-h-full flex-1">
+    <div className="min-h-dvh">
       <AdminNav />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
+      <div className="ml-56 flex min-h-dvh min-w-0 flex-col">
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6">
           <Wordmark className="text-[17px]" />
 
           <div className="flex items-center gap-2.5">
@@ -45,7 +45,9 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
           </div>
         </header>
 
-        <main className="flex-1 px-6 py-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden px-4 py-5 sm:px-6 sm:py-6">
+          {children}
+        </main>
       </div>
     </div>
   );

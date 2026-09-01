@@ -11,8 +11,12 @@ import { Wordmark } from '@/components/public/wordmark';
  * The foot of every public page.
  *
  * It carries the long tail the header's pill deliberately does not — Careers,
- * Contact, and the six legal documents — so those are reachable without the
+ * Contact, and every legal document — so those are reachable without the
  * navigation following the reader down the page to offer them.
+ *
+ * The legal list is not written out here: it is whatever is published, so a
+ * new policy appears in the footer of every page the moment it goes live and
+ * nothing has to be kept in step by hand.
  *
  * Legal links come from the CMS, so a policy that has not been published yet
  * does not appear. A link to an unpublished policy would 404, which on a legal
@@ -28,7 +32,6 @@ export async function SiteFooter({ className }: { className?: string | undefined
   ]);
 
   const address = settings.text('company.address');
-  const phone = settings.text('company.phone');
   const email = settings.text('company.support_email');
 
   return (
@@ -53,16 +56,13 @@ export async function SiteFooter({ className }: { className?: string | undefined
             </p>
 
             {/*
-              Address and phone both default to empty — a founder fills them in
-              at /admin/settings. Rendering the separator regardless would put a
-              bare "·" on every page of the site until they do.
+              Address only. `company.phone` is deliberately not rendered on any
+              public surface — it stays in settings because invoices need it,
+              but a number in the footer of every page is a number scraped off
+              every page. Email and the contact form are the public routes.
             */}
-            {address || phone ? (
-              <p className="mt-5 text-[14px] text-muted-foreground">
-                {address}
-                {address && phone ? ' · ' : null}
-                {phone ? <span className="numeric">{phone}</span> : null}
-              </p>
+            {address ? (
+              <p className="mt-5 text-[14px] text-muted-foreground">{address}</p>
             ) : null}
 
             {email ? (

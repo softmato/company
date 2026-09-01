@@ -1,4 +1,9 @@
 import 'server-only';
 
-export { createTotpEnrolment, verifyTotp } from './totp.core';
-export type { TotpEnrolment } from './totp.core';
+export {
+  checkTotp,
+  createTotpEnrolment,
+  enrolmentUri,
+  verifyTotp,
+} from './totp.core';
+export type { TotpCheck, TotpEnrolment } from './totp.core';

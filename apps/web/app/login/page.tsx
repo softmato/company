@@ -2,10 +2,14 @@
  * Admin sign-in. Email, password, and authenticator code in one step — there
  * is no partially-authenticated state to mishandle.
  */
-import { AuthError } from 'next-auth';
+import { AuthError, CredentialsSignin } from 'next-auth';
 import { redirect } from 'next/navigation';
 
 import { signIn } from '@/lib/auth';
+import {
+  LOGIN_FAILURE_MESSAGE,
+  loginFailureCode,
+} from '@/lib/auth-failure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -16,7 +20,9 @@ export default async function LoginPage({
   searchParams,
 }: PageProps<'/login'>) {
   const { error, enrolled } = await searchParams;
-  const failed = error === '1';
+  // An unrecognised code — including the bare `?error=1` this page used to
+  // redirect to — falls back to the vague message rather than to no message.
+  const failure = error ? (loginFailureCode(error) ?? 'credentials') : null;
   const justEnrolled = enrolled === '1';
 
   async function authenticate(formData: FormData): Promise<void> {
@@ -31,10 +37,16 @@ export default async function LoginPage({
       });
     } catch (err) {
       // next-auth signals a successful redirect by throwing; let that through.
+      //
+      // `LoginFailure` arrives here as the same instance `authorize()` threw,
+      // so the reason is read off the error rather than guessed at. Only the
+      // checks that run before the password is verified collapse into the one
+      // vague code — those are the ones that would otherwise enumerate admins.
+      if (err instanceof CredentialsSignin) {
+        redirect(`/login?error=${loginFailureCode(err.code) ?? 'credentials'}`);
+      }
       if (err instanceof AuthError) {
-        // One message for every failure mode. Distinguishing "no such account"
-        // from "wrong password" would let anyone enumerate admins.
-        redirect('/login?error=1');
+        redirect('/login?error=credentials');
       }
       throw err;
     }
@@ -65,22 +77,21 @@ export default async function LoginPage({
         ) : null}
 
         {/*
-          The error is rendered, not just redirected to. The signIn catch
-          above sends failures to `?error=1`, and a sign-in that silently
-          reloads a blank form reads as a broken page rather than a refusal.
+          The error is rendered, not just redirected to: a sign-in that
+          silently reloads a blank form reads as a broken page rather than a
+          refusal.
 
-          The wording stays deliberately vague about which half was wrong, for
-          the same reason the redirect is: naming it enumerates admins. It
-          also promises nothing about attempts remaining — we do not count
-          them, and a made-up number is a worse lie than no number.
+          The wording lives in `lib/auth-failure.ts` beside the codes the
+          provider throws, so the two cannot drift. It still promises nothing
+          about attempts remaining — we do not count them, and a made-up
+          number is a worse lie than no number.
         */}
-        {failed ? (
+        {failure ? (
           <p
             role="alert"
             className="mt-4 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[13px] text-destructive"
           >
-            That email, password and code did not match. Check the code has not
-            just rolled over, then try again.
+            {LOGIN_FAILURE_MESSAGE[failure]}
           </p>
         ) : null}
 

@@ -31,7 +31,6 @@ export async function organizationNode() {
   const settings = await getSettings();
 
   const address = settings.text('company.address');
-  const phone = settings.text('company.phone');
   const email = settings.text('company.support_email');
 
   /*
@@ -75,21 +74,24 @@ export async function organizationNode() {
           addressCountry: 'NP',
         })
       : undefined,
-    telephone: phone || undefined,
+    /*
+     * No `telephone`. The number is in settings for invoices, and is kept off
+     * every public surface — structured data included, since this block is
+     * emitted into the page HTML and read by anything that crawls it. Costs a
+     * little local-SEO signal; that is the trade the founder chose.
+     */
     email: email || undefined,
-    contactPoint:
-      phone || email
-        ? [
-            compact({
-              '@type': 'ContactPoint',
-              contactType: 'customer support',
-              telephone: phone || undefined,
-              email: email || undefined,
-              areaServed: 'NP',
-              availableLanguage: ['en', 'ne'],
-            }),
-          ]
-        : undefined,
+    contactPoint: email
+      ? [
+          compact({
+            '@type': 'ContactPoint',
+            contactType: 'customer support',
+            email,
+            areaServed: 'NP',
+            availableLanguage: ['en', 'ne'],
+          }),
+        ]
+      : undefined,
     sameAs,
   });
 }

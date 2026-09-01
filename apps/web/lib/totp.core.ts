@@ -50,18 +50,43 @@ export function createTotpEnrolment(email: string): TotpEnrolment {
 }
 
 /**
- * Returns true only for a currently-valid code. Fails closed on a malformed
- * secret or code — an uncertain verification is a failed one (docs/RULES.md §5).
+ * Why a code was refused, so a caller that can act on the difference has it.
+ *
+ * `unreadable` is not a wrong code at all — it is a stored secret this process
+ * cannot decrypt, which in practice means `ENCRYPTION_KEY` is not the key the
+ * secret was enrolled under. Folding that into `invalid` is what makes a
+ * mismatched key look exactly like a mistyped six digits.
  */
-export function verifyTotp(encryptedSecret: string, code: string): boolean {
-  if (!/^\d{6}$/.test(code.trim())) return false;
+export type TotpCheck = 'ok' | 'invalid' | 'unreadable';
+
+/**
+ * Fails closed on a malformed secret or code — an uncertain verification is a
+ * failed one (docs/RULES.md §5).
+ */
+export function checkTotp(encryptedSecret: string, code: string): TotpCheck {
+  const token = code.trim();
+  if (!/^\d{6}$/.test(token)) return 'invalid';
+
+  let secret: string;
+  try {
+    secret = decryptSecret(encryptedSecret);
+  } catch {
+    // Tampering, or a key that is not the one the secret was written under.
+    return 'unreadable';
+  }
 
   try {
-    const totp = totpFor(decryptSecret(encryptedSecret), 'verify');
-    return totp.validate({ token: code.trim(), window: WINDOW }) !== null;
+    return totpFor(secret, 'verify').validate({ token, window: WINDOW }) !== null
+      ? 'ok'
+      : 'invalid';
   } catch {
-    // A secret that will not decrypt means tampering or a rotated key.
-    // Either way the answer is "not authenticated".
-    return false;
+    // GCM authenticated the plaintext, so this is not a wrong key — the secret
+    // itself is not valid base32. Still not an authentication.
+    return 'invalid';
   }
+}
+
+/** Returns true only for a currently-valid code. */
+export function verifyTotp(encryptedSecret: string, code: string): boolean {
+  return checkTotp(encryptedSecret, code) === 'ok';
 }

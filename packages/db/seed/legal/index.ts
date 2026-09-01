@@ -1,11 +1,16 @@
 /**
- * The six legal documents, one file each (see ./shared.ts for the rules they
+ * The seven legal documents, one file each (see ./shared.ts for the rules they
  * all follow).
  *
- * Order matters only in the footer, where they are listed as they come back
- * from the database; keep the most-read first.
+ * The order of this array is the order they are seeded in and nothing else.
+ * It is **not** the order the footer shows: `listPublishedLegalDocuments()`
+ * sorts by slug, so the footer reads aup, candidates, cookies, privacy,
+ * refunds, sla, terms regardless of what is written here. Change the sort in
+ * `apps/web/lib/cms/public-queries.ts` if that order should be editorial
+ * rather than alphabetical.
  */
 import { aup } from './aup';
+import { candidates } from './candidates';
 import { cookies } from './cookies';
 import { privacy } from './privacy';
 import { refunds } from './refunds';
@@ -14,7 +19,6 @@ import { terms } from './terms';
 import type { LegalDocumentSeed } from './shared';
 
 export type { LegalDocumentSeed };
-export { DRAFT_NOTICE } from './shared';
 
 export const legalDocumentSeeds: LegalDocumentSeed[] = [
   terms,
@@ -23,4 +27,5 @@ export const legalDocumentSeeds: LegalDocumentSeed[] = [
   sla,
   aup,
   cookies,
+  candidates,
 ];

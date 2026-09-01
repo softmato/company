@@ -253,7 +253,7 @@ foot. These are read by someone hunting one clause — make that fast.
 #### Also needed
 
 - **Site header** — logo, seven nav links, mobile menu. Sticky, quiet.
-- **Site footer** — the six legal links, contact block, copyright.
+- **Site footer** — the seven legal links, contact block, copyright.
 - **404 and 500** — currently Next's defaults, which look nothing like the
   site. These need designing.
 

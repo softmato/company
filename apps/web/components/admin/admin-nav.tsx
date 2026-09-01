@@ -24,16 +24,18 @@ interface NavItem {
 const SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Overview',
-    items: [{ label: 'Dashboard', href: '/admin' }],
+    items: [
+      { label: 'Dashboard', href: '/admin' },
+      { label: 'Leads & Bookings', href: '/admin/leads' },
+    ],
   },
   {
     title: 'Money',
     items: [
-      { label: 'Payments', phase: 3 },
-      { label: 'Approvals', phase: 3 },
-      { label: 'Refunds', phase: 4 },
-      { label: 'Invoices', phase: 6 },
-      { label: 'Subscriptions', phase: 6 },
+      { label: 'Payments', href: '/admin/payments' },
+      { label: 'Refunds', href: '/admin/refunds' },
+      { label: 'Invoices', href: '/admin/invoices' },
+      { label: 'Subscriptions', href: '/admin/subscriptions' },
     ],
   },
   {
@@ -43,7 +45,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: 'Journals', phase: 7 },
       { label: 'Reports', phase: 7 },
       { label: 'Periods', phase: 7 },
-      { label: 'Reconciliation', phase: 7 },
+      { label: 'Reconciliation', href: '/admin/reconciliation' },
     ],
   },
   {
@@ -76,7 +78,7 @@ export function AdminNav() {
   return (
     <nav
       aria-label="Admin sections"
-      className="w-56 shrink-0 border-r border-sidebar-border bg-sidebar px-3 py-5"
+      className="fixed inset-y-0 left-0 z-40 h-dvh w-56 overflow-y-auto overscroll-contain border-r border-sidebar-border bg-sidebar px-3 py-5"
     >
       {SECTIONS.map((section) => (
         <div key={section.title} className="mb-5">

@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { NAV_LINKS } from '@/components/public/nav-links';
+import { useScrolled } from '@/components/public/use-scrolled';
 import { Wordmark } from '@/components/public/wordmark';
 
 /**
@@ -16,16 +17,22 @@ import { Wordmark } from '@/components/public/wordmark';
  * bottom of the viewport. On a page whose sections are full-height light-forms
  * a bar fixed to the bottom sits in the middle of every one of them.
  *
- * It is `fixed`, and it does not adapt to what is under it. The pill carries
- * its own translucent white ground and a blur, so it reads over the light
- * stages and over the one dark section without needing to know which it is
- * over — which is what lets this stay a single element rather than a component
- * that watches the scroll position and re-tints itself.
+ * It is `fixed`, and the pill carries its own translucent white ground and a
+ * blur, so it reads over the light stages and over the one dark section
+ * without needing to know which it is over.
+ *
+ * Once the reader has scrolled it also lays down `.header-veil`: a band of
+ * blur with a masked, edgeless bottom, because the pills alone do not stop
+ * what is behind them from running under the wordmark. That holds on the home
+ * page as much as on a document — and it still does not need to know which
+ * ground it is over, because `data-nav` redefines `--background` on this
+ * element and the veil is mixed from that token.
  */
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
+  const scrolled = useScrolled();
 
   /*
    * Close on navigation. Adjusting state during render rather than in an
@@ -44,8 +51,13 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+    <header
+      data-scrolled={scrolled ? '' : undefined}
+      className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5"
+    >
+      <div aria-hidden="true" className="header-veil" />
+
+      <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4">
         {/*
           The wordmark sits on the page, not in a pill.
 
@@ -126,7 +138,7 @@ export function SiteHeader() {
         <nav
           id="site-menu"
           aria-label="Primary"
-          className="nav-pill mx-auto mt-2 max-w-6xl animate-rise overflow-hidden rounded-3xl p-2 md:hidden"
+          className="nav-pill relative mx-auto mt-2 max-w-6xl animate-rise overflow-hidden rounded-3xl p-2 md:hidden"
         >
           <ul>
             {NAV_LINKS.map((link) => (

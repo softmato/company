@@ -875,4 +875,204 @@ html[data-nav='over-dark'] header {
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
   }
+
+  /*
+   * A long document with its "on this page" rail: the layout of a legal page.
+   *
+   * Two things it does that a plain grid does not.
+   *
+   * **The rail sits at the window's edge, not the measure's.** The reading
+   * column is centred at `max-w-5xl` like every other inner page, and a rail
+   * parked against the inside of that measure reads as a second column of the
+   * document rather than as furniture belonging to the window. So the grid
+   * grows to the *right* only: the reading column and the title stay exactly
+   * where they are on `/about` or `/contact`, and only the rail moves out.
+   *
+   * The width is the widest the grid can be without leaving the window. From
+   * a container of `64rem` centred in `100vw`, the left edge sits at
+   * `(100vw - 64rem) / 2 + 1.5rem`; subtracting that and a matching gutter
+   * from `100vw` gives `(100vw + 64rem) / 2 - 3rem`. `72rem` caps it on a very
+   * wide display, where an unbounded rail would end up in the reader's
+   * peripheral vision. `.stage` is full-bleed and does not clip this; the
+   * `max-w-5xl` measure it overflows has no clipping of its own.
+   *
+   * **`--doc-rail-top` is both the rail's offset and the page's top padding.**
+   * That equality is the point: `PageContainer` starts the article `9rem` down,
+   * so a rail that sticks at `9rem` is already in its stuck position at the top
+   * of the page and never travels. Sticking it any higher buys nothing — the
+   * header is clear at `4rem` — and costs a visible jolt in the first `50px` of
+   * scroll, which is the one moment a reader is looking straight at it.
+   */
+  .doc-grid {
+    --doc-rail-top: 9rem;
+  }
+
+  @media (min-width: 64rem) {
+    .doc-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 15rem;
+      column-gap: 3.5rem;
+      width: min(72rem, calc((100vw + 64rem) / 2 - 3rem));
+    }
+  }
+
+  .doc-rail {
+    position: sticky;
+    top: var(--doc-rail-top);
+    max-height: calc(100vh - var(--doc-rail-top) - 2rem);
+    overflow-y: auto;
+    /* Room for the last row's descenders when the rail is scrolled. */
+    padding-bottom: 2rem;
+  }
+
+  /*
+   * The ground the fixed header gets once content has scrolled up to it.
+   *
+   * The problem it solves is only visible on an inner page: the header is
+   * `fixed` over a document that scrolls under it, so the wordmark and the
+   * call to action end up sitting directly on top of body copy. The obvious
+   * fix is the one every site reaches for — a solid bar with a hairline under
+   * it — and it is the wrong one here, because a rule across the top of the
+   * window is a second horizontal line competing with the page's own, and it
+   * announces a chrome this design does not otherwise have.
+   *
+   * So: no line, ever. What appears instead is a band of blur that has no
+   * bottom edge at all. `mask-image` fades the layer out over its lower half,
+   * and because a mask applies to the element's composited result, it fades
+   * the `backdrop-filter` with it — the text underneath goes from unreadably
+   * blurred at the top of the window to completely untouched about `100px`
+   * down, with nothing anywhere that reads as a border. The tint is the page's
+   * own background at partial strength for the same reason: enough to lift the
+   * header off the copy, not enough to be a bar.
+   *
+   * Off at the top of the page, where there is nothing under the header to
+   * separate it from. `SiteHeader` sets `data-scrolled` and the whole thing is
+   * a `260ms` opacity fade, so arriving at a page and starting to read is one
+   * continuous movement rather than a panel snapping into place.
+   *
+   * It works on the home page's dark bands with no extra rule, which is the
+   * payoff of mixing the tint from `--background` rather than naming a colour:
+   * `html[data-nav='over-dark'] header` redefines that token on the header, so
+   * over the hero the same gradient resolves to the near-black ground and the
+   * blur goes on doing exactly what it does over a white one. The gradients
+   * either side of that swap have identical stops, so it interpolates rather
+   * than cutting.
+   */
+  .header-veil {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 9rem;
+    pointer-events: none;
+    opacity: 0;
+    transition:
+      opacity 260ms ease-out,
+      background 250ms ease-out;
+
+    /*
+     * The tint, on its own curve. Many stops rather than two: a two-stop
+     * `linear-gradient` is linear in *alpha*, and alpha is not what the eye
+     * reads — the last quarter of a two-stop fade shows up as a soft band
+     * against a near-white page. These stops ease it out instead.
+     */
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--background) 98%, transparent) 0%,
+      color-mix(in oklab, var(--background) 96%, transparent) 38%,
+      color-mix(in oklab, var(--background) 82%, transparent) 52%,
+      color-mix(in oklab, var(--background) 52%, transparent) 66%,
+      color-mix(in oklab, var(--background) 24%, transparent) 80%,
+      color-mix(in oklab, var(--background) 7%, transparent) 91%,
+      transparent 100%
+    );
+
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 46%,
+      rgba(0, 0, 0, 0.72) 64%,
+      rgba(0, 0, 0, 0.36) 80%,
+      rgba(0, 0, 0, 0.12) 91%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 46%,
+      rgba(0, 0, 0, 0.72) 64%,
+      rgba(0, 0, 0, 0.36) 80%,
+      rgba(0, 0, 0, 0.12) 91%,
+      transparent 100%
+    );
+  }
+
+  /*
+   * The blur itself is three stacked layers, not one.
+   *
+   * A single masked `backdrop-filter` fades a *fixed* blur radius out, and the
+   * eye catches that: halfway down, letters are still smeared by the full
+   * 20px, only more faintly, which reads as a translucent panel with an edge
+   * rather than as depth. Stacking short, medium and long radii — each ending
+   * sooner than the one below it — makes the radius itself fall off, so the
+   * copy sharpens continuously on its way out from under the header and there
+   * is no line anywhere to find.
+   *
+   * Three is the number that works and the number available: an element gets
+   * two pseudo-elements, and past three another full-width backdrop pass buys
+   * nothing anyone can see.
+   */
+  .header-veil::before,
+  .header-veil::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .header-veil::before {
+    backdrop-filter: blur(9px) saturate(120%);
+    -webkit-backdrop-filter: blur(9px) saturate(120%);
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 34%,
+      rgba(0, 0, 0, 0.5) 56%,
+      rgba(0, 0, 0, 0.16) 72%,
+      transparent 84%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 34%,
+      rgba(0, 0, 0, 0.5) 56%,
+      rgba(0, 0, 0, 0.16) 72%,
+      transparent 84%
+    );
+  }
+
+  .header-veil::after {
+    backdrop-filter: blur(20px) saturate(135%);
+    -webkit-backdrop-filter: blur(20px) saturate(135%);
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 20%,
+      rgba(0, 0, 0, 0.45) 38%,
+      rgba(0, 0, 0, 0.12) 52%,
+      transparent 62%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 20%,
+      rgba(0, 0, 0, 0.45) 38%,
+      rgba(0, 0, 0, 0.12) 52%,
+      transparent 62%
+    );
+  }
+
+  header[data-scrolled] .header-veil {
+    opacity: 1;
+  }
 }

@@ -18,6 +18,7 @@
 import { eq } from 'drizzle-orm';
 
 import { adminUsers, closeDb, db } from '@softmato/db';
+import { enrolmentUrl } from '../apps/web/lib/enrolment/link';
 import { mintEnrolmentToken } from '../apps/web/lib/enrolment/token';
 import { hashPassword, passwordMinLength } from '../apps/web/lib/password.core';
 
@@ -85,14 +86,10 @@ const subject = {
 
 const { token, expiresAt } = mintEnrolmentToken(subject);
 
-const base =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ??
-  'http://localhost:3000';
-
 console.log(`\nAdmin created: ${email} (id ${created!.id})`);
 console.log('Status: inactive — cannot sign in until enrolment completes.\n');
 console.log('Send them this link. It expires', expiresAt.toISOString(), '\n');
-console.log(`  ${base}/enrol?token=${token}\n`);
+console.log(`  ${enrolmentUrl(token)}\n`);
 console.log(
   'The link stops working the moment it is used. If it expires first,\n' +
     're-issue one with:  pnpm admin:enrol -- --email ' +

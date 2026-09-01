@@ -15,12 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TotpSetup } from '@/components/admin/totp-setup';
 import { Wordmark } from '@/components/public/wordmark';
-import { decryptSecret } from '@/lib/crypto';
 import { qrSvg } from '@/lib/enrolment/qr';
-import { sealPendingSecret } from '@/lib/enrolment/pending';
 import { findEnrolmentSubject } from '@/lib/enrolment/queries';
+import { enrolmentSecret } from '@/lib/enrolment/secret';
 import { claimedAdminId, verifyEnrolmentToken } from '@/lib/enrolment/token';
-import { createTotpEnrolment } from '@/lib/totp';
+import { enrolmentUri } from '@/lib/totp';
 
 import { confirmEnrolment } from './actions';
 
@@ -63,12 +62,13 @@ export default async function EnrolPage({
   if (!subject || !verifyEnrolmentToken(token, subject)) return <Refused />;
 
   /*
-   * A fresh secret every render, and nothing is written to the row until the
-   * code confirms it. Reloading this page therefore abandons the previous QR
-   * rather than leaving a half-enrolled admin behind.
+   * Derived from the token, so this page is idempotent: reloading it — or
+   * leaving it to open the authenticator app and coming back, which on a phone
+   * reloads it — shows the same QR rather than silently replacing the one that
+   * was just scanned. Nothing is written to the row until the code confirms it.
    */
-  const enrolment = createTotpEnrolment(subject.email);
-  const svg = await qrSvg(enrolment.otpauthUri);
+  const secretBase32 = enrolmentSecret(token);
+  const svg = await qrSvg(enrolmentUri(secretBase32, subject.email));
 
   return (
     <main className="mx-auto flex w-full max-w-[26rem] flex-1 flex-col justify-center px-6 py-20">
@@ -86,23 +86,15 @@ export default async function EnrolPage({
             role="alert"
             className="mt-4 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-[13px] text-destructive"
           >
-            That code didn&rsquo;t match. The QR below is a new one — scan it
-            again, then enter the six digits it shows.
+            That code didn&rsquo;t match. This is the same QR — if it is already
+            in your app, wait for the next six digits and try again.
           </p>
         ) : null}
 
         <form action={confirmEnrolment} className="mt-1 grid gap-4">
           <input type="hidden" name="token" value={token} />
-          <input
-            type="hidden"
-            name="pending"
-            value={sealPendingSecret(subject.id, enrolment.encryptedSecret)}
-          />
 
-          <TotpSetup
-            svg={svg}
-            setupKey={decryptSecret(enrolment.encryptedSecret)}
-          />
+          <TotpSetup svg={svg} setupKey={secretBase32} />
 
           <Button type="submit" className="mt-1 w-full">
             Confirm and activate

@@ -271,7 +271,7 @@ export const productPages = pgTable(
 export type ProductPage = typeof productPages.$inferSelect;
 
 /**
- * Terms, privacy, refunds, SLA, acceptable use, cookies.
+ * Terms, privacy, refunds, SLA, acceptable use, cookies, candidate privacy.
  *
  * These differ from `pages` in one way that matters: what a customer agreed to
  * on a given date must stay knowable. Rows are versioned and superseded rather

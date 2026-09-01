@@ -21,10 +21,18 @@
     "cms:publish-all": "tsx --env-file-if-exists=.env.local ./scripts/publish-all.mts",
     "cms:sync-copy": "tsx --env-file-if-exists=.env.local ./scripts/sync-cms-copy.mts",
     "brand:build": "tsx ./scripts/build-brand-assets.mts",
+    "settings:set": "tsx --env-file-if-exists=.env.local ./scripts/set-setting.mts",
     "legal:check": "tsx --env-file-if-exists=.env.local ./scripts/check-legal.mts",
     "legal:todo": "tsx --env-file-if-exists=.env.local ./scripts/legal-todo.mts",
+    "legal:refresh": "tsx --env-file-if-exists=.env.local ./scripts/refresh-legal.mts",
     "predeploy": "pnpm typecheck && pnpm test && pnpm legal:check",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\""
+  },
+  "pnpm": {
+    "overrides": {
+      "@smithy/types": "4.17.2",
+      "@smithy/core": "3.33.3"
+    }
   },
   "devDependencies": {
     "@node-rs/argon2": "^2.0.2",

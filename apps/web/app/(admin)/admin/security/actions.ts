@@ -1,17 +1,15 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
-import { adminUsers, db } from '@softmato/db';
-
 import { recordAudit } from '@/lib/audit';
-import { openPendingSecret } from '@/lib/enrolment/pending';
+import { encryptSecret } from '@/lib/crypto';
 import { replaceSecret } from '@/lib/enrolment/queries';
-import { verifyPassword } from '@/lib/password.core';
+import { rotationSecret } from '@/lib/enrolment/secret';
 import { verifyTotp } from '@/lib/totp';
 
 import { requireAdmin } from '../cms/actions/shared';
+import { reauthenticate } from './reauth';
 
 export interface RotateResult {
   ok: boolean;
@@ -30,6 +28,11 @@ export interface RotateResult {
  * The new secret is only committed after a code from the *new* one verifies —
  * confirming the scan actually landed. Until then the old device keeps working
  * and closing the page changes nothing.
+ *
+ * The candidate is re-derived from the secret it replaces rather than carried
+ * back from the page, so the code being checked belongs to the QR that was
+ * actually scanned however many reloads and failed attempts ago — and stops
+ * deriving the moment this succeeds. See `lib/enrolment/secret.ts`.
  */
 export async function rotateTotp(
   _previous: RotateResult | undefined,
@@ -41,24 +44,10 @@ export async function rotateTotp(
   const password = String(form.get('password') ?? '');
   const currentCode = String(form.get('current') ?? '');
   const newCode = String(form.get('code') ?? '');
-  const sealed = String(form.get('pending') ?? '');
 
-  const [user] = await db
-    .select({
-      passwordHash: adminUsers.passwordHash,
-      totpSecret: adminUsers.totpSecret,
-    })
-    .from(adminUsers)
-    .where(eq(adminUsers.id, id))
-    .limit(1);
+  const me = await reauthenticate(id, password, currentCode);
 
-  if (!user?.totpSecret) {
-    return { ok: false, message: 'Could not verify this account.' };
-  }
-
-  const passwordOk = await verifyPassword(user.passwordHash, password);
-
-  if (!passwordOk || !verifyTotp(user.totpSecret, currentCode)) {
+  if (!me.ok) {
     await recordAudit({
       actorType: 'admin',
       actorId: adminId,
@@ -75,13 +64,7 @@ export async function rotateTotp(
     };
   }
 
-  const encryptedSecret = openPendingSecret(id, sealed);
-  if (!encryptedSecret) {
-    return {
-      ok: false,
-      message: 'This page expired before you finished. Reload for a new QR.',
-    };
-  }
+  const encryptedSecret = encryptSecret(rotationSecret(id, me.totpSecret));
 
   if (!verifyTotp(encryptedSecret, newCode)) {
     return {

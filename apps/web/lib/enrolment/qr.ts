@@ -1,10 +1,11 @@
 import 'server-only';
 
 /**
- * Renders an `otpauth://` URI as an inline SVG.
+ * Renders a URI as an inline SVG — an `otpauth://` secret, or an `/enrol` link
+ * carrying a one-time token.
  *
- * Server-side and inline on purpose. The URI contains the shared secret, so it
- * must not become an image `src` — that would put a live MFA secret into a URL,
+ * Server-side and inline on purpose. Both URIs are bearer credentials, so
+ * neither may become an image `src` — that would put a live secret into a URL,
  * where it reaches the access log, the browser history and any referrer.
  *
  * Error correction stays at the default M. A QR is read once, from a screen,

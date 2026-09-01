@@ -1,4 +1,13 @@
 @import 'tailwindcss';
+/*
+ * Lenis's own stylesheet. Small, and two of its rules matter here:
+ * `html.lenis { height: auto }` keeps the document element free to grow so
+ * Lenis's ResizeObserver can see the page get taller (see the root layout —
+ * a fixed height there froze the scroll limit and stalled the wheel partway
+ * down the page), and `overscroll-behavior: contain` on `[data-lenis-prevent]`
+ * stops the chat transcript handing its overscroll to the page.
+ */
+@import 'lenis/dist/lenis.css';
 @import './marketing.css';
 
 /*
@@ -374,6 +383,40 @@
   .numeric {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Sleek custom scrollbars for dark containers & chat widgets */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(52, 211, 153, 0.3) rgba(11, 26, 19, 0.8);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(11, 26, 19, 0.6);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(52, 211, 153, 0.25);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 211, 153, 0.5);
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 

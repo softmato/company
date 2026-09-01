@@ -215,6 +215,64 @@ EXIF from images. Never trust a client-declared content type.
 
 Access via `@aws-sdk/client-s3` with `region: 'auto'` and the R2 endpoint.
 
+### Admin image uploads are presigned
+
+The file never passes through the server. A Vercel function rejects a request
+body over 4.5 MB before the handler runs, which is *below* the 5 MB above — so
+routing bytes through us made the top of the documented range impossible to
+upload, and paid to move every megabyte twice.
+
+```
+Admin picks an image
+  → POST /api/admin/upload          server checks the session and MFA,
+                                    allowlists the declared type, builds the
+                                    key, returns a presigned PUT (120s)
+  → PUT direct to R2                browser → bucket, no server in between
+  → POST /api/admin/upload/confirm  server HEADs the object for its real size,
+                                    reads the first 16 bytes for its real type,
+                                    records the audit row, returns the URL
+```
+
+The magic-byte rule is not weakened by this, it moves: the confirm step reads
+the bytes back out of the bucket with a Range request before the URL is handed
+to the CMS. An object that fails either check is deleted and never named to the
+caller — until confirm returns, the key is a uuid nobody can guess and no row
+points at it.
+
+The signature pins the key and the `Content-Type` (`SignedHeaders` is
+`content-type;host`), so R2 refuses a PUT that stores anything but one of the
+four allowed image types. That is what keeps the public bucket from serving
+caller-supplied `text/html`.
+
+**The public bucket needs a CORS rule**, or the browser's PUT never leaves.
+The uploader lives in the admin, so the origin is the **admin** host — not the
+marketing one:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://admin.softmato.com",
+      "http://admin.localhost:3000"
+    ],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+The S3 client sets `requestChecksumCalculation: 'WHEN_REQUIRED'`, and must keep
+doing so. On the default the SDK pins a CRC32 of the request body into the
+signature — and at signing time there is no body, so what gets pinned is the
+checksum of nothing. R2 rejects the real upload with a 403 that carries no CORS
+headers, so the browser reports a CORS failure and the actual cause is nowhere
+in the message.
+
+Client code never talks to R2 itself — it goes through
+`components/admin/uploads` (or `uploadImage` in `lib/admin/upload-image.ts`),
+which is the one implementation of the three steps.
+
 ---
 
 ## 4. Environments

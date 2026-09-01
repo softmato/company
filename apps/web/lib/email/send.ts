@@ -28,6 +28,23 @@ export interface SendResult {
 }
 
 export const NOT_CONFIGURED = 'email not configured';
+export const SUPPRESSED_IN_TEST = 'email suppressed under test';
+
+/**
+ * True while a test runner is driving the process.
+ *
+ * `vitest.config.ts` deliberately loads the real `.env.local`, so a test run
+ * has a live `RESEND_API_KEY` and `emailConfigured` is true. Without this
+ * guard any test that exercises a code path ending in a send delivers real
+ * mail to a real mailbox — which is exactly what happened: a `book_meeting`
+ * unit test mailed a booking confirmation to the fixture address and a
+ * "[NEW BOOKING]" alert to the founders on every `pnpm test`.
+ *
+ * The suppression lives here, at the single outbound path, rather than in the
+ * individual test. A guard the test has to remember to apply is a guard that
+ * the next test forgets.
+ */
+const underTest = Boolean(process.env.VITEST) || process.env.NODE_ENV === 'test';
 
 /** A file to send alongside the message — an invoice PDF, a statement. */
 export interface EmailAttachment {
@@ -62,6 +79,10 @@ export async function sendEmail({
   category,
   attachments,
 }: Message): Promise<SendResult> {
+  if (underTest) {
+    return { sent: false, reason: SUPPRESSED_IN_TEST };
+  }
+
   if (!emailConfigured) {
     return { sent: false, reason: NOT_CONFIGURED };
   }

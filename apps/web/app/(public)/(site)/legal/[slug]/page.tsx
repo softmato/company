@@ -9,14 +9,17 @@ import {
 } from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
 import { isIndexableLegalDocument } from '@/lib/cms/legal-readiness';
+import { resolveTokens } from '@/lib/cms/tokens';
+import { getSettings } from '@/lib/settings/queries';
 import { breadcrumbList } from '@/lib/seo/breadcrumbs';
 import { legalPageNode } from '@/lib/seo/content';
 import { JsonLd } from '@/lib/seo/json-ld';
 import { extractHeadings } from '@/lib/cms/headings';
 import { formatBsWithAd } from '@/lib/format/date';
-import { LegalToc } from '@/components/public/legal-toc';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
+import { TocInline } from '@/components/public/toc/toc-inline';
+import { TocRail } from '@/components/public/toc/toc-rail';
 
 export async function generateStaticParams() {
   const slugs = await publishedSlugs('legal');
@@ -44,7 +47,9 @@ export async function generateMetadata({
    * lib/cms/legal-readiness.ts, the same rule `pnpm legal:check` enforces
    * before a deploy.
    */
-  const indexable = isIndexableLegalDocument(doc.body);
+  const indexable = isIndexableLegalDocument(
+    resolveTokens(doc.body, await getSettings()),
+  );
 
   return {
     ...metadataFor(doc, { path: `/legal/${slug}` }),
@@ -60,54 +65,77 @@ export default async function LegalDocumentPage({
 
   if (!doc) notFound();
 
-  const headings = extractHeadings(doc.body);
+  /*
+   * Company details are `{{settings.key}}` tokens in the stored body, filled in
+   * from the admin panel as the page renders — see lib/cms/tokens.ts. Resolved
+   * before the headings are extracted so a token can never end up in an anchor
+   * id, and before `Markdown` so a reader never sees the raw brace syntax.
+   */
+  const body = resolveTokens(doc.body, await getSettings());
+
+  const headings = extractHeadings(body);
   const others = (await listPublishedLegalDocuments()).filter(
     (other) => other.slug !== doc.slug,
   );
 
   return (
-    <article className="mx-auto max-w-3xl">
-      <JsonLd id="breadcrumbs" data={breadcrumbList([{ name: doc.title }])} />
-      <JsonLd id="policy" data={legalPageNode(doc)} />
+    /*
+     * Two columns from `lg` up: the document, and the "on this page" rail out
+     * at the right edge of the window. The rail is a sibling of the article
+     * rather than a block inside it, because a `sticky` element can only
+     * travel inside its own parent — nested in the prose it would stop at the
+     * first paragraph. `.doc-grid` carries the columns and the breakout.
+     *
+     * Below `lg` the grid collapses and `TocInline` takes over in the flow.
+     */
+    <div className="doc-grid">
+      <article className="min-w-0">
+        <JsonLd id="breadcrumbs" data={breadcrumbList([{ name: doc.title }])} />
+        <JsonLd id="policy" data={legalPageNode(doc)} />
 
-      <PageHeader eyebrow="Legal" title={doc.title} />
+        <PageHeader eyebrow="Legal" title={doc.title} />
 
-      {/*
-       * Version and effective date are stated on the page, not just stored.
-       * A policy a customer cannot date is a policy they cannot rely on.
-       */}
-      <p className="numeric mt-3 text-xs text-muted-foreground">
-        Version {doc.version}
-        {doc.effectiveAt
-          ? ` · in effect from ${formatBsWithAd(doc.effectiveAt)}`
-          : ''}
-      </p>
+        {/*
+         * Version and effective date are stated on the page, not just stored.
+         * A policy a customer cannot date is a policy they cannot rely on.
+         */}
+        <p className="numeric mt-3 text-xs text-muted-foreground">
+          Version {doc.version}
+          {doc.effectiveAt
+            ? ` · in effect from ${formatBsWithAd(doc.effectiveAt)}`
+            : ''}
+        </p>
 
-      <LegalToc headings={headings} />
+        <TocInline headings={headings} />
 
-      <Markdown anchors>{doc.body}</Markdown>
+        <div className="mt-8">
+          <Markdown anchors>{body}</Markdown>
+        </div>
 
-      {others.length > 0 ? (
-        <nav
-          aria-label="Other policies"
-          className="section-frame mt-12 rounded-lg p-5"
-        >
-          <p className="eyebrow">Other policies</p>
+        {others.length > 0 ? (
+          <nav
+            aria-label="Other policies"
+            className="section-frame mt-12 rounded-lg p-5"
+          >
+            <p className="eyebrow">Other policies</p>
 
-          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            {others.map((other) => (
-              <li key={other.slug}>
-                <Link
-                  href={`/legal/${other.slug}`}
-                  className="text-primary underline-offset-2 hover:underline"
-                >
-                  {other.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      ) : null}
-    </article>
+            <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              {others.map((other) => (
+                <li key={other.slug}>
+                  <Link
+                    href={`/legal/${other.slug}`}
+                    className="text-primary underline-offset-2 hover:underline"
+                  >
+                    {other.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
+      </article>
+
+      <TocRail headings={headings} />
+    </div>
   );
 }

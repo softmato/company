@@ -11,7 +11,7 @@ import {
   encryptSecret,
   timingSafeEquals,
 } from '@/lib/crypto.core';
-import { createTotpEnrolment, verifyTotp } from '@/lib/totp.core';
+import { checkTotp, createTotpEnrolment, verifyTotp } from '@/lib/totp.core';
 
 describe('encryption at rest', () => {
   test('a secret round-trips', () => {
@@ -97,5 +97,50 @@ describe('TOTP', () => {
 
   test('verification fails closed on an undecryptable secret', () => {
     expect(verifyTotp('v1.aaa.bbb.ccc', '123456')).toBe(false);
+  });
+});
+
+/**
+ * The distinction that matters operationally: a secret encrypted under a
+ * different ENCRYPTION_KEY is not a wrong code, and a deployment that reports
+ * it as one sends its operator looking at their phone instead of their
+ * environment variables. That mistake has already cost one production
+ * debugging session.
+ */
+describe('why a code was refused', () => {
+  test('a valid code is ok', () => {
+    const enrolment = createTotpEnrolment('founder@example.com');
+    const secret = decryptSecret(enrolment.encryptedSecret);
+
+    const generated = new TOTP({
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: Secret.fromBase32(secret),
+    }).generate();
+
+    expect(checkTotp(enrolment.encryptedSecret, generated)).toBe('ok');
+  });
+
+  test('a wrong code is invalid, not unreadable', () => {
+    const enrolment = createTotpEnrolment('founder@example.com');
+    expect(checkTotp(enrolment.encryptedSecret, '000000')).toBe('invalid');
+  });
+
+  test('a secret from a different key is unreadable, not invalid', () => {
+    const enrolment = createTotpEnrolment('founder@example.com');
+    const original = process.env.ENCRYPTION_KEY;
+
+    try {
+      process.env.ENCRYPTION_KEY = 'f'.repeat(64);
+      expect(checkTotp(enrolment.encryptedSecret, '000000')).toBe('unreadable');
+    } finally {
+      process.env.ENCRYPTION_KEY = original;
+    }
+  });
+
+  test('verifyTotp still answers a plain boolean', () => {
+    const enrolment = createTotpEnrolment('founder@example.com');
+    expect(verifyTotp(enrolment.encryptedSecret, '000000')).toBe(false);
   });
 });

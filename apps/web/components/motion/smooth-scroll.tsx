@@ -50,6 +50,21 @@ export function SmoothScroll() {
 
     lenis.on('scroll', ScrollTrigger.update);
 
+    /*
+     * Re-measure Lenis whenever ScrollTrigger re-measures.
+     *
+     * Lenis clamps every wheel target to a cached `scrollHeight - innerHeight`.
+     * Its own `ResizeObserver` keeps that cache honest — the root layout leaves
+     * `<html>` free to grow so it can — but the observer is debounced 250ms and
+     * knows nothing about the moments ScrollTrigger already treats as "the page
+     * changed shape": load, resize, and the font-swap refresh below. Hooking
+     * the two together means there is no window in which ScrollTrigger has the
+     * new page height and Lenis is still clamping to the old one.
+     */
+    const syncSize = () => lenis.resize();
+
+    ScrollTrigger.addEventListener('refresh', syncSize);
+
     const tick = (time: number) => lenis.raf(time * 1000);
 
     gsap.ticker.add(tick);
@@ -77,6 +92,7 @@ export function SmoothScroll() {
 
     return () => {
       live = false;
+      ScrollTrigger.removeEventListener('refresh', syncSize);
       gsap.ticker.remove(tick);
       gsap.ticker.lagSmoothing(500, 33);
       lenis.destroy();

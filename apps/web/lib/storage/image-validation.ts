@@ -75,6 +75,27 @@ export interface DetectedImage {
   extension: string;
 }
 
+/**
+ * Is this string one of the four types we accept?
+ *
+ * A presigned upload has to commit to a content type *before* any bytes
+ * exist — R2 stores the value and later serves it, so it is signed into the
+ * URL and cannot be a free-text field. This narrows a client-declared string
+ * to the allowlist so the signature can only ever pin an image type.
+ *
+ * It says nothing about the file. `detectImage` still has the last word once
+ * the bytes are readable; this only decides what we are willing to sign.
+ */
+export function isImageMime(value: unknown): value is ImageMime {
+  return SIGNATURES.some((signature) => signature.mime === value);
+}
+
+/** The extension we store a given accepted type under. */
+export function extensionForMime(mime: ImageMime): string {
+  /* Every ImageMime comes from SIGNATURES, so this always finds one. */
+  return SIGNATURES.find((signature) => signature.mime === mime)!.extension;
+}
+
 /** Returns null when the bytes are not a supported image. */
 export function detectImage(bytes: Uint8Array): DetectedImage | null {
   for (const signature of SIGNATURES) {

@@ -13,7 +13,7 @@ import { isProductionSite, siteUrl } from '@/lib/seo/site';
  *
  * Every entry comes from a `status = 'published'` query, so a draft cannot be
  * advertised to a crawler — which would be a slower, more public version of
- * the same leak the public queries exist to prevent. That is why the six legal
+ * the same leak the public queries exist to prevent. That is why the seven legal
  * documents will not appear here until the founder gives each an effective
  * date and publishes it; the pages 404 until then, and a sitemap full of 404s
  * is how a site loses crawl budget.

@@ -14,6 +14,50 @@ this file tracks what was delivered.
 
 ### Added
 
+- **Company details in the legal documents are now admin-configurable.**
+  `{{settings.key}}` tokens in a document body are resolved from
+  `platform_settings` as the page renders (`apps/web/lib/cms/tokens.ts`), so
+  the registered address, PAN, registration number and the support, refunds and
+  abuse mailboxes are edited once in the admin panel instead of in seven
+  documents. The Company settings group had carried `company.address`,
+  `company.pan` and the mailboxes since it was written — their help text says
+  "Printed in the SLA", "Printed in the Refund Policy" — but nothing had ever
+  read them and the documents held `[confirm: …]` markers instead. Added
+  `company.legal_name`, `company.registration_number`,
+  `company.contact_email`, `company.emergency_phone`, and the two data-region
+  keys the Privacy Policy's processor table needs.
+
+  A blank **required** setting resolves to `[confirm: <label>]`, which is the
+  marker `legalReadiness()` already blocks on — so an unfilled address still
+  keeps its document out of the search index, under the rule that was there
+  before. A blank **optional** token (`{{company.pan?}}`) drops its whole line
+  instead: Nepal has no Impressum rule obliging a company to print its PAN or
+  registry number on a website, so whether those appear is now a field left
+  empty rather than seven documents edited. `pnpm legal:check` and
+  `pnpm legal:todo` both run against the resolved text, and `legal:todo` now
+  separates settings to fill in from markers that need a document edit.
+- **Candidate Privacy Notice** (`/legal/candidates`) — the seventh public legal
+  document, and the one that was overdue: `careers/` has been collecting CVs
+  with nothing describing what happens to them, which the **Individual Privacy
+  Act, 2075** does not permit. Covers the three intern tracks, including the
+  two-way reporting a college-sponsored placement involves, and states plainly
+  that we never charge a candidate a fee.
+- **People-side templates** in `docs/legal/people/` — employment agreement,
+  internship agreement (stipend / unpaid / institution-sponsored),
+  training-placement agreement with an institution, IP assignment and
+  confidentiality, employee handbook, anti-harassment policy, IT and device
+  policy, and an offboarding checklist. **Not published and not CMS content**:
+  these are handed to a person. Written against the Labour Act 2074, the Social
+  Security Act 2074, and the Sexual Harassment at Workplace (Prevention) Act
+  2071, which requires an employer to *have* a policy and a complaints route.
+  Each carries a standing clause that the Act wins wherever it gives someone
+  more than the template does, so no template has to restate a statutory
+  figure exactly.
+- **`docs/PRODUCT_LEGAL_CHECKLIST.md`** — what a new SaaS must publish on its
+  own site to sit under the parent policies, and the floors it may not go
+  below (grace periods, retention, refund window, liability cap, never
+  auto-debit, never hold a customer's end users' money).
+
 - **TOTP enrolment as a flow rather than a line of CLI output** — a new admin
   now scans a QR in the browser instead of copying an `otpauth://` URI out of a
   terminal. `pnpm admin:create` writes the row **inactive with no secret**,
@@ -44,6 +88,42 @@ this file tracks what was delivered.
   access log, the history and the referrer.
 
 ### Changed
+
+- **The legal documents no longer read as a payment aggregator's.** They were
+  written against a PRD that describes Softmato as a payment platform, so they
+  inherited a payments company's centre of gravity — most visibly in the
+  Acceptable Use Policy, where four of six prohibitions were
+  payment-regulatory (hundi/hawala, unlicensed financial services) and a whole
+  section governed merchant accounts we do not operate. Removed, and the
+  sections that actually govern a SaaS-and-agency company grew to take their
+  place.
+- **Terms of Service** now carries all three lines of business rather than one
+  line each, and states the umbrella rule: a product's own terms may add
+  detail and promise more, never less, and where they conflict the term more
+  favourable to the customer applies. Project work gained client
+  responsibilities, scope-change handling, an acceptance window, and an
+  explicit **no-ranking-guarantee** clause for SEO work. The liability cap is
+  now the greater of three months' fees *or* the proposal value, because for
+  project work the old cap could sit far below what the client had paid.
+- **The pass-through payment model is described for the first time.** Where a
+  product routes a customer's own end users' payments using the customer's own
+  merchant credentials, the money moves payer → merchant directly and never
+  reaches us. Nothing in the six documents had said so. Terms §4 now sets out
+  whose provider agreement applies and who handles a refund; the Refund policy
+  says plainly that money we never received is not money we can return.
+- **Privacy Policy** distinguishes controller from processor — data a customer
+  holds in one of our products, merchant credentials, and access to a client's
+  live systems during project work. All three were absent, and they are the
+  positions that matter most now that products hold records about people who
+  are not our customers.
+- **SLA** keeps its 99.5% and 24/7 one-hour P1 numbers unchanged on the
+  founder's instruction; only the payments framing was removed. It now says
+  explicitly that a delivered project site is *not* covered by it, which a
+  footer link had left ambiguous.
+- Commercial periods are now expressed as **floors rather than flat numbers**
+  (grace "at least 7 days", retention "at least 30"), so a product may be more
+  generous without contradicting the parent. The floors are tabulated in
+  `docs/PRODUCT_LEGAL_CHECKLIST.md`.
 
 - `/enrol` joins `/login` in the set of paths `proxy.ts` never rewrites. Under
   the admin surface it would have become `/admin/enrol`, hit the layout's
