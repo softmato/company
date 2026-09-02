@@ -73,8 +73,11 @@ function speakSlots(slots: Array<{ date: string; time: string }>): string {
 
   // A wall of thirty slots is not help. Show the next handful.
   const shown = slots.slice(0, 6);
-  const lines = shown.map(s => `• ${speakSlot(s.date, s.time)}`).join('\n');
-  const more = slots.length > shown.length ? `\n\n(there's more open after that if none of these fit)` : '';
+  const lines = shown.map((s) => `• ${speakSlot(s.date, s.time)}`).join('\n');
+  const more =
+    slots.length > shown.length
+      ? `\n\n(there's more open after that if none of these fit)`
+      : '';
 
   return `here's what's open — all times Kathmandu:\n\n${lines}${more}\n\ntell me which one works plus your name and email, and I'll lock it in.`;
 }
@@ -87,8 +90,13 @@ export function formatToolResult(result: ToolExecutionResult): string {
 
   const data = (result.data ?? {}) as Record<string, unknown>;
 
-  if (result.toolName === 'get_available_meeting_slots' && Array.isArray(data.availableSlots)) {
-    return speakSlots(data.availableSlots as Array<{ date: string; time: string }>);
+  if (
+    result.toolName === 'get_available_meeting_slots' &&
+    Array.isArray(data.availableSlots)
+  ) {
+    return speakSlots(
+      data.availableSlots as Array<{ date: string; time: string }>,
+    );
   }
 
   if (result.toolName === 'book_meeting' && data.bookingId) {

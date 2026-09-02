@@ -80,7 +80,13 @@ export function InviteAdminForm({ minimum }: { minimum: number }) {
         required
       >
         {(props) => (
-          <Input {...props} name="name" type="text" autoComplete="off" required />
+          <Input
+            {...props}
+            name="name"
+            type="text"
+            autoComplete="off"
+            required
+          />
         )}
       </Field>
 

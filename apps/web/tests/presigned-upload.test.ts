@@ -34,12 +34,7 @@ const file = (name: string, type: string, size: number) =>
 
 describe('isImageMime', () => {
   test('accepts the four types the product supports', () => {
-    for (const mime of [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-    ]) {
+    for (const mime of ['image/jpeg', 'image/png', 'image/webp', 'image/gif']) {
       expect(isImageMime(mime)).toBe(true);
     }
   });
@@ -90,9 +85,7 @@ describe('parseCmsImageKey', () => {
   });
 
   test('refuses a traversal', () => {
-    expect(
-      parseCmsImageKey(`${CMS_IMAGE_PREFIX}/../../etc/passwd`),
-    ).toBeNull();
+    expect(parseCmsImageKey(`${CMS_IMAGE_PREFIX}/../../etc/passwd`)).toBeNull();
     expect(
       parseCmsImageKey(`${CMS_IMAGE_PREFIX}/${UUID}-a/../../b.png`),
     ).toBeNull();

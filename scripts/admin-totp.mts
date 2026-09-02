@@ -31,9 +31,7 @@ const email = arg('email')?.toLowerCase();
 const rotate = process.argv.includes('--rotate');
 
 if (!email) {
-  throw new Error(
-    'Usage: pnpm admin:totp -- --email <email> [--rotate]',
-  );
+  throw new Error('Usage: pnpm admin:totp -- --email <email> [--rotate]');
 }
 
 const [user] = await db

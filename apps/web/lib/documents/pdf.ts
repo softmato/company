@@ -49,9 +49,8 @@ export async function renderPdf(html: string): Promise<PdfResult> {
    * `puppeteer-core` and 65 MB of Linux Chromium into every process that
    * touches a document — including the preview script, which needs neither.
    */
-  const { chromiumUsable, renderWithBundledChromium } = await import(
-    './pdf-chromium'
-  );
+  const { chromiumUsable, renderWithBundledChromium } =
+    await import('./pdf-chromium');
 
   if (!chromiumUsable()) {
     return {

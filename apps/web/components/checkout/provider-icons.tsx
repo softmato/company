@@ -15,10 +15,7 @@ export function FonepayIcon({ className }: { className?: string }) {
       aria-hidden="true"
     >
       <rect width="32" height="32" rx="8" fill="#E52127" />
-      <path
-        d="M10 8h12v3.2H13.6v3.6h7.2v3.2h-7.2V24H10V8z"
-        fill="#fff"
-      />
+      <path d="M10 8h12v3.2H13.6v3.6h7.2v3.2h-7.2V24H10V8z" fill="#fff" />
     </svg>
   );
 }

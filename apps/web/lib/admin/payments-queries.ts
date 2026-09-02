@@ -93,34 +93,36 @@ function whereFor(filter: PaymentFilter): SQL | undefined {
 export async function listPayments(
   filter: PaymentFilter = {},
 ): Promise<PaymentRow[]> {
-  return db
-    .select({
-      id: transactions.id,
-      txnNo: transactions.txnNo,
-      providerId: transactions.providerId,
-      providerRef: transactions.providerRef,
-      providerTxnId: transactions.providerTxnId,
-      status: transactions.status,
-      grossAmountMinor: transactions.grossAmountMinor,
-      providerFeeMinor: transactions.providerFeeMinor,
-      netAmountMinor: transactions.netAmountMinor,
-      currency: transactions.currency,
-      invoiceNo: invoices.invoiceNo,
-      customerName: customers.name,
-      journalNo: journalEntries.journalNo,
-      createdAt: transactions.createdAt,
-      succeededAt: transactions.succeededAt,
-    })
-    .from(transactions)
-    .innerJoin(invoices, eq(invoices.id, transactions.invoiceId))
-    .innerJoin(customers, eq(customers.id, transactions.customerId))
-    // Left: only a settled transaction has a journal, and the others must
-    // still appear — a pending payment vanishing from the list because it has
-    // not been booked yet is the opposite of useful.
-    .leftJoin(journalEntries, eq(journalEntries.id, transactions.journalId))
-    .where(whereFor(filter))
-    .orderBy(desc(transactions.createdAt))
-    .limit(filter.limit ?? 100);
+  return (
+    db
+      .select({
+        id: transactions.id,
+        txnNo: transactions.txnNo,
+        providerId: transactions.providerId,
+        providerRef: transactions.providerRef,
+        providerTxnId: transactions.providerTxnId,
+        status: transactions.status,
+        grossAmountMinor: transactions.grossAmountMinor,
+        providerFeeMinor: transactions.providerFeeMinor,
+        netAmountMinor: transactions.netAmountMinor,
+        currency: transactions.currency,
+        invoiceNo: invoices.invoiceNo,
+        customerName: customers.name,
+        journalNo: journalEntries.journalNo,
+        createdAt: transactions.createdAt,
+        succeededAt: transactions.succeededAt,
+      })
+      .from(transactions)
+      .innerJoin(invoices, eq(invoices.id, transactions.invoiceId))
+      .innerJoin(customers, eq(customers.id, transactions.customerId))
+      // Left: only a settled transaction has a journal, and the others must
+      // still appear — a pending payment vanishing from the list because it has
+      // not been booked yet is the opposite of useful.
+      .leftJoin(journalEntries, eq(journalEntries.id, transactions.journalId))
+      .where(whereFor(filter))
+      .orderBy(desc(transactions.createdAt))
+      .limit(filter.limit ?? 100)
+  );
 }
 
 /**

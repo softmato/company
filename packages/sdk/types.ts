@@ -175,12 +175,7 @@ export interface InvoiceDetail {
    * says so rather than saying `issued`.
    */
   status:
-    | 'unpaid'
-    | 'partially_paid'
-    | 'paid'
-    | 'past_due'
-    | 'void'
-    | 'written_off';
+    'unpaid' | 'partially_paid' | 'paid' | 'past_due' | 'void' | 'written_off';
   currency: string;
   issued_at: string | null;
   due_at: string | null;

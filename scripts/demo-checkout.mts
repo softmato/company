@@ -126,7 +126,9 @@ async function loadSeller() {
     .select({ key: platformSettings.key, value: platformSettings.value })
     .from(platformSettings);
 
-  return sellerFromSettings(resolve(new Map(rows.map((r) => [r.key, r.value]))));
+  return sellerFromSettings(
+    resolve(new Map(rows.map((r) => [r.key, r.value]))),
+  );
 }
 
 /** Audit entries are printed rather than written; this is a developer tool. */
@@ -204,7 +206,10 @@ async function main(): Promise<void> {
   console.log('  invoice      ', invoice.invoiceNo);
   console.log('  amount       ', `NPR ${Number(options.amountMinor) / 100}`);
   console.log('  session      ', session.session.id);
-  console.log('  providers    ', session.session.allowedProviders.join(', ') || '(none)');
+  console.log(
+    '  providers    ',
+    session.session.allowedProviders.join(', ') || '(none)',
+  );
   console.log('  expires      ', session.session.expiresAt.toISOString());
   console.log('');
   console.log('  open:', session.checkoutUrl);

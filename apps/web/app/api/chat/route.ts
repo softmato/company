@@ -4,7 +4,12 @@ import { retrieveContext } from '@/lib/ai/retrieve-context';
 import { buildSystemPrompt } from '@/lib/ai/system-prompt';
 import { AI_TOOL_DEFINITIONS, executeTool } from '@/lib/ai/tools';
 import type { ChatMessage, ToolExecutionResult } from '@/lib/ai/types';
-import { allowBooking, allowTurn, callerAddress, hashAddress } from '@/lib/ai/chat-rate-limit';
+import {
+  allowBooking,
+  allowTurn,
+  callerAddress,
+  hashAddress,
+} from '@/lib/ai/chat-rate-limit';
 import { formatToolResults } from '@/lib/ai/format-reply';
 
 export const runtime = 'nodejs';
@@ -15,7 +20,10 @@ export async function POST(req: Request) {
 
     if (!allowTurn(caller)) {
       return NextResponse.json(
-        { message: "you're going a bit fast for me — give me a moment and try again." },
+        {
+          message:
+            "you're going a bit fast for me — give me a moment and try again.",
+        },
         { status: 429 },
       );
     }
@@ -24,10 +32,14 @@ export async function POST(req: Request) {
     const messages: ChatMessage[] = body.messages || [];
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'Messages array is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Messages array is required' },
+        { status: 400 },
+      );
     }
 
-    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+    const lastUserMessage =
+      [...messages].reverse().find((m) => m.role === 'user')?.content || '';
 
     // Step 1: Lightweight Context Retrieval
     const retrievedContexts = await retrieveContext(lastUserMessage, 3);
@@ -51,16 +63,23 @@ export async function POST(req: Request) {
       for (const toolCall of aiResponse.toolCalls) {
         // Booking is the one tool that sends mail, so it carries its own,
         // stricter budget on top of the per-turn limit.
-        if (toolCall.function.name === 'book_meeting' && !allowBooking(caller)) {
+        if (
+          toolCall.function.name === 'book_meeting' &&
+          !allowBooking(caller)
+        ) {
           executedToolResults.push({
             toolName: 'book_meeting',
             success: false,
-            error: 'You have booked several calls already. Reply here and a founder will sort the rest out directly.',
+            error:
+              'You have booked several calls already. Reply here and a founder will sort the rest out directly.',
           });
           continue;
         }
 
-        const result = await executeTool(toolCall.function.name, toolCall.function.arguments);
+        const result = await executeTool(
+          toolCall.function.name,
+          toolCall.function.arguments,
+        );
         executedToolResults.push(result);
       }
 
@@ -81,8 +100,10 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error('[API /api/chat] Internal error:', err);
     return NextResponse.json(
-      { error: 'An unexpected error occurred while processing your AI request.' },
-      { status: 500 }
+      {
+        error: 'An unexpected error occurred while processing your AI request.',
+      },
+      { status: 500 },
     );
   }
 }

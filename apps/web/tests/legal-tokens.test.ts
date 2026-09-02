@@ -38,9 +38,9 @@ describe('resolving tokens', () => {
   test('a token appearing twice is replaced both times', () => {
     const settings = saved({ 'company.pan': '123456789' });
 
-    expect(
-      resolveTokens('{{company.pan}} and {{company.pan}}', settings),
-    ).toBe('123456789 and 123456789');
+    expect(resolveTokens('{{company.pan}} and {{company.pan}}', settings)).toBe(
+      '123456789 and 123456789',
+    );
   });
 
   test('prose containing braces is left alone', () => {

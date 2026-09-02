@@ -16,7 +16,9 @@ describe('Booking detail extraction', () => {
   describe('names', () => {
     it('does not read the first word of a sentence as a name', () => {
       // The regression that mailed "[NEW BOOKING] Book booked a Discovery Call".
-      expect(extractName('book a call, my email is ram@example.com')).toBeNull();
+      expect(
+        extractName('book a call, my email is ram@example.com'),
+      ).toBeNull();
       expect(extractName('Schedule me for next week')).toBeNull();
       expect(extractName('Meeting please')).toBeNull();
     });
@@ -35,9 +37,9 @@ describe('Booking detail extraction', () => {
 
   describe('emails and phones', () => {
     it('finds an address anywhere in the sentence', () => {
-      expect(extractEmail('reach me at ram.thapa+work@example.co.uk please')).toBe(
-        'ram.thapa+work@example.co.uk',
-      );
+      expect(
+        extractEmail('reach me at ram.thapa+work@example.co.uk please'),
+      ).toBe('ram.thapa+work@example.co.uk');
     });
 
     it('returns null when there is no address, never a placeholder', () => {
@@ -45,7 +47,9 @@ describe('Booking detail extraction', () => {
     });
 
     it('finds a phone number but ignores years and short digit runs', () => {
-      expect(extractPhone('call me on +977-9801234567')).toBe('+977-9801234567');
+      expect(extractPhone('call me on +977-9801234567')).toBe(
+        '+977-9801234567',
+      );
       expect(extractPhone('we launched in 2024')).toBeNull();
     });
   });
@@ -132,14 +136,17 @@ describe('Slot generation', () => {
   it('accepts an offered slot written in either time format', () => {
     const slot = generateSlots(TUESDAY)[0]!;
     expect(isOfferedSlot(slot.date, slot.time, TUESDAY)).toBe(true);
-    expect(isOfferedSlot(slot.date, normaliseTime(slot.time), TUESDAY)).toBe(true);
+    expect(isOfferedSlot(slot.date, normaliseTime(slot.time), TUESDAY)).toBe(
+      true,
+    );
   });
 
   it('honours the minimum-notice window', () => {
     const slots = generateSlots(TUESDAY);
     const earliest = slots[0]!;
     const hoursAway =
-      (new Date(`${earliest.date}T00:00:00Z`).getTime() - TUESDAY.getTime()) / 3_600_000;
+      (new Date(`${earliest.date}T00:00:00Z`).getTime() - TUESDAY.getTime()) /
+      3_600_000;
     expect(hoursAway).toBeGreaterThan(-24);
   });
 });

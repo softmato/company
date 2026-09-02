@@ -99,7 +99,9 @@ export function TeamGrid({ members }: { members: TeamMember[] }) {
                   </ProfileLink>
                 ) : null}
                 {member.email ? (
-                  <ProfileLink href={`mailto:${member.email}`}>Email</ProfileLink>
+                  <ProfileLink href={`mailto:${member.email}`}>
+                    Email
+                  </ProfileLink>
                 ) : null}
               </ul>
             ) : null}

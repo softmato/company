@@ -35,10 +35,7 @@ export function serializeInvoice(invoice: Invoice) {
   };
 }
 
-export function serializeSession(
-  session: PaymentSession,
-  checkoutUrl: string,
-) {
+export function serializeSession(session: PaymentSession, checkoutUrl: string) {
   return {
     session_id: session.id,
     checkout_url: checkoutUrl,

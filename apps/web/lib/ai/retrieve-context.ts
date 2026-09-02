@@ -33,7 +33,8 @@ import type { RetrievedContext } from './types';
 const MAX_CONTEXT_CHARS = 2_000;
 
 /** A greeting needs identity, not the price list. */
-const GREETING_RE = /^(hi|hello|hey|greetings|sup|hola|yo|howdy|namaste|good\s?(morning|evening|afternoon))\b/i;
+const GREETING_RE =
+  /^(hi|hello|hey|greetings|sup|hola|yo|howdy|namaste|good\s?(morning|evening|afternoon))\b/i;
 
 /**
  * The one thing worth saying when there is nothing to retrieve.
@@ -48,7 +49,10 @@ const IDENTITY_FALLBACK =
  * `maxResults` caps chunks, not files — several chunks may come from one
  * document when that document is where the answer lives.
  */
-export async function retrieveContext(query: string, maxResults = 4): Promise<RetrievedContext[]> {
+export async function retrieveContext(
+  query: string,
+  maxResults = 4,
+): Promise<RetrievedContext[]> {
   const trimmed = query.trim();
 
   // A bare "hey" carries no terms worth ranking, and answering it does not
@@ -80,7 +84,7 @@ export async function retrieveContext(query: string, maxResults = 4): Promise<Re
 
 function identityContext(): RetrievedContext {
   const index = getIndex();
-  const overview = index.chunks.find(c => c.filename === 'company.md');
+  const overview = index.chunks.find((c) => c.filename === 'company.md');
 
   return {
     filename: 'company.md',

@@ -9,3 +9,9 @@ graphify-out/
 # SQL is hand-written in places (0001, 0002) with comments that carry the
 # reasoning — neither should be rewritten by a formatter.
 packages/db/migrations/
+
+# Working notes, and prettier is not idempotent on it: a fenced code block
+# nested inside a list item gets re-indented on every run, so `--check` fails
+# no matter how many times `--write` is run. Not source, so it is not worth
+# reflowing by hand to satisfy a formatter that cannot settle on an answer.
+todo.md

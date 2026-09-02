@@ -80,7 +80,11 @@ export async function enqueueWebhook(
     applicationId: transaction.applicationId,
     eventType: event,
     payload,
-    signature: sign(application.webhookSecret, timestamp, JSON.stringify(payload)),
+    signature: sign(
+      application.webhookSecret,
+      timestamp,
+      JSON.stringify(payload),
+    ),
     status: 'pending',
     // Due immediately; the retry job picks it up on its next pass.
     nextAttemptAt: occurredAt,

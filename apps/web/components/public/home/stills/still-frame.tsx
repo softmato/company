@@ -36,7 +36,9 @@ export function StillFrame({
       */}
       <div
         className="bloom opacity-50"
-        style={{ '--bloom-x': '68%', '--bloom-y': '82%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '68%', '--bloom-y': '82%' } as React.CSSProperties
+        }
       />
       <div className="w-full">{children}</div>
     </div>

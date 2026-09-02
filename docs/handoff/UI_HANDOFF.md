@@ -6,20 +6,20 @@ Source of truth for the mockups in `softmato-ui-mockups.html` (open it in a brow
 
 The founder narrowed the approved palette to **white, black and emerald**. The terracotta `--accent-strong` and warm-paper cream in `apps/web/app/globals.css` are NOT used. Red survives in one role only, because money legibility depends on it.
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `--background` | `#FFFFFF` | page ground |
-| `--surface` | `#F6F6F4` | panels, secondary buttons, summary rail |
-| `--muted` | `#F5F5F4` | banded table rows, inactive chips |
-| `--foreground` | `#1C1917` | text |
-| `--muted-foreground` | `#78716C` | secondary text, table headers |
-| `--border` | `#E7E5E4` | every hairline |
-| `--primary` | `#047857` | primary buttons, active nav, links |
-| `--primary-foreground` | `#FFFFFF` | text on primary |
-| `--sidebar` | `#E2E6E3` | admin sidebar only |
-| `--credit` | `#1B6B4A` | money in — figures only |
-| `--flag` | `#A81E12` | money out, reversed — figures only |
-| `--destructive` | `#DC2626` | destructive actions, error borders/text |
+| Token                  | Value     | Use                                     |
+| ---------------------- | --------- | --------------------------------------- |
+| `--background`         | `#FFFFFF` | page ground                             |
+| `--surface`            | `#F6F6F4` | panels, secondary buttons, summary rail |
+| `--muted`              | `#F5F5F4` | banded table rows, inactive chips       |
+| `--foreground`         | `#1C1917` | text                                    |
+| `--muted-foreground`   | `#78716C` | secondary text, table headers           |
+| `--border`             | `#E7E5E4` | every hairline                          |
+| `--primary`            | `#047857` | primary buttons, active nav, links      |
+| `--primary-foreground` | `#FFFFFF` | text on primary                         |
+| `--sidebar`            | `#E2E6E3` | admin sidebar only                      |
+| `--credit`             | `#1B6B4A` | money in — figures only                 |
+| `--flag`               | `#A81E12` | money out, reversed — figures only      |
+| `--destructive`        | `#DC2626` | destructive actions, error borders/text |
 
 Rules that are not negotiable: never colour a non-financial word with credit/flag; never colour an amount with anything but credit/flag/foreground; destructive is for buttons that destroy, flag is for figures.
 
@@ -48,7 +48,7 @@ Rules that are not negotiable: never colour a non-financial word with credit/fla
 
 ## 5. The banded table
 
-The one signature move. Odd rows `--background`, even rows `--muted` — structural, always visible, never hover-only. Header row: Plex Mono, 11.5px, uppercase, `0.18em`, muted-foreground, 1px bottom rule. Every amount column right-aligned, mono, tabular. Row height 40px (44px in list views). No zebra *and* border. Real `<table>` markup — screen readers need the row/column relationship.
+The one signature move. Odd rows `--background`, even rows `--muted` — structural, always visible, never hover-only. Header row: Plex Mono, 11.5px, uppercase, `0.18em`, muted-foreground, 1px bottom rule. Every amount column right-aligned, mono, tabular. Row height 40px (44px in list views). No zebra _and_ border. Real `<table>` markup — screen readers need the row/column relationship.
 
 Used in: payments, ledger/journal, trial balance, invoice history, CMS lists, audit log, the public pricing block, and the in-post comparison table.
 

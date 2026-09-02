@@ -89,7 +89,11 @@ describe('the invoice', () => {
     const large: InvoiceDocument = {
       ...SAMPLE_INVOICE,
       lines: [
-        { ...SAMPLE_INVOICE.lines[0]!, unitPriceMinor: 123_456_700n, amountMinor: 123_456_700n },
+        {
+          ...SAMPLE_INVOICE.lines[0]!,
+          unitPriceMinor: 123_456_700n,
+          amountMinor: 123_456_700n,
+        },
       ],
       subtotalMinor: 123_456_700n,
       totalMinor: 123_456_700n,

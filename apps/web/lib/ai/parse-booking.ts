@@ -30,20 +30,72 @@ const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+\w/;
  * Without this list "Book", "Monday" and "Softmato" all read as candidates.
  */
 const NOT_A_NAME = new Set([
-  'book', 'booking', 'meeting', 'call', 'schedule', 'slot', 'discovery',
-  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
-  'today', 'tomorrow', 'softmato', 'hello', 'hey', 'hi', 'thanks', 'please',
-  'yes', 'no', 'sure', 'ok', 'okay', 'my', 'the', 'a', 'an', 'i', 'im',
-  'email', 'name', 'phone', 'number', 'project', 'team', 'jiwan', 'siddhant',
+  'book',
+  'booking',
+  'meeting',
+  'call',
+  'schedule',
+  'slot',
+  'discovery',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+  'today',
+  'tomorrow',
+  'softmato',
+  'hello',
+  'hey',
+  'hi',
+  'thanks',
+  'please',
+  'yes',
+  'no',
+  'sure',
+  'ok',
+  'okay',
+  'my',
+  'the',
+  'a',
+  'an',
+  'i',
+  'im',
+  'email',
+  'name',
+  'phone',
+  'number',
+  'project',
+  'team',
+  'jiwan',
+  'siddhant',
 ]);
 
 const WEEKDAYS = [
-  'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday',
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
 ] as const;
 
 const MONTHS = [
-  'january', 'february', 'march', 'april', 'may', 'june',
-  'july', 'august', 'september', 'october', 'november', 'december',
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
 ] as const;
 
 export function extractEmail(message: string): string | null {
@@ -84,12 +136,12 @@ export function extractName(message: string): string | null {
     const words = captured
       .trim()
       .split(/\s+/)
-      .filter(w => !NOT_A_NAME.has(w.toLowerCase().replace(/[^a-z]/g, '')));
+      .filter((w) => !NOT_A_NAME.has(w.toLowerCase().replace(/[^a-z]/g, '')));
 
     if (words.length === 0) continue;
 
     const name = words
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
 
     if (name.length < 2) continue;
@@ -121,7 +173,10 @@ export function extractTime(message: string): string | null {
  * Handles an explicit ISO date, "tomorrow", a bare weekday ("Tuesday" means
  * the next one, not today), and "12 September" / "September 12".
  */
-export function extractDate(message: string, now: Date = new Date()): string | null {
+export function extractDate(
+  message: string,
+  now: Date = new Date(),
+): string | null {
   const lower = message.toLowerCase();
   const nptNow = new Date(now.getTime() + (5 * 60 + 45) * 60_000);
 
@@ -133,7 +188,9 @@ export function extractDate(message: string, now: Date = new Date()): string | n
     return nptDateKey(new Date(nptNow.getTime() + 86_400_000));
   }
 
-  const weekdayIndex = WEEKDAYS.findIndex(d => new RegExp(`\\b${d}\\b`).test(lower));
+  const weekdayIndex = WEEKDAYS.findIndex((d) =>
+    new RegExp(`\\b${d}\\b`).test(lower),
+  );
   if (weekdayIndex >= 0) {
     let delta = (weekdayIndex - nptNow.getUTCDay() + 7) % 7;
     if (delta === 0) delta = 7;
@@ -147,7 +204,9 @@ export function extractDate(message: string, now: Date = new Date()): string | n
     dayFirst ? [dayFirst[1], dayFirst[2]] : null,
     monthFirst ? [monthFirst[2], monthFirst[1]] : null,
   ].filter(Boolean) as Array<[string, string]>) {
-    const monthIndex = MONTHS.findIndex(m => m.startsWith(monthRaw.toLowerCase()));
+    const monthIndex = MONTHS.findIndex((m) =>
+      m.startsWith(monthRaw.toLowerCase()),
+    );
     if (monthIndex < 0) continue;
 
     const day = Number(dayRaw);
@@ -163,7 +222,10 @@ export function extractDate(message: string, now: Date = new Date()): string | n
   return null;
 }
 
-export function parseBooking(message: string, now: Date = new Date()): ParsedBooking {
+export function parseBooking(
+  message: string,
+  now: Date = new Date(),
+): ParsedBooking {
   return {
     name: extractName(message),
     email: extractEmail(message),

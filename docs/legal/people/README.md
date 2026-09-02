@@ -12,13 +12,13 @@ person signs one.
 
 ## Which document for which person
 
-| Who is joining                            | Give them                                                              |
-| ----------------------------------------- | ---------------------------------------------------------------------- |
-| Developer, manager, any payroll employee  | `employment-agreement.md` + `handbook.md` + `ip-and-confidentiality.md` |
-| Intern on a stipend                       | `internship-agreement.md` (Track A) + `ip-and-confidentiality.md`       |
-| Unpaid intern                             | `internship-agreement.md` (Track B) + `ip-and-confidentiality.md`       |
-| Intern sent by a college or institute     | `internship-agreement.md` (Track C) + `ip-and-confidentiality.md`       |
-| The institute paying for that placement   | `training-institution-agreement.md`                                     |
+| Who is joining                           | Give them                                                               |
+| ---------------------------------------- | ----------------------------------------------------------------------- |
+| Developer, manager, any payroll employee | `employment-agreement.md` + `handbook.md` + `ip-and-confidentiality.md` |
+| Intern on a stipend                      | `internship-agreement.md` (Track A) + `ip-and-confidentiality.md`       |
+| Unpaid intern                            | `internship-agreement.md` (Track B) + `ip-and-confidentiality.md`       |
+| Intern sent by a college or institute    | `internship-agreement.md` (Track C) + `ip-and-confidentiality.md`       |
+| The institute paying for that placement  | `training-institution-agreement.md`                                     |
 
 Everyone, without exception, also gets `anti-harassment-policy.md` and
 `it-and-device-policy.md`. Everyone leaving goes through
@@ -52,15 +52,15 @@ person more than a document here does, **the Act applies and the document
 yields** — every template says so, which is why none of them has to restate a
 statutory figure exactly.
 
-| Law                                                              | What it governs here                                                                 |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **Labour Act, 2074 (2017)** and Labour Rules, 2075                | Written appointment letters, probation, hours, overtime, leave, notice, termination   |
-| **Social Security Act, 2074 (2017)**                              | SSF registration and contributions for employees                                       |
-| **Sexual Harassment at Workplace (Prevention) Act, 2071 (2014)**  | The obligation to _have_ a policy and a complaints mechanism — not optional            |
-| **Bonus Act, 2030**                                               | Profit bonus once the company is profitable                                            |
-| **Income Tax Act, 2058**                                          | TDS on salary and on stipend                                                           |
-| **Individual Privacy Act, 2075 (2018)**                           | Personnel records and candidate data                                                   |
-| **Copyright Act, 2059**                                           | Ownership of what employees and interns create                                         |
+| Law                                                              | What it governs here                                                                |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Labour Act, 2074 (2017)** and Labour Rules, 2075               | Written appointment letters, probation, hours, overtime, leave, notice, termination |
+| **Social Security Act, 2074 (2017)**                             | SSF registration and contributions for employees                                    |
+| **Sexual Harassment at Workplace (Prevention) Act, 2071 (2014)** | The obligation to _have_ a policy and a complaints mechanism — not optional         |
+| **Bonus Act, 2030**                                              | Profit bonus once the company is profitable                                         |
+| **Income Tax Act, 2058**                                         | TDS on salary and on stipend                                                        |
+| **Individual Privacy Act, 2075 (2018)**                          | Personnel records and candidate data                                                |
+| **Copyright Act, 2059**                                          | Ownership of what employees and interns create                                      |
 
 ## Before the first person signs
 

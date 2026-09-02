@@ -43,7 +43,9 @@ export function formatBytes(bytes: number): string {
   const value = bytes / 1024 ** exponent;
   /* One decimal for small values, but never a bare ".0" — "5 MB", not "5.0 MB". */
   const rounded =
-    value >= 10 || exponent === 0 ? Math.round(value) : Number(value.toFixed(1));
+    value >= 10 || exponent === 0
+      ? Math.round(value)
+      : Number(value.toFixed(1));
 
   return `${rounded} ${units[exponent]}`;
 }

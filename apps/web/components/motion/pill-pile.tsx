@@ -97,9 +97,15 @@ export function PillPile({
         Matter.Bodies.rectangle(-WALL / 2, height / 2, WALL, height * 3, {
           isStatic: true,
         }),
-        Matter.Bodies.rectangle(width + WALL / 2, height / 2, WALL, height * 3, {
-          isStatic: true,
-        }),
+        Matter.Bodies.rectangle(
+          width + WALL / 2,
+          height / 2,
+          WALL,
+          height * 3,
+          {
+            isStatic: true,
+          },
+        ),
       ];
 
       /*

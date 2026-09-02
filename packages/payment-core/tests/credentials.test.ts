@@ -71,9 +71,18 @@ describe('rejecting junk before a database round trip', () => {
     ['no prefix', 'hostelhub.abcdefghijklmnopqrstuvwxyz0123456789abcd'],
     ['no dot', 'sk_live_hostelhub_7fk2m9qz'],
     ['too little entropy', 'sk_live_hostelhub_7fk2m9qz.short'],
-    ['bad mode', 'sk_prod_hostelhub_7fk2m9qz.abcdefghijklmnopqrstuvwxyz0123456789'],
-    ['sql-ish', "sk_live_x' OR 1=1--_7fk2m9qz.abcdefghijklmnopqrstuvwxyz01234567"],
-    ['padding characters', 'sk_live_hostelhub_7fk2m9qz.abcdefghijklmnopqrstuvwxyz0123456789+/='],
+    [
+      'bad mode',
+      'sk_prod_hostelhub_7fk2m9qz.abcdefghijklmnopqrstuvwxyz0123456789',
+    ],
+    [
+      'sql-ish',
+      "sk_live_x' OR 1=1--_7fk2m9qz.abcdefghijklmnopqrstuvwxyz01234567",
+    ],
+    [
+      'padding characters',
+      'sk_live_hostelhub_7fk2m9qz.abcdefghijklmnopqrstuvwxyz0123456789+/=',
+    ],
   ])('rejects %s', (_name, value) => {
     expect(clientIdFromSecret(value)).toBeNull();
   });

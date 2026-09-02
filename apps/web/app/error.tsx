@@ -26,7 +26,9 @@ export default function GlobalError({
     <main className="stage flex w-full flex-1 flex-col justify-center px-6 py-24">
       <div
         className="bloom opacity-70"
-        style={{ '--bloom-x': '50%', '--bloom-y': '38%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '38%' } as React.CSSProperties
+        }
       />
 
       <div className="mx-auto w-full max-w-xl">

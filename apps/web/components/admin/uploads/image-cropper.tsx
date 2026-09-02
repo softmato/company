@@ -127,9 +127,7 @@ export function ImageCropper({
   /* Memoised only so `applyScale` is not rebuilt on every render by a fresh object. */
   const natural = useMemo<Frame | null>(
     () =>
-      image
-        ? { height: image.naturalHeight, width: image.naturalWidth }
-        : null,
+      image ? { height: image.naturalHeight, width: image.naturalWidth } : null,
     [image],
   );
 

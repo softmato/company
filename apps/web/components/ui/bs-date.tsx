@@ -31,7 +31,10 @@ export function BsDate({
   return (
     <time
       dateTime={date.toISOString()}
-      className={cn(format === 'numeric' && 'font-mono tabular-nums', className)}
+      className={cn(
+        format === 'numeric' && 'font-mono tabular-nums',
+        className,
+      )}
     >
       {text}
     </time>

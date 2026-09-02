@@ -4,7 +4,10 @@ import { PaymentError } from '../errors';
 import { KhaltiProviderAdapter } from '../providers/khalti';
 
 function adapter(): KhaltiProviderAdapter {
-  return new KhaltiProviderAdapter({ secretKey: 'test-secret', env: 'sandbox' });
+  return new KhaltiProviderAdapter({
+    secretKey: 'test-secret',
+    env: 'sandbox',
+  });
 }
 
 const txn = {
@@ -121,7 +124,11 @@ describe('initiate', () => {
     respond({ payment_url: 'https://test-pay.khalti.com/?pidx=x' });
 
     await expect(
-      adapter().initiate({ id: 'cs_test', invoiceId: 1, amountMinor: 250000n } as never),
+      adapter().initiate({
+        id: 'cs_test',
+        invoiceId: 1,
+        amountMinor: 250000n,
+      } as never),
     ).rejects.toThrow(PaymentError);
   });
 });
@@ -173,7 +180,10 @@ describe('a non-2xx that is really an answer', () => {
   });
 
   it('still throws when a 400 carries a status we have no mapping for', async () => {
-    respond({ pidx: 'pidx_abc123', total_amount: 250000, status: 'Astonished' }, 400);
+    respond(
+      { pidx: 'pidx_abc123', total_amount: 250000, status: 'Astonished' },
+      400,
+    );
 
     await expect(adapter().poll(txn)).rejects.toThrow(PaymentError);
   });

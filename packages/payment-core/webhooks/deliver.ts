@@ -18,11 +18,7 @@
  */
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 
-import {
-  applications,
-  webhookDeliveries,
-  type DbLike,
-} from '@softmato/db';
+import { applications, webhookDeliveries, type DbLike } from '@softmato/db';
 
 import { sign } from './signature';
 
@@ -157,8 +153,7 @@ export async function retryWebhooks(
 }
 
 type Attempt =
-  | { ok: true; status: number }
-  | { ok: false; status?: number; error: string };
+  { ok: true; status: number } | { ok: false; status?: number; error: string };
 
 /**
  * One HTTP POST, with a timeout and no thrown exception.

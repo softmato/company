@@ -73,7 +73,9 @@ export function Markdown({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          h1: (props) => <h2 className="headline mt-8 text-xl" {...withoutNode(props)} />,
+          h1: (props) => (
+            <h2 className="headline mt-8 text-xl" {...withoutNode(props)} />
+          ),
           h2: ({ children: heading, ...props }) => (
             <h2
               id={anchorFor(heading)}
@@ -84,14 +86,25 @@ export function Markdown({
             </h2>
           ),
           h3: (props) => (
-            <h3 className="mt-6 text-base font-medium" {...withoutNode(props)} />
+            <h3
+              className="mt-6 text-base font-medium"
+              {...withoutNode(props)}
+            />
           ),
-          p: (props) => <p className="mt-4 leading-relaxed" {...withoutNode(props)} />,
+          p: (props) => (
+            <p className="mt-4 leading-relaxed" {...withoutNode(props)} />
+          ),
           ul: (props) => (
-            <ul className="mt-4 list-disc space-y-1 pl-5" {...withoutNode(props)} />
+            <ul
+              className="mt-4 list-disc space-y-1 pl-5"
+              {...withoutNode(props)}
+            />
           ),
           ol: (props) => (
-            <ol className="mt-4 list-decimal space-y-1 pl-5" {...withoutNode(props)} />
+            <ol
+              className="mt-4 list-decimal space-y-1 pl-5"
+              {...withoutNode(props)}
+            />
           ),
           a: (props) => (
             <a
@@ -128,7 +141,10 @@ export function Markdown({
            */
           table: (props) => (
             <div className="mt-5 w-[min(68ch,100%)] overflow-x-auto sm:w-auto sm:min-w-full">
-              <table className="w-full border-collapse text-sm" {...withoutNode(props)} />
+              <table
+                className="w-full border-collapse text-sm"
+                {...withoutNode(props)}
+              />
             </div>
           ),
           th: (props) => (
@@ -137,8 +153,12 @@ export function Markdown({
               {...withoutNode(props)}
             />
           ),
-          tr: (props) => <tr className="h-10 even:bg-muted" {...withoutNode(props)} />,
-          td: (props) => <td className="px-3 align-middle" {...withoutNode(props)} />,
+          tr: (props) => (
+            <tr className="h-10 even:bg-muted" {...withoutNode(props)} />
+          ),
+          td: (props) => (
+            <td className="px-3 align-middle" {...withoutNode(props)} />
+          ),
           pre: (props) => (
             <pre
               className="mt-5 overflow-x-auto rounded-lg bg-surface p-4 font-mono text-[13px] leading-relaxed"

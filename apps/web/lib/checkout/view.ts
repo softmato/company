@@ -61,7 +61,11 @@ interface Summary {
 }
 
 export type CheckoutView =
-  | ({ state: 'payable'; providers: CheckoutProvider[]; expiresAt: Date } & Summary)
+  | ({
+      state: 'payable';
+      providers: CheckoutProvider[];
+      expiresAt: Date;
+    } & Summary)
   | ({ state: 'paid' } & Summary)
   | ({ state: 'expired' } & Summary)
   | ({ state: 'closed'; status: string } & Summary)
@@ -171,7 +175,10 @@ async function offerable(session: PaymentSession): Promise<CheckoutProvider[]> {
   const registered = new Set<string>(availableProviders());
 
   const rows = await db
-    .select({ id: paymentProviders.id, displayName: paymentProviders.displayName })
+    .select({
+      id: paymentProviders.id,
+      displayName: paymentProviders.displayName,
+    })
     .from(paymentProviders)
     .where(
       and(

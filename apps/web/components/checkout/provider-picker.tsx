@@ -15,7 +15,11 @@
  * is not: arrow keys do not move between them, nothing announces "2 of 3", and
  * there is no group label. This is the one control on the page.
  */
-import { EsewaIcon, FonepayIcon, KhaltiIcon } from '@/components/checkout/provider-icons';
+import {
+  EsewaIcon,
+  FonepayIcon,
+  KhaltiIcon,
+} from '@/components/checkout/provider-icons';
 import type { CheckoutProvider } from '@/lib/checkout/view';
 import type { ProviderId } from '@softmato/payment-core';
 
@@ -71,7 +75,9 @@ export function ProviderPicker({
                 active ? 'border-primary' : 'border-border'
               }`}
             >
-              {active ? <span className="h-2 w-2 rounded-full bg-primary" /> : null}
+              {active ? (
+                <span className="h-2 w-2 rounded-full bg-primary" />
+              ) : null}
             </span>
 
             {ICONS[id]}

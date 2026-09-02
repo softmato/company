@@ -9,6 +9,7 @@ This tracker outlines all implementation tasks required before and after live bi
 > Everything in this phase is built, wired, and tested end-to-end using sandbox credentials, environment variable toggles, or mocked payment responses.
 
 ### 1. UI & Admin Screens
+
 - [x] **Payments Overview & Details Screen** (`/admin/payments`)
   - List transactions with status filters (pending, succeeded, failed, cancelled, refunded, reconciliation_required).
   - Transaction detail view showing gateway response payload, provider fees, journal link, and audit history.
@@ -25,6 +26,7 @@ This tracker outlines all implementation tasks required before and after live bi
   - Two-column split layout matching Softmato's white-and-emerald design system, tabular monospaced figures, smooth entrance animations, and provider tab selectors.
 
 ### 2. Database Models, API Endpoints, Admin Permissions & Audit Logs
+
 - [x] **Database Schema Alignment**
   - Verified and aligned schema for webhooks (`outbound_webhooks`, `webhook_deliveries`), sessions, transactions, and ledger journal constraints (`payments.ts`).
 - [x] **API & Webhook Callback Endpoints (`apps/web/app/api/v1/`)**
@@ -35,6 +37,7 @@ This tracker outlines all implementation tasks required before and after live bi
   - Connected admin navigation menu links (`AdminNav`) gated by session TOTP MFA.
 
 ### 3. Payment Provider Adapters & Env Variable Controls
+
 - [x] **Khalti Gateway Adapter (`packages/payment-core/providers/khalti.ts`)**
   - Implements `/epayment/initiate/`, `/epayment/lookup/`, `/epayment/refund/`, and sandbox fallback.
 - [x] **eSewa Gateway Adapter (`packages/payment-core/providers/esewa.ts`)**
@@ -45,12 +48,14 @@ This tracker outlines all implementation tasks required before and after live bi
   - Deterministic adapter simulating instant succeeded, pending, failed, cancelled, and refunded flows for non-live end-to-end testing.
 
 ### 4. Production Configuration Templates & Environment Setup
+
 - [x] **`.env.example` Update**
   - Documented payment mode, mock toggles, provider credentials, and standardized webhook callback URLs.
 - [x] **Registry & Exports (`packages/payment-core/index.ts`)**
   - Registered all provider adapters for composition-time loading without heavy SDK coupling.
 
 ### 5. Local & Staging Non-Live End-to-End Testing
+
 - [x] **Unit & Integration Test Suite (`packages/payment-core/tests/providers-sandbox.test.ts`)**
   - Test coverage for Khalti, eSewa, Fonepay, and Mock adapters across initiate, poll, callback, and refund flows.
 

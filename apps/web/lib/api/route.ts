@@ -42,7 +42,10 @@ export function readEndpoint<P = Record<string, never>>(
   handler: (
     context: ApiContext & { params: P; request: Request },
   ) => Promise<{ status?: number; body: unknown } | Response>,
-): (request: Request, routeContext?: { params: Promise<P> }) => Promise<Response> {
+): (
+  request: Request,
+  routeContext?: { params: Promise<P> },
+) => Promise<Response> {
   return async (request, routeContext) => {
     const requestId = newRequestId();
 

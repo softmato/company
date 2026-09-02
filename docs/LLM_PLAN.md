@@ -1,6 +1,7 @@
 # Softmato AI & LLM Integration Architecture Plan
 
 ## Overview
+
 This document outlines the architecture, model routing, provider abstraction, function calling, and knowledge retrieval strategy for the Softmato AI Assistant in Next.js, referencing the multi-provider LLM infrastructure from `ai_local/server` (`D:\siddhant-files\projects\ai_assistant\ai_local\server`).
 
 ---
@@ -10,6 +11,7 @@ This document outlines the architecture, model routing, provider abstraction, fu
 Inspired by the reference python server (`app/ai/providers/manager.py`, `router.py`, `key_manager.py`), our Next.js AI system uses a unified provider layer (`AiProvider`) with automatic fallback and key rotation capability.
 
 ### Supported LLM Providers & Fallback Priority:
+
 1. **Google Gemini** (`GEMINI_API_KEY`, model: `gemini-2.5-flash` / `gemini-1.5-flash`) — Primary default for speed, large context window, and function calling.
 2. **Groq** (`GROQ_API_KEY`, model: `llama-3.3-70b-versatile`) — High-speed inference for quick user responses.
 3. **OpenRouter** (`OPENROUTER_API_KEY`, model: `mistralai/mistral-7b-instruct` / `meta-llama/llama-3.3-70b-instruct`) — Multi-model access & fallback routing.
@@ -32,6 +34,7 @@ As required by `Softmato_AI_Company_Assistant_Architecture.docx`, dynamic operat
 ## 3. Knowledge Base Retrieval (Repository RAG)
 
 Static company data lives in Markdown files inside `knowledge/`:
+
 - `company.md`: Softmato Technology overview, leadership, tech stack, and location.
 - `services.md`: Product engineering, web applications, mobile apps, software development.
 - `pricing.md`: Project tiers (Static, Advanced, Custom) and retainer guidelines.
@@ -40,6 +43,7 @@ Static company data lives in Markdown files inside `knowledge/`:
 - `faq.md`: Frequently asked questions.
 
 ### Retrieval Pipeline:
+
 1. User message enters `POST /api/chat`.
 2. `retrieveContext()` performs query intent token analysis to select relevant `.md` documents.
 3. `buildSystemPrompt()` injects retrieved knowledge context into the system prompt with strict rules forbidding hallucinated meeting availability or unconfirmed bookings.

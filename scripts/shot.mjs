@@ -31,15 +31,16 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-const CHROME =
-  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PORT = Number(process.env.SHOT_PORT ?? 9222);
 
 const [name, urlPath = '/', scrollArg = '0', width = '1440', height = '900'] =
   process.argv.slice(2);
 
 if (!name) {
-  console.error('usage: node scripts/shot.mjs <name> [path] [scrollY|full] [w] [h]');
+  console.error(
+    'usage: node scripts/shot.mjs <name> [path] [scrollY|full] [w] [h]',
+  );
   process.exit(1);
 }
 
@@ -77,7 +78,9 @@ async function endpoint() {
 }
 
 const ws = new WebSocket(await endpoint());
-await new Promise((resolve) => ws.addEventListener('open', resolve, { once: true }));
+await new Promise((resolve) =>
+  ws.addEventListener('open', resolve, { once: true }),
+);
 
 let nextId = 0;
 const pending = new Map();
@@ -101,7 +104,14 @@ function send(method, params = {}, sessionId) {
   const id = (nextId += 1);
   return new Promise((resolve) => {
     pending.set(id, resolve);
-    ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+    ws.send(
+      JSON.stringify({
+        id,
+        method,
+        params,
+        ...(sessionId ? { sessionId } : {}),
+      }),
+    );
   });
 }
 
@@ -114,7 +124,10 @@ function once(method) {
 
 /* A fresh tab per run, so state never leaks between screenshots. */
 const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
-const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+const { sessionId } = await send('Target.attachToTarget', {
+  targetId,
+  flatten: true,
+});
 
 const call = (method, params) => send(method, params, sessionId);
 

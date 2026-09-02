@@ -53,7 +53,9 @@ export function OrderSummary({
               Both are shown because they answer different questions: which
               service this is, and which plan of it was bought.
             */}
-            <p className="text-[15px] font-medium leading-snug">{productName}</p>
+            <p className="text-[15px] font-medium leading-snug">
+              {productName}
+            </p>
             <p className="mt-0.5 text-[13px] text-white/45">{invoiceNo}</p>
           </div>
           <p className="numeric whitespace-nowrap pl-4 text-[15px] font-medium">

@@ -26,7 +26,10 @@ const BASE = {
   occurredAt: new Date('2026-08-16T10:00:00Z'),
 };
 
-function lineFor(journal: ReturnType<typeof paymentReceivedJournal>, code: string) {
+function lineFor(
+  journal: ReturnType<typeof paymentReceivedJournal>,
+  code: string,
+) {
   return journal.lines.find((line) => line.accountCode === code);
 }
 
@@ -53,7 +56,8 @@ describe('paymentReceivedJournal', () => {
 
     const signed = journal.lines.reduce(
       (sum, line) =>
-        sum + (line.direction === 'debit' ? line.amountMinor : -line.amountMinor),
+        sum +
+        (line.direction === 'debit' ? line.amountMinor : -line.amountMinor),
       0n,
     );
 

@@ -8,7 +8,11 @@ import { SURFACE, bar, fillRound, ground, label, strokeRound } from './draw';
  * reasoning as the drawn still in the services chapter, and the same address:
  * ours, never a plausible client's.
  */
-export function drawWebsite(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+export function drawWebsite(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
   ground(ctx, w, h);
 
   /* Window bar. */

@@ -46,7 +46,10 @@ describe('renderPdf', () => {
       pdf: Buffer.from('%PDF-'),
     });
 
-    expect(renderWithChrome).toHaveBeenCalledWith('<p>a</p>', '/usr/bin/google-chrome');
+    expect(renderWithChrome).toHaveBeenCalledWith(
+      '<p>a</p>',
+      '/usr/bin/google-chrome',
+    );
     expect(renderWithBundledChromium).not.toHaveBeenCalled();
   });
 
@@ -92,7 +95,8 @@ describe('renderPdf', () => {
     renderWithBundledChromium.mockResolvedValue({
       ok: true,
       pdf: Buffer.from('%PDF-'),
-      degraded: 'Web fonts did not load; the document is set in a fallback face.',
+      degraded:
+        'Web fonts did not load; the document is set in a fallback face.',
     });
 
     const result = await renderPdf('<p>a</p>');

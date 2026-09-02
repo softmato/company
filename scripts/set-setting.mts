@@ -73,7 +73,9 @@ for (const { key, value } of writes) {
       set: { value, updatedAt: new Date(), updatedBy: null },
     });
 
-  console.log(`✓ ${definitionFor(key)!.label}\n    ${key} = ${value || '(blank)'}`);
+  console.log(
+    `✓ ${definitionFor(key)!.label}\n    ${key} = ${value || '(blank)'}`,
+  );
 }
 
 console.log(`\n${writes.length} settings written.`);

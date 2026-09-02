@@ -92,7 +92,8 @@ export async function renderWithBundledChromium(
       : {
           ok: true,
           pdf,
-          degraded: 'Web fonts did not load; the document is set in a fallback face.',
+          degraded:
+            'Web fonts did not load; the document is set in a fallback face.',
         };
   } finally {
     // Always. A browser left running in a warm container is a leak that

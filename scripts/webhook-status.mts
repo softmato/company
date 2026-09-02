@@ -45,8 +45,12 @@ for (const app of apps) {
       : `set (${app.webhookSecret.length} chars, --reveal to print)`
     : 'MISSING — nothing can be signed, deliveries will be abandoned';
 
-  console.log(`  ${app.clientId}  ${app.isActive ? '' : '(inactive) '}${app.name}`);
-  console.log(`    webhook_url    : ${app.webhookUrl ?? 'MISSING — nothing to deliver to'}`);
+  console.log(
+    `  ${app.clientId}  ${app.isActive ? '' : '(inactive) '}${app.name}`,
+  );
+  console.log(
+    `    webhook_url    : ${app.webhookUrl ?? 'MISSING — nothing to deliver to'}`,
+  );
   console.log(`    webhook_secret : ${secret}`);
   console.log('');
 }
@@ -66,14 +70,14 @@ const rows = await db
   })
   .from(webhookDeliveries)
   .where(
-    all
-      ? undefined
-      : inArray(webhookDeliveries.status, ['pending', 'failed']),
+    all ? undefined : inArray(webhookDeliveries.status, ['pending', 'failed']),
   )
   .orderBy(desc(webhookDeliveries.createdAt))
   .limit(50);
 
-console.log(`WEBHOOK DELIVERIES (${all ? 'all' : 'pending + failed only'}) — ${rows.length}\n`);
+console.log(
+  `WEBHOOK DELIVERIES (${all ? 'all' : 'pending + failed only'}) — ${rows.length}\n`,
+);
 
 for (const row of rows) {
   const payload = row.payload as { transaction_id?: string } | null;

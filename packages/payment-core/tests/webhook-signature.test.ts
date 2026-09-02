@@ -48,8 +48,9 @@ describe('verify', () => {
   });
 
   it('rejects a body edited after signing', () => {
-    expect(signed({ body: '{"event":"payment.success","amount":120000000}' }))
-      .toEqual({ valid: false, reason: 'signature_mismatch' });
+    expect(
+      signed({ body: '{"event":"payment.success","amount":120000000}' }),
+    ).toEqual({ valid: false, reason: 'signature_mismatch' });
   });
 
   it('rejects a signature made with a different secret', () => {

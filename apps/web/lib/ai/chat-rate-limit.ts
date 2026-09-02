@@ -38,9 +38,14 @@ export function callerAddress(req: Request): string {
   return first || req.headers.get('x-real-ip') || 'unknown';
 }
 
-function record(store: Map<string, number[]>, key: string, windowMs: number, max: number): boolean {
+function record(
+  store: Map<string, number[]>,
+  key: string,
+  windowMs: number,
+  max: number,
+): boolean {
   const now = Date.now();
-  const recent = (store.get(key) ?? []).filter(t => now - t < windowMs);
+  const recent = (store.get(key) ?? []).filter((t) => now - t < windowMs);
 
   if (recent.length >= max) {
     store.set(key, recent);
@@ -53,7 +58,7 @@ function record(store: Map<string, number[]>, key: string, windowMs: number, max
   // The map would otherwise grow without bound across a long-lived process.
   if (store.size > 5_000) {
     for (const [k, stamps] of store) {
-      if (stamps.every(t => now - t >= windowMs)) store.delete(k);
+      if (stamps.every((t) => now - t >= windowMs)) store.delete(k);
     }
   }
 

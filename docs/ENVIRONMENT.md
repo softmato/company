@@ -163,7 +163,7 @@ than a failure at the first use:
 
   There is no `EMAIL_FROM`. The sender is assembled per message from the
   domain and the message's category, so a receipt leaves as `Softmato Billing
-  <billing@softmato.com>` and an alert as `Softmato Alerts <alert@…>` —
+<billing@softmato.com>` and an alert as `Softmato Alerts <alert@…>` —
   docs/EMAIL_SYSTEM.md has the full table. `EMAIL_DOMAIN` is a **bare
   hostname**, not an address, and it must be verified in the Resend account or
   the provider rejects the send. Unset, it falls back to `softmato.com`.
@@ -267,10 +267,10 @@ engine at all the download falls back to HTML with an
 
 `lib/documents/pdf.ts` picks one of two, in this order:
 
-| | |
-| --- | --- |
-| A Chrome or Edge on the machine | `CHROME_PATH`, or a standard install location. Every developer, and any container built on a Chrome image. No dependency |
-| Chromium bundled into the deployment | `@sparticuz/chromium` + `puppeteer-core`. **This is the production engine** — Vercel's servers have no browser |
+|                                      |                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| A Chrome or Edge on the machine      | `CHROME_PATH`, or a standard install location. Every developer, and any container built on a Chrome image. No dependency |
+| Chromium bundled into the deployment | `@sparticuz/chromium` + `puppeteer-core`. **This is the production engine** — Vercel's servers have no browser           |
 
 The local binary wins where there is one: it starts faster than unpacking 65 MB
 of Chromium into `/tmp`, and the bundled build is Linux x64, so on a Mac or on
@@ -300,7 +300,7 @@ Access via `@aws-sdk/client-s3` with `region: 'auto'` and the R2 endpoint.
 ### Admin image uploads are presigned
 
 The file never passes through the server. A Vercel function rejects a request
-body over 4.5 MB before the handler runs, which is *below* the 5 MB above — so
+body over 4.5 MB before the handler runs, which is _below_ the 5 MB above — so
 routing bytes through us made the top of the documented range impossible to
 upload, and paid to move every megabyte twice.
 

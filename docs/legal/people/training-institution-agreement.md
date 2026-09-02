@@ -53,12 +53,12 @@ training.
 
 ## 3. Fee and payment
 
-| | |
-| --- | --- |
-| **Training fee** | NPR [confirm: amount] per student |
-| **Total for this cohort** | NPR [confirm: amount] for [n] students |
-| **Invoiced** | [confirm: in full before the placement starts / in two stages] |
-| **Payable within** | 15 days of the invoice |
+|                           |                                                                |
+| ------------------------- | -------------------------------------------------------------- |
+| **Training fee**          | NPR [confirm: amount] per student                              |
+| **Total for this cohort** | NPR [confirm: amount] for [n] students                         |
+| **Invoiced**              | [confirm: in full before the placement starts / in two stages] |
+| **Payable within**        | 15 days of the invoice                                         |
 
 Softmato is PAN-registered and **not currently VAT-registered**, so no VAT is
 charged. Where the Institute must deduct tax at source under the **Income Tax
@@ -172,11 +172,11 @@ agreement governs.
 
 ## Schedule A — Students
 
-| # | Name | Course | Email | Phone | Placement objectives |
-| --- | --- | --- | --- | --- | --- |
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
+| #   | Name | Course | Email | Phone | Placement objectives |
+| --- | ---- | ------ | ----- | ----- | -------------------- |
+| 1   |      |        |       |       |                      |
+| 2   |      |        |       |       |                      |
+| 3   |      |        |       |       |                      |
 
 ---
 

@@ -137,12 +137,7 @@ describe('clampOffset', () => {
     ];
 
     for (const source of images) {
-      for (const aspect of [
-        source.width / source.height,
-        16 / 9,
-        4 / 3,
-        1,
-      ]) {
+      for (const aspect of [source.width / source.height, 16 / 9, 4 / 3, 1]) {
         const frame = frameFor(aspect, BOUNDS);
         const min = coverScale(source, frame);
 

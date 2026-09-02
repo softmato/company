@@ -44,7 +44,9 @@ export function DrawIn({
 
     registerMotionPlugins();
 
-    const strokes = el.querySelectorAll('path, line, polyline, circle, ellipse');
+    const strokes = el.querySelectorAll(
+      'path, line, polyline, circle, ellipse',
+    );
 
     if (strokes.length === 0) return;
 

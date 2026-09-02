@@ -75,7 +75,10 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
 
-        <nav aria-label="Primary" className="nav-pill hidden h-11 items-center px-1.5 md:flex">
+        <nav
+          aria-label="Primary"
+          className="nav-pill hidden h-11 items-center px-1.5 md:flex"
+        >
           <ul className="flex items-center gap-0.5">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>

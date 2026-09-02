@@ -8,17 +8,21 @@ import { defaultAiProvider, SmartFallbackProvider } from '../lib/ai/provider';
 describe('Softmato AI Assistant Core System', () => {
   describe('Context Retrieval Engine', () => {
     it('retrieves pricing context when asked about costs and pricing tiers', async () => {
-      const contexts = await retrieveContext('How much does custom website development cost?');
+      const contexts = await retrieveContext(
+        'How much does custom website development cost?',
+      );
       expect(contexts.length).toBeGreaterThan(0);
-      const pricingDoc = contexts.find(c => c.filename === 'pricing.md');
+      const pricingDoc = contexts.find((c) => c.filename === 'pricing.md');
       expect(pricingDoc).toBeDefined();
       expect(pricingDoc?.content).toContain('Pricing');
     });
 
     it('retrieves service context for tech stack inquiries', async () => {
-      const contexts = await retrieveContext('What services and mobile app features do you offer?');
+      const contexts = await retrieveContext(
+        'What services and mobile app features do you offer?',
+      );
       expect(contexts.length).toBeGreaterThan(0);
-      const servicesDoc = contexts.find(c => c.filename === 'services.md');
+      const servicesDoc = contexts.find((c) => c.filename === 'services.md');
       expect(servicesDoc).toBeDefined();
       expect(servicesDoc?.content).toContain('Services');
     });
@@ -26,14 +30,18 @@ describe('Softmato AI Assistant Core System', () => {
     it('falls back gracefully to general company context for unknown terms', async () => {
       const contexts = await retrieveContext('random unmapped queryxyz');
       expect(contexts.length).toBeGreaterThan(0);
-      expect(contexts.some(c => c.filename === 'company.md')).toBe(true);
+      expect(contexts.some((c) => c.filename === 'company.md')).toBe(true);
     });
   });
 
   describe('System Prompt Generator', () => {
     it('formats system prompt with retrieved context blocks and strict rules', () => {
       const mockContext = [
-        { filename: 'company.md', content: 'Softmato Technology Pvt Ltd overview', score: 2 },
+        {
+          filename: 'company.md',
+          content: 'Softmato Technology Pvt Ltd overview',
+          score: 2,
+        },
       ];
       const prompt = buildSystemPrompt(mockContext);
       expect(prompt).toContain('Alex');
@@ -45,7 +53,7 @@ describe('Softmato AI Assistant Core System', () => {
   describe('AI Tools & Function Calling', () => {
     it('has valid tool definitions for LLM registration', () => {
       expect(AI_TOOL_DEFINITIONS.length).toBe(4);
-      const toolNames = AI_TOOL_DEFINITIONS.map(t => t.name);
+      const toolNames = AI_TOOL_DEFINITIONS.map((t) => t.name);
       expect(toolNames).toContain('get_available_meeting_slots');
       expect(toolNames).toContain('book_meeting');
       expect(toolNames).toContain('create_lead');
@@ -56,7 +64,10 @@ describe('Softmato AI Assistant Core System', () => {
       const res = await executeTool('get_available_meeting_slots', {});
       expect(res.success).toBe(true);
       const data = res.data as Record<string, unknown>;
-      const slots = data.availableSlots as Array<{ date: string; time: string }>;
+      const slots = data.availableSlots as Array<{
+        date: string;
+        time: string;
+      }>;
 
       expect(Array.isArray(slots)).toBe(true);
       expect(slots.length).toBeGreaterThan(0);
@@ -176,7 +187,9 @@ describe('Softmato AI Assistant Core System', () => {
 
     it('resilient provider executes chat without throwing', async () => {
       const response = await defaultAiProvider.chat({
-        messages: [{ role: 'user', content: 'What are your available meeting slots?' }],
+        messages: [
+          { role: 'user', content: 'What are your available meeting slots?' },
+        ],
         systemPrompt: 'Test prompt',
       });
       expect(response.message).toBeDefined();

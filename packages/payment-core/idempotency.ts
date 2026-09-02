@@ -108,7 +108,9 @@ export async function withIdempotency<T extends Record<string, unknown>>(
 
 type StoredKey = typeof idempotencyKeys.$inferSelect;
 
-async function read(request: IdempotentRequest): Promise<StoredKey | undefined> {
+async function read(
+  request: IdempotentRequest,
+): Promise<StoredKey | undefined> {
   const [row] = await db
     .select()
     .from(idempotencyKeys)
@@ -130,7 +132,10 @@ function replay<T extends Record<string, unknown>>(
 ): IdempotentOutcome<T> {
   // A key reused with a different body is the caller's bug, and answering it
   // with the first response would hide it. 409 (docs/API.md §1).
-  if (stored.endpoint !== request.endpoint || stored.requestHash !== requestHash) {
+  if (
+    stored.endpoint !== request.endpoint ||
+    stored.requestHash !== requestHash
+  ) {
     throw new PaymentError(
       'IDEMPOTENCY_CONFLICT',
       'Idempotency key reused with a different request',
@@ -171,7 +176,8 @@ function hashRequest(endpoint: string, body: unknown): string {
 }
 
 function canonical(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+  if (value === null || typeof value !== 'object')
+    return JSON.stringify(value) ?? 'null';
 
   if (Array.isArray(value)) {
     return `[${value.map(canonical).join(',')}]`;

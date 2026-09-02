@@ -81,7 +81,8 @@ async function confirmIdentity(
       ok: false,
       message: 'Nothing happened.',
       fieldErrors: {
-        password: 'Confirm with your password and a code from your authenticator.',
+        password:
+          'Confirm with your password and a code from your authenticator.',
       },
     };
   }
@@ -258,7 +259,10 @@ export async function revokeApplicationAction(
     revalidatePath('/admin/applications');
     revalidatePath('/admin/products');
 
-    return { ok: true, message: 'Revoked. Every secret for it stopped working.' };
+    return {
+      ok: true,
+      message: 'Revoked. Every secret for it stopped working.',
+    };
   } catch (error) {
     return failure(error);
   }
@@ -294,7 +298,10 @@ export async function updateApplicationAction(
      */
     await updateApplication(
       applicationId,
-      { scopes, webhookUrl: String(form.get('webhookUrl') ?? '').trim() || null },
+      {
+        scopes,
+        webhookUrl: String(form.get('webhookUrl') ?? '').trim() || null,
+      },
       { type: 'admin', id: adminId },
       recordAudit,
     );

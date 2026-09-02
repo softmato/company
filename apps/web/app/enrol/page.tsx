@@ -49,9 +49,7 @@ function Refused() {
   );
 }
 
-export default async function EnrolPage({
-  searchParams,
-}: PageProps<'/enrol'>) {
+export default async function EnrolPage({ searchParams }: PageProps<'/enrol'>) {
   const { token: rawToken, error } = await searchParams;
   const token = typeof rawToken === 'string' ? rawToken : '';
 

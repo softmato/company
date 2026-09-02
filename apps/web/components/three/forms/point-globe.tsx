@@ -20,7 +20,11 @@ const KATHMANDU = { lat: 27.7172, lon: 85.324 };
  * Kathmandu in the Pacific — which is the kind of mistake that survives review
  * on a globe made of undifferentiated dots.
  */
-function onSphere(lat: number, lon: number, radius: number): [number, number, number] {
+function onSphere(
+  lat: number,
+  lon: number,
+  radius: number,
+): [number, number, number] {
   const phi = ((90 - lat) * Math.PI) / 180;
   const theta = ((lon + 180) * Math.PI) / 180;
 

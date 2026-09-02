@@ -127,11 +127,7 @@ function AttachedImage({
       <div className="flex min-w-0 items-center gap-2.5">
         <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element -- preview of a freshly uploaded object. */}
-          <img
-            src={file.url}
-            alt=""
-            className="size-full object-cover"
-          />
+          <img src={file.url} alt="" className="size-full object-cover" />
         </span>
         <div className="min-w-0">
           <p className="truncate text-xs font-semibold text-foreground">
@@ -313,7 +309,8 @@ export function ImageUploaderView({
           'focus-within:outline-none focus-within:ring-[3px] focus-within:ring-ring/50',
           large ? 'rounded-xl px-4 py-8' : 'px-4 py-4',
           isDragging && 'border-solid border-primary bg-primary/5',
-          locked && 'cursor-not-allowed opacity-60 hover:border-border hover:bg-transparent',
+          locked &&
+            'cursor-not-allowed opacity-60 hover:border-border hover:bg-transparent',
         )}
       >
         {busy ? (
@@ -323,7 +320,9 @@ export function ImageUploaderView({
         ) : (
           <UploadIcon
             className={cn(
-              large ? 'mb-1 size-6 text-primary' : 'size-4 text-muted-foreground',
+              large
+                ? 'mb-1 size-6 text-primary'
+                : 'size-4 text-muted-foreground',
             )}
           />
         )}

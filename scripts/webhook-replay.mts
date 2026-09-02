@@ -59,7 +59,8 @@ const rows = await db
 
 const match = txn
   ? rows.find(
-      (row) => (row.payload as { transaction_id?: string })?.transaction_id === txn,
+      (row) =>
+        (row.payload as { transaction_id?: string })?.transaction_id === txn,
     )
   : rows[0];
 
@@ -74,7 +75,9 @@ if (!match) {
 }
 
 if (!match.secret) {
-  console.error(`Application ${match.clientId} has no webhook_secret; nothing can be signed.`);
+  console.error(
+    `Application ${match.clientId} has no webhook_secret; nothing can be signed.`,
+  );
   process.exit(1);
 }
 
@@ -99,15 +102,30 @@ const headers: Record<string, string> = {
 if (!omitSignature) headers['X-Softmato-Signature'] = signature;
 
 console.log(`Replaying ${match.eventType} (row status: ${match.status})`);
-console.log(`  transaction : ${(match.payload as { transaction_id?: string })?.transaction_id}`);
+console.log(
+  `  transaction : ${(match.payload as { transaction_id?: string })?.transaction_id}`,
+);
 console.log(`  to          : ${url}`);
-console.log(`  signed with : ${overrideSecret ? 'AN OVERRIDE SECRET (expect rejection)' : 'the application webhook_secret'}`);
-if (age) console.log(`  timestamp   : backdated ${age}s (expect timestamp_too_old past 300s)`);
-if (tamper) console.log('  body        : TAMPERED after signing (expect signature_mismatch)');
-if (omitSignature) console.log('  signature   : header omitted (expect signature_mismatch)');
+console.log(
+  `  signed with : ${overrideSecret ? 'AN OVERRIDE SECRET (expect rejection)' : 'the application webhook_secret'}`,
+);
+if (age)
+  console.log(
+    `  timestamp   : backdated ${age}s (expect timestamp_too_old past 300s)`,
+  );
+if (tamper)
+  console.log(
+    '  body        : TAMPERED after signing (expect signature_mismatch)',
+  );
+if (omitSignature)
+  console.log('  signature   : header omitted (expect signature_mismatch)');
 
 try {
-  const response = await fetch(url, { method: 'POST', headers, body: sentBody });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: sentBody,
+  });
 
   console.log(`\n  → HTTP ${response.status} ${await response.text()}`);
 } catch (error) {

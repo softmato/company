@@ -141,9 +141,12 @@ async function syncTeam(): Promise<number> {
    * site show real content, and a team member seeded as a draft does not
    * appear on /team — which is the thing we are here to fix.
    */
-  await db
-    .insert(teamMembers)
-    .values(teamMemberSeeds.map((member) => ({ ...member, status: 'published' as const })));
+  await db.insert(teamMembers).values(
+    teamMemberSeeds.map((member) => ({
+      ...member,
+      status: 'published' as const,
+    })),
+  );
 
   return teamMemberSeeds.length;
 }

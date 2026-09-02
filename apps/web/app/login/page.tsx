@@ -6,19 +6,14 @@ import { AuthError, CredentialsSignin } from 'next-auth';
 import { redirect } from 'next/navigation';
 
 import { signIn } from '@/lib/auth';
-import {
-  LOGIN_FAILURE_MESSAGE,
-  loginFailureCode,
-} from '@/lib/auth-failure';
+import { LOGIN_FAILURE_MESSAGE, loginFailureCode } from '@/lib/auth-failure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Wordmark } from '@/components/public/wordmark';
 
-export default async function LoginPage({
-  searchParams,
-}: PageProps<'/login'>) {
+export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
   const { error, enrolled } = await searchParams;
   // An unrecognised code — including the bare `?error=1` this page used to
   // redirect to — falls back to the vague message rather than to no message.

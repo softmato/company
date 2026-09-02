@@ -31,10 +31,14 @@ export function PageContainer({
     <div className="stage">
       <div
         className="bloom opacity-60"
-        style={{ '--bloom-x': '50%', '--bloom-y': '-6%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '-6%' } as React.CSSProperties
+        }
       />
 
-      <div className={cn('mx-auto w-full max-w-5xl px-6 pb-24 pt-36', className)}>
+      <div
+        className={cn('mx-auto w-full max-w-5xl px-6 pb-24 pt-36', className)}
+      >
         {children}
       </div>
     </div>

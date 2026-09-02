@@ -60,12 +60,7 @@ export interface DocumentLine {
  * that is three weeks late would be technically true and practically useless.
  */
 export type DocumentStatus =
-  | 'unpaid'
-  | 'partially_paid'
-  | 'paid'
-  | 'past_due'
-  | 'void'
-  | 'written_off';
+  'unpaid' | 'partially_paid' | 'paid' | 'past_due' | 'void' | 'written_off';
 
 export interface InvoiceDocument {
   kind: 'invoice';

@@ -41,7 +41,9 @@ const effectiveArg = process.argv
   .find((a) => a.startsWith('--effective='))
   ?.slice('--effective='.length);
 
-const effectiveAt = effectiveArg ? new Date(`${effectiveArg}T00:00:00Z`) : new Date();
+const effectiveAt = effectiveArg
+  ? new Date(`${effectiveArg}T00:00:00Z`)
+  : new Date();
 
 if (Number.isNaN(effectiveAt.getTime())) {
   console.error(`Not a date: ${effectiveArg}. Use --effective=YYYY-MM-DD.`);
@@ -96,7 +98,10 @@ for (const seed of legalDocumentSeeds) {
   };
 
   if (existing) {
-    await db.update(legalDocuments).set(values).where(eq(legalDocuments.id, existing.id));
+    await db
+      .update(legalDocuments)
+      .set(values)
+      .where(eq(legalDocuments.id, existing.id));
   } else {
     await db.insert(legalDocuments).values({ ...seed, ...values, version });
   }
@@ -130,7 +135,9 @@ for (const seed of legalDocumentSeeds) {
 
 console.log(
   `\n${written} documents rewritten from the seeds` +
-    (publish ? `, ${published} published, ${skipped} skipped as not ready` : '') +
+    (publish
+      ? `, ${published} published, ${skipped} skipped as not ready`
+      : '') +
     '.',
 );
 

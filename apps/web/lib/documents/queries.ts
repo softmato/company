@@ -116,7 +116,13 @@ export async function findInvoice(
     .from(invoices)
     .innerJoin(customers, eq(customers.id, invoices.customerId))
     .innerJoin(products, eq(products.id, invoices.productId))
-    .where(owned(eq(invoices.invoiceNo, invoiceNo), invoices.applicationId, ownerApplicationId))
+    .where(
+      owned(
+        eq(invoices.invoiceNo, invoiceNo),
+        invoices.applicationId,
+        ownerApplicationId,
+      ),
+    )
     .limit(1);
 
   return row ?? null;
@@ -177,10 +183,7 @@ export async function paymentsFor(invoiceId: number): Promise<PaymentRecord[]> {
 export async function findPayment(
   txnNo: string,
   ownerApplicationId?: number,
-): Promise<
-  | (PaymentRecord & { invoiceId: number; invoiceNo: string })
-  | null
-> {
+): Promise<(PaymentRecord & { invoiceId: number; invoiceNo: string }) | null> {
   const [row] = await db
     .select({
       txnNo: transactions.txnNo,
@@ -204,7 +207,13 @@ export async function findPayment(
     )
     .innerJoin(invoices, eq(invoices.id, transactions.invoiceId))
     .leftJoin(journalEntries, eq(journalEntries.id, transactions.journalId))
-    .where(owned(eq(transactions.txnNo, txnNo), transactions.applicationId, ownerApplicationId))
+    .where(
+      owned(
+        eq(transactions.txnNo, txnNo),
+        transactions.applicationId,
+        ownerApplicationId,
+      ),
+    )
     .limit(1);
 
   return row ?? null;

@@ -244,7 +244,9 @@ describe('startPayment', () => {
 
     const { transaction } = await start(session.id);
 
-    const entry = audited.slice(before).find((e) => e.action === 'transaction.start');
+    const entry = audited
+      .slice(before)
+      .find((e) => e.action === 'transaction.start');
     expect(entry?.resourceId).toBe(transaction.txnNo);
   });
 
@@ -357,7 +359,11 @@ describe('startPayment', () => {
     // Evaluated at real `now`, which is past this deadline.
     await expect(
       db.transaction((tx) =>
-        startPayment(tx, { sessionId: session!.id, providerId: PROVIDER }, audit),
+        startPayment(
+          tx,
+          { sessionId: session!.id, providerId: PROVIDER },
+          audit,
+        ),
       ),
     ).rejects.toMatchObject({ code: 'SESSION_EXPIRED' });
 

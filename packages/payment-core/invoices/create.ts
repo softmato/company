@@ -281,7 +281,8 @@ export async function createInvoice(
           invoiceNo: invoice.invoiceNo,
           totalMinor: total.toString(),
           journalNo: posted.journalNo,
-          deferred: input.serviceStartsAt != null && input.serviceEndsAt != null,
+          deferred:
+            input.serviceStartsAt != null && input.serviceEndsAt != null,
         },
       },
       tx,

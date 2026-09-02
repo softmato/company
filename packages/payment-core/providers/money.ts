@@ -38,7 +38,9 @@ export function minorFromDecimal(
   raw: string | number,
   exponent: number = MINOR_EXPONENT,
 ): bigint {
-  const text = String(raw).trim().replace(/[,\s_]/g, '');
+  const text = String(raw)
+    .trim()
+    .replace(/[,\s_]/g, '');
 
   if (!DECIMAL.test(text)) {
     throw new PaymentError(
@@ -49,9 +51,9 @@ export function minorFromDecimal(
   }
 
   const negative = text.startsWith('-');
-  const [whole = '0', fraction = ''] = (
-    negative ? text.slice(1) : text
-  ).split('.');
+  const [whole = '0', fraction = ''] = (negative ? text.slice(1) : text).split(
+    '.',
+  );
 
   if (fraction.length > exponent) {
     throw new PaymentError(

@@ -71,7 +71,10 @@ function splitLongBody(body: string): string[] {
  * own; prefixed with "Pricing > Static Web Tier" it answers a pricing
  * question without the model having to infer where it came from.
  */
-export function chunkMarkdown(filename: string, content: string): KnowledgeChunk[] {
+export function chunkMarkdown(
+  filename: string,
+  content: string,
+): KnowledgeChunk[] {
   const chunks: KnowledgeChunk[] = [];
   const stack: string[] = [];
   let buffer: string[] = [];

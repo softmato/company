@@ -132,7 +132,10 @@ export function Showcase() {
   );
 
   /* Textures hold GPU memory until they are told not to. */
-  useEffect(() => () => textures.forEach((texture) => texture.dispose()), [textures]);
+  useEffect(
+    () => () => textures.forEach((texture) => texture.dispose()),
+    [textures],
+  );
 
   useFrame((_, delta) => {
     if (!still.current) spin.current += delta * SPEED;

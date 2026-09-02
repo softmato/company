@@ -27,7 +27,6 @@ import { PaymentError } from '../errors';
 import { SESSION_TTL_MS } from './expiry';
 import { generateSessionId } from './id';
 
-
 export interface CreateSessionInput {
   /** The `invoice_no` returned by `POST /v1/invoices`. */
   invoiceId: string;
@@ -103,7 +102,9 @@ export async function createSession(
     .returning();
 
   if (!session) {
-    throw new PaymentError('INTERNAL', 'Session insert returned no row', { id });
+    throw new PaymentError('INTERNAL', 'Session insert returned no row', {
+      id,
+    });
   }
 
   await audit(

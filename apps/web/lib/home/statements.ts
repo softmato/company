@@ -19,7 +19,11 @@
  */
 
 /** Under the hero. Paraphrases the home page's "How we work" section. */
-export const CRAFT_STATEMENT = ['We build it.', 'We run it.', 'We answer for it.'];
+export const CRAFT_STATEMENT = [
+  'We build it.',
+  'We run it.',
+  'We answer for it.',
+];
 
 export interface Principle {
   title: string;

@@ -50,7 +50,9 @@ export async function transitionTransaction(
     .set({
       status: next,
       updatedAt: now,
-      ...(options.providerTxnId ? { providerTxnId: options.providerTxnId } : {}),
+      ...(options.providerTxnId
+        ? { providerTxnId: options.providerTxnId }
+        : {}),
       ...(options.providerFeeMinor !== undefined
         ? { providerFeeMinor: options.providerFeeMinor }
         : {}),

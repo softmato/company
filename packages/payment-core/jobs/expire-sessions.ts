@@ -21,7 +21,11 @@
  */
 import { and, eq, inArray, lte } from 'drizzle-orm';
 
-import { paymentSessions, type DbLike, type PaymentSession } from '@softmato/db';
+import {
+  paymentSessions,
+  type DbLike,
+  type PaymentSession,
+} from '@softmato/db';
 
 import type { AuditRecorder } from '../audit';
 import { isPaymentError } from '../errors';
@@ -29,7 +33,11 @@ import { transitionSession } from '../sessions/transition';
 import type { SessionStatus } from '../sessions/state-machine';
 
 /** The statuses `sessions_expiry_idx` is partial on. Keep the two in step. */
-const OPEN: readonly SessionStatus[] = ['created', 'provider_selected', 'pending'];
+const OPEN: readonly SessionStatus[] = [
+  'created',
+  'provider_selected',
+  'pending',
+];
 
 export interface ExpireSessionsResult {
   expired: number;

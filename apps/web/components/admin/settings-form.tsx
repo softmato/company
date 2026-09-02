@@ -125,7 +125,11 @@ function SettingField({
         </p>
 
         {error ? (
-          <p id={errorId} role="alert" className="mt-1 text-[13px] text-destructive">
+          <p
+            id={errorId}
+            role="alert"
+            className="mt-1 text-[13px] text-destructive"
+          >
             {error}
           </p>
         ) : null}
@@ -175,7 +179,11 @@ function SettingField({
       </p>
 
       {error ? (
-        <p id={errorId} role="alert" className="mt-1 text-[13px] text-destructive">
+        <p
+          id={errorId}
+          role="alert"
+          className="mt-1 text-[13px] text-destructive"
+        >
           {error}
         </p>
       ) : null}

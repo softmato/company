@@ -8,7 +8,11 @@ import { SURFACE, bar, fillRound, ground, label } from './draw';
  * tab bar along the foot and the notification resting over the top — the same
  * two the drawn still in the services chapter leans on.
  */
-export function drawApp(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+export function drawApp(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
   ground(ctx, w, h);
 
   const sx = 34;
@@ -35,7 +39,15 @@ export function drawApp(ctx: CanvasRenderingContext2D, w: number, h: number): vo
     const x = sx + 22 + col * (tile + gap);
     const y = 118 + row * (tile + gap);
 
-    fillRound(ctx, x, y, tile, tile, 14, i === 0 ? SURFACE.glow : SURFACE.panelSoft);
+    fillRound(
+      ctx,
+      x,
+      y,
+      tile,
+      tile,
+      14,
+      i === 0 ? SURFACE.glow : SURFACE.panelSoft,
+    );
     fillRound(
       ctx,
       x + tile / 2 - 11,

@@ -10,7 +10,11 @@ import { SURFACE, bar, fillRound, ground, label } from './draw';
  * as our customer count and named rows read as our clients. Bars carry the
  * composition and claim nothing.
  */
-export function drawProduct(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+export function drawProduct(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
   ground(ctx, w, h);
 
   const sideW = 132;
@@ -21,9 +25,17 @@ export function drawProduct(ctx: CanvasRenderingContext2D, w: number, h: number)
   bar(ctx, 72, 52, 54);
   [0, 1, 2, 3].forEach((i) => {
     const y = 100 + i * 34;
-    if (i === 0) fillRound(ctx, 34, y - 8, sideW - 24, 28, 9, SURFACE.panelSoft);
+    if (i === 0)
+      fillRound(ctx, 34, y - 8, sideW - 24, 28, 9, SURFACE.panelSoft);
     fillRound(ctx, 44, y, 14, 14, 4, i === 0 ? SURFACE.glow : SURFACE.line);
-    bar(ctx, 66, y + 3, i === 0 ? 46 : 38, i === 0 ? SURFACE.glow : SURFACE.line, 7);
+    bar(
+      ctx,
+      66,
+      y + 3,
+      i === 0 ? 46 : 38,
+      i === 0 ? SURFACE.glow : SURFACE.line,
+      7,
+    );
   });
 
   /* Header. */
@@ -64,7 +76,15 @@ export function drawProduct(ctx: CanvasRenderingContext2D, w: number, h: number)
     ctx.arc(bx + 13, y, 13, 0, Math.PI * 2);
     ctx.fill();
     bar(ctx, bx + 38, y - 5, 200 - i * 28);
-    fillRound(ctx, w - 106, y - 9, 60, 18, 9, i === 2 ? SURFACE.line : SURFACE.panelSoft);
+    fillRound(
+      ctx,
+      w - 106,
+      y - 9,
+      60,
+      18,
+      9,
+      i === 2 ? SURFACE.line : SURFACE.panelSoft,
+    );
   });
 
   label(ctx, 'Products', 22, h - 26);

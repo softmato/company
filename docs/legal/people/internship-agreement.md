@@ -7,10 +7,10 @@
 One agreement, three tracks. Tick the track at the top and the clauses marked
 for the other tracks fall away.
 
-| Track | Who pays | Used for |
-| --- | --- | --- |
-| **A — Stipend** | We pay the intern | Interns doing substantive work we benefit from |
-| **B — Unpaid** | Nobody pays | Short learning placements, no productive substitution |
+| Track                         | Who pays                                 | Used for                                                 |
+| ----------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| **A — Stipend**               | We pay the intern                        | Interns doing substantive work we benefit from           |
+| **B — Unpaid**                | Nobody pays                              | Short learning placements, no productive substitution    |
 | **C — Institution-sponsored** | The institute pays **us** a training fee | Placements arranged with a college or training institute |
 
 **Track C also needs `training-institution-agreement.md`**, signed with the
@@ -54,13 +54,13 @@ are not used to fill a role we would otherwise pay someone to do**.
 
 ## 2. Dates, hours, and place
 
-| | |
-| --- | --- |
-| **Starts** | [date] |
-| **Ends** | [date] — [confirm: typical duration, e.g. 8 weeks] |
-| **Hours** | [confirm: hours per day] a day, [confirm: days] a week |
-| **Place** | [confirm: office address] / remote as agreed |
-| **Supervisor** | [name], who you report to and who signs off your work |
+|                |                                                        |
+| -------------- | ------------------------------------------------------ |
+| **Starts**     | [date]                                                 |
+| **Ends**       | [date] — [confirm: typical duration, e.g. 8 weeks]     |
+| **Hours**      | [confirm: hours per day] a day, [confirm: days] a week |
+| **Place**      | [confirm: office address] / remote as agreed           |
+| **Supervisor** | [name], who you report to and who signs off your work  |
 
 If you are studying, the hours fit around your classes and examinations.
 Examinations always take priority — tell your supervisor and the schedule

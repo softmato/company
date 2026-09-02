@@ -96,11 +96,11 @@ complained about.
 
 ## 5. Who to tell
 
-| | |
-| --- | --- |
-| **Complaints officer** | [confirm: name] — [confirm: email] — [confirm: phone] |
-| **Alternate** (use if the complaint concerns the officer) | [confirm: name] — [confirm: email] |
-| **External contact** (independent of the company) | [confirm: name of an external adviser, lawyer, or counsellor] |
+|                                                           |                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| **Complaints officer**                                    | [confirm: name] — [confirm: email] — [confirm: phone]         |
+| **Alternate** (use if the complaint concerns the officer) | [confirm: name] — [confirm: email]                            |
+| **External contact** (independent of the company)         | [confirm: name of an external adviser, lawyer, or counsellor] |
 
 [confirm: the Act expects a real mechanism. With a team this small, name a
 second founder as alternate and an external adviser as the third route, so no

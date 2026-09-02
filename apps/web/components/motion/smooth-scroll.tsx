@@ -4,7 +4,11 @@ import Lenis from 'lenis';
 import { useEffect } from 'react';
 
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
-import { gsap, registerMotionPlugins, ScrollTrigger } from '@/lib/motion/register';
+import {
+  gsap,
+  registerMotionPlugins,
+  ScrollTrigger,
+} from '@/lib/motion/register';
 
 /**
  * Smooth scrolling for the marketing surface.

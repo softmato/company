@@ -17,7 +17,10 @@ export function Card({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-export function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
+export function CardHeader({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(

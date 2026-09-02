@@ -4,7 +4,11 @@ import { useEffect, useRef, type ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
-import { ScrollTrigger, gsap, registerMotionPlugins } from '@/lib/motion/register';
+import {
+  ScrollTrigger,
+  gsap,
+  registerMotionPlugins,
+} from '@/lib/motion/register';
 
 /**
  * Floats its child up and down, forever, on its own clock.

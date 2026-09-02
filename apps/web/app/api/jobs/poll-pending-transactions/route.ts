@@ -28,7 +28,9 @@ export const POST = jobEndpoint('poll-pending-transactions', async () => {
   // a cold lambda does.
   ensureProvidersRegistered();
 
-  return { ...(await pollPendingTransactions(db, recordAudit, sendPaymentReceipt)) };
+  return {
+    ...(await pollPendingTransactions(db, recordAudit, sendPaymentReceipt)),
+  };
 });
 
 export const GET = POST;

@@ -61,7 +61,11 @@ export default function LightFormScene({
          */
         dpr={[1, 1.6]}
         camera={{ position: [0, 0, 9], fov: 45 }}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        }}
         style={{ background: 'transparent' }}
       >
         {/*

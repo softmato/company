@@ -13,26 +13,26 @@ gives no sign of it. Read [§6](#6-the-failure-that-matters) before you finish.
 
 Set these identically on all four. Only the URL and the schedule differ.
 
-| Where | Field | Value |
-| --- | --- | --- |
-| Common | **URL** | `https://softmato.com/api/jobs/<job-name>` |
-| Common | **Folder** | Softmato Company Crons |
-| Common | **Enable job** | on |
-| Common | **Save responses in job history** | **on** — see [§5](#5-save-responses-in-job-history) |
-| Advanced | **Request method** | `POST` |
-| Advanced | **Time zone** | `UTC` |
-| Advanced | **Timeout** | `30` seconds (the maximum) |
-| Advanced | **Headers** | one header — see below |
-| Advanced | **Requires HTTP authentication** | **off** — see below |
-| Advanced | **Request body** | leave empty |
-| Advanced | **Treat redirects as success** | off |
+| Where    | Field                             | Value                                               |
+| -------- | --------------------------------- | --------------------------------------------------- |
+| Common   | **URL**                           | `https://softmato.com/api/jobs/<job-name>`          |
+| Common   | **Folder**                        | Softmato Company Crons                              |
+| Common   | **Enable job**                    | on                                                  |
+| Common   | **Save responses in job history** | **on** — see [§5](#5-save-responses-in-job-history) |
+| Advanced | **Request method**                | `POST`                                              |
+| Advanced | **Time zone**                     | `UTC`                                               |
+| Advanced | **Timeout**                       | `30` seconds (the maximum)                          |
+| Advanced | **Headers**                       | one header — see below                              |
+| Advanced | **Requires HTTP authentication**  | **off** — see below                                 |
+| Advanced | **Request body**                  | leave empty                                         |
+| Advanced | **Treat redirects as success**    | off                                                 |
 
 ### The auth header
 
 Under **Advanced → Headers**, press **+ ADD** and enter:
 
-| Name | Value |
-| --- | --- |
+| Name            | Value                  |
+| --------------- | ---------------------- |
 | `Authorization` | `Bearer <CRON_SECRET>` |
 
 `<CRON_SECRET>` is the value of `CRON_SECRET` in the production environment.
@@ -69,10 +69,10 @@ suspect the header before you suspect the deploy.
 https://softmato.com/api/jobs/poll-pending-transactions
 ```
 
-| Setting | Value |
-| --- | --- |
-| Schedule | **Custom** → crontab `* * * * *` |
-| Notify on failure | **on**, after `3` failures |
+| Setting           | Value                            |
+| ----------------- | -------------------------------- |
+| Schedule          | **Custom** → crontab `* * * * *` |
+| Notify on failure | **on**, after `3` failures       |
 
 **This is the one that matters.** Khalti never pushes a webhook, eSewa's return
 trip depends on the customer's browser completing a redirect, and any customer
@@ -86,9 +86,17 @@ It asks each provider about transactions that are due a check, on a backoff of
 Response looks like:
 
 ```json
-{ "job": "poll-pending-transactions", "ok": true, "ms": 412,
-  "examined": 3, "settled": 1, "stillPending": 2,
-  "closed": 0, "flagged": 0, "errors": 0 }
+{
+  "job": "poll-pending-transactions",
+  "ok": true,
+  "ms": 412,
+  "examined": 3,
+  "settled": 1,
+  "stillPending": 2,
+  "closed": 0,
+  "flagged": 0,
+  "errors": 0
+}
 ```
 
 `errors` counts providers that could not be reached. A few is normal; a run
@@ -103,22 +111,29 @@ wrong.
 https://softmato.com/api/jobs/retry-webhooks
 ```
 
-| Setting | Value |
-| --- | --- |
-| Schedule | **Custom** → crontab `* * * * *` |
-| Notify on failure | **on**, after `3` failures |
+| Setting           | Value                            |
+| ----------------- | -------------------------------- |
+| Schedule          | **Custom** → crontab `* * * * *` |
+| Notify on failure | **on**, after `3` failures       |
 
 Despite the name it sends first attempts too — `enqueueWebhook` writes a row
 due immediately and this is what delivers it. Eight failures, then the delivery
 is marked `abandoned` and left for an admin replay.
 
 ```json
-{ "job": "retry-webhooks", "ok": true, "ms": 88,
-  "attempted": 2, "delivered": 2, "failed": 0, "abandoned": 0 }
+{
+  "job": "retry-webhooks",
+  "ok": true,
+  "ms": 88,
+  "attempted": 2,
+  "delivered": 2,
+  "failed": 0,
+  "abandoned": 0
+}
 ```
 
-`ok: true` with `failed: 2` is not a contradiction: the *job* succeeded, and
-two *consumers* did not answer. Only `ok: false` means our side broke.
+`ok: true` with `failed: 2` is not a contradiction: the _job_ succeeded, and
+two _consumers_ did not answer. Only `ok: false` means our side broke.
 
 ---
 
@@ -128,10 +143,10 @@ two *consumers* did not answer. Only `ok: false` means our side broke.
 https://softmato.com/api/jobs/expire-stale-sessions
 ```
 
-| Setting | Value |
-| --- | --- |
-| Schedule | **Every** → `5 minutes` (crontab `*/5 * * * *`) |
-| Notify on failure | on, after `3` failures |
+| Setting           | Value                                           |
+| ----------------- | ----------------------------------------------- |
+| Schedule          | **Every** → `5 minutes` (crontab `*/5 * * * *`) |
+| Notify on failure | on, after `3` failures                          |
 
 A sweeper, not a safety mechanism. Every payment path already settles expiry
 when it reads a session, so an expired session cannot be paid whether or not
@@ -142,8 +157,13 @@ It never touches transactions. A session lapsing does not mean the customer
 failed to pay — they may be finishing at the gateway right now.
 
 ```json
-{ "job": "expire-stale-sessions", "ok": true, "ms": 61,
-  "expired": 4, "skipped": 0 }
+{
+  "job": "expire-stale-sessions",
+  "ok": true,
+  "ms": 61,
+  "expired": 4,
+  "skipped": 0
+}
 ```
 
 `skipped` counts sessions something else moved first — usually a payment
@@ -157,10 +177,10 @@ landing in the same instant. Not a failure.
 https://softmato.com/api/jobs/heartbeat
 ```
 
-| Setting | Value |
-| --- | --- |
-| Schedule | **Every** → `5 minutes` (crontab `*/5 * * * *`) |
-| Notify on failure | **on**, after `1` failure |
+| Setting           | Value                                           |
+| ----------------- | ----------------------------------------------- |
+| Schedule          | **Every** → `5 minutes` (crontab `*/5 * * * *`) |
+| Notify on failure | **on**, after `1` failure                       |
 
 The dead-man's switch. Notify after **1**, not 3 — this job exists to be
 noticed, and it does no work worth retrying.
@@ -171,9 +191,15 @@ reachable" would keep reassuring you through the failure that stops every other
 job. It also reports the backlog:
 
 ```json
-{ "job": "heartbeat", "ok": true, "ms": 44,
+{
+  "job": "heartbeat",
+  "ok": true,
+  "ms": 44,
   "at": "2026-09-01T18:00:00.000Z",
-  "liveTransactions": 2, "flaggedForReview": 0, "overduePolls": 0 }
+  "liveTransactions": 2,
+  "flaggedForReview": 0,
+  "overduePolls": 0
+}
 ```
 
 **`overduePolls` is the number to watch.** It counts live transactions whose
@@ -259,8 +285,8 @@ Three things guard against it, and you should know all three:
    is drained by the next run — the jobs query by state, never "what changed
    since last time", so a small batch costs latency and never work.
 2. **`heartbeat`'s `overduePolls`** is the independent signal. It rises when
-   the poller has stopped, and it rises *while the poller reports nothing at
-   all*.
+   the poller has stopped, and it rises _while the poller reports nothing at
+   all_.
 3. **Leave the failure notification on.** After 3 failures for the workers,
    after 1 for the heartbeat.
 
@@ -276,13 +302,13 @@ near 30,000 the batch limit needs lowering in
 These are in `docs/ARCHITECTURE.md` §6 and belong to later phases. Do not
 create them yet — the endpoints do not exist and every execution would 404.
 
-| Job | Frequency | Phase |
-| --- | --- | --- |
-| `recognize-revenue` | monthly | 6 |
-| `generate-renewal-invoices` | daily | 6 |
-| `send-dunning-reminders` | daily | 6 |
-| `suspend-past-grace` | daily | 6 |
-| `reconcile-providers` | daily | 7 |
+| Job                         | Frequency | Phase |
+| --------------------------- | --------- | ----- |
+| `recognize-revenue`         | monthly   | 6     |
+| `generate-renewal-invoices` | daily     | 6     |
+| `send-dunning-reminders`    | daily     | 6     |
+| `suspend-past-grace`        | daily     | 6     |
+| `reconcile-providers`       | daily     | 7     |
 
 Add them to this file when they are built.
 
@@ -290,14 +316,14 @@ Add them to this file when they are built.
 
 ## 8. Reference
 
-| Thing | Where |
-| --- | --- |
-| The auth guard | `apps/web/lib/jobs/guard.ts` |
-| The route wrapper | `apps/web/lib/jobs/endpoint.ts` |
-| Routes | `apps/web/app/api/jobs/*/route.ts` |
-| Poll logic and backoff | `packages/payment-core/jobs/` |
-| Webhook delivery | `packages/payment-core/webhooks/deliver.ts` |
-| Schedule spec | `docs/ARCHITECTURE.md` §6, `docs/ENVIRONMENT.md` §6 |
+| Thing                  | Where                                               |
+| ---------------------- | --------------------------------------------------- |
+| The auth guard         | `apps/web/lib/jobs/guard.ts`                        |
+| The route wrapper      | `apps/web/lib/jobs/endpoint.ts`                     |
+| Routes                 | `apps/web/app/api/jobs/*/route.ts`                  |
+| Poll logic and backoff | `packages/payment-core/jobs/`                       |
+| Webhook delivery       | `packages/payment-core/webhooks/deliver.ts`         |
+| Schedule spec          | `docs/ARCHITECTURE.md` §6, `docs/ENVIRONMENT.md` §6 |
 
 Every job is **self-healing**: it queries by state, never by "what changed
 since the last run". A missed execution is caught by the next one, and running

@@ -1,8 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { retrieveContext } from '../lib/ai/retrieve-context';
 import { chunkMarkdown } from '../lib/ai/knowledge/chunk';
-import { loadChunks, getIndex, KNOWLEDGE_FILES } from '../lib/ai/knowledge/load';
-import { rankChunks, selectWithinBudget, buildIndex } from '../lib/ai/knowledge/search';
+import {
+  loadChunks,
+  getIndex,
+  KNOWLEDGE_FILES,
+} from '../lib/ai/knowledge/load';
+import {
+  rankChunks,
+  selectWithinBudget,
+  buildIndex,
+} from '../lib/ai/knowledge/search';
 import { expandQuery, tokenize } from '../lib/ai/knowledge/tokenize';
 
 describe('Markdown chunking', () => {
@@ -21,7 +29,7 @@ Best for multi-tenant SaaS platforms.
 
   it('splits at headings and carries the heading trail into the text', () => {
     const chunks = chunkMarkdown('guide.md', sample);
-    const custom = chunks.find(c => c.heading.includes('Custom Tier'));
+    const custom = chunks.find((c) => c.heading.includes('Custom Tier'));
 
     expect(custom).toBeDefined();
     expect(custom!.heading).toBe('Guide > Pricing > Custom Tier');
@@ -32,7 +40,7 @@ Best for multi-tenant SaaS platforms.
 
   it('does not leak one section body into another', () => {
     const chunks = chunkMarkdown('guide.md', sample);
-    const staticTier = chunks.find(c => c.heading.includes('Static Tier'));
+    const staticTier = chunks.find((c) => c.heading.includes('Static Tier'));
 
     expect(staticTier!.body).toContain('marketing sites');
     expect(staticTier!.body).not.toContain('multi-tenant');
@@ -56,8 +64,8 @@ Best for multi-tenant SaaS platforms.
     const crlf = chunkMarkdown('guide.md', sample.replace(/\n/g, '\r\n'));
 
     expect(crlf.length).toBe(lf.length);
-    expect(crlf.map(c => c.heading)).toEqual(lf.map(c => c.heading));
-    expect(crlf.every(c => !c.text.includes('\r'))).toBe(true);
+    expect(crlf.map((c) => c.heading)).toEqual(lf.map((c) => c.heading));
+    expect(crlf.every((c) => !c.text.includes('\r'))).toBe(true);
   });
 
   it('finds headings even in a file with no trailing newline', () => {
@@ -94,14 +102,19 @@ describe('Chunk ranking', () => {
      * preamble — so the tier that answers a mobile/app pricing question was
      * never in the prompt.
      */
-    const ranked = rankChunks('how much does a custom saas platform cost', getIndex());
+    const ranked = rankChunks(
+      'how much does a custom saas platform cost',
+      getIndex(),
+    );
     expect(ranked.length).toBeGreaterThan(0);
 
     // The guarantee is that the tier describing SaaS platforms is retrieved,
     // not that it outranks everything — the FAQ entry on how quotes work is a
     // fair answer to the same question and contains "cost" literally.
-    const top3 = ranked.slice(0, 3).map(r => r.chunk);
-    const tier = top3.find(c => c.filename === 'pricing.md' && /tier/i.test(c.heading));
+    const top3 = ranked.slice(0, 3).map((r) => r.chunk);
+    const tier = top3.find(
+      (c) => c.filename === 'pricing.md' && /tier/i.test(c.heading),
+    );
 
     expect(tier).toBeDefined();
     // And it is a tier section, never the preamble the old slice(0, 650)
@@ -122,8 +135,15 @@ describe('Chunk ranking', () => {
 describe('Context budget', () => {
   it('never exceeds the character budget', () => {
     const index = getIndex();
-    const ranked = rankChunks('pricing services mobile app security team', index);
-    const selected = selectWithinBudget(ranked, { maxChars: 800, maxChunks: 10, maxPerFile: 5 });
+    const ranked = rankChunks(
+      'pricing services mobile app security team',
+      index,
+    );
+    const selected = selectWithinBudget(ranked, {
+      maxChars: 800,
+      maxChunks: 10,
+      maxPerFile: 5,
+    });
 
     const total = selected.reduce((n, s) => n + s.chunk.text.length, 0);
     expect(total).toBeLessThanOrEqual(800);
@@ -131,8 +151,15 @@ describe('Context budget', () => {
 
   it('caps how much any one file can contribute', () => {
     const index = getIndex();
-    const ranked = rankChunks('service services web mobile app development', index);
-    const selected = selectWithinBudget(ranked, { maxChars: 99_999, maxChunks: 20, maxPerFile: 2 });
+    const ranked = rankChunks(
+      'service services web mobile app development',
+      index,
+    );
+    const selected = selectWithinBudget(ranked, {
+      maxChars: 99_999,
+      maxChunks: 20,
+      maxPerFile: 2,
+    });
 
     const perFile = new Map<string, number>();
     for (const { chunk } of selected) {
@@ -158,7 +185,9 @@ describe('retrieveContext', () => {
   });
 
   it('sends a bounded payload, not whole documents', async () => {
-    const ctx = await retrieveContext('tell me about your pricing and services and security');
+    const ctx = await retrieveContext(
+      'tell me about your pricing and services and security',
+    );
     const total = ctx.reduce((n, c) => n + c.content.length, 0);
 
     expect(ctx.length).toBeGreaterThan(0);
@@ -171,7 +200,7 @@ describe('retrieveContext', () => {
   });
 
   it('reads every knowledge file that ships', () => {
-    const seen = new Set(loadChunks().map(c => c.filename));
+    const seen = new Set(loadChunks().map((c) => c.filename));
     for (const filename of KNOWLEDGE_FILES) {
       expect(seen.has(filename)).toBe(true);
     }

@@ -47,7 +47,11 @@ export function Field({
         ) : null}
       </label>
 
-      {children({ id, invalid: Boolean(error), 'aria-describedby': describedBy })}
+      {children({
+        id,
+        invalid: Boolean(error),
+        'aria-describedby': describedBy,
+      })}
 
       {error ? (
         <p id={errorId} className="text-[13px] text-destructive">

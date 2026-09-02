@@ -65,7 +65,10 @@ export function MarkCircle({ className, strokeWidth = 3 }: MarkProps) {
       viewBox="0 0 220 74"
       preserveAspectRatio="none"
       aria-hidden="true"
-      className={cn('absolute -inset-x-4 -inset-y-2 size-auto h-[calc(100%+1rem)] w-[calc(100%+2rem)]', className)}
+      className={cn(
+        'absolute -inset-x-4 -inset-y-2 size-auto h-[calc(100%+1rem)] w-[calc(100%+2rem)]',
+        className,
+      )}
     >
       <path
         className="mark-stroke"
@@ -83,10 +86,26 @@ export function MarkCircle({ className, strokeWidth = 3 }: MarkProps) {
  */
 export function MarkSpark({ className, strokeWidth = 2.5 }: MarkProps) {
   return (
-    <svg viewBox="0 0 40 40" aria-hidden="true" className={cn('size-8', className)}>
-      <path className="mark-stroke" strokeWidth={strokeWidth} d="M20 4 L20 14" />
-      <path className="mark-stroke" strokeWidth={strokeWidth} d="M6 14 L13 20" />
-      <path className="mark-stroke" strokeWidth={strokeWidth} d="M34 15 L26 20" />
+    <svg
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+      className={cn('size-8', className)}
+    >
+      <path
+        className="mark-stroke"
+        strokeWidth={strokeWidth}
+        d="M20 4 L20 14"
+      />
+      <path
+        className="mark-stroke"
+        strokeWidth={strokeWidth}
+        d="M6 14 L13 20"
+      />
+      <path
+        className="mark-stroke"
+        strokeWidth={strokeWidth}
+        d="M34 15 L26 20"
+      />
     </svg>
   );
 }
@@ -98,7 +117,11 @@ export function MarkSpark({ className, strokeWidth = 2.5 }: MarkProps) {
  */
 export function MarkSquiggle({ className, strokeWidth = 1.5 }: MarkProps) {
   return (
-    <svg viewBox="0 0 120 120" aria-hidden="true" className={cn('size-28', className)}>
+    <svg
+      viewBox="0 0 120 120"
+      aria-hidden="true"
+      className={cn('size-28', className)}
+    >
       <path
         className="mark-stroke"
         strokeWidth={strokeWidth}
@@ -115,7 +138,11 @@ export function MarkSquiggle({ className, strokeWidth = 1.5 }: MarkProps) {
  */
 export function MarkArrow({ className }: { className?: string | undefined }) {
   return (
-    <svg viewBox="0 0 26 26" aria-hidden="true" className={cn('size-6', className)}>
+    <svg
+      viewBox="0 0 26 26"
+      aria-hidden="true"
+      className={cn('size-6', className)}
+    >
       <circle
         className="mark-stroke"
         strokeWidth={1.4}
@@ -124,7 +151,11 @@ export function MarkArrow({ className }: { className?: string | undefined }) {
         r="12"
       />
       <path className="mark-stroke" strokeWidth={1.4} d="M8.5 13 H17" />
-      <path className="mark-stroke" strokeWidth={1.4} d="M13.6 9.4 L17.2 13 L13.6 16.6" />
+      <path
+        className="mark-stroke"
+        strokeWidth={1.4}
+        d="M13.6 9.4 L17.2 13 L13.6 16.6"
+      />
     </svg>
   );
 }

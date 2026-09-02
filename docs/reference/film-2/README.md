@@ -32,7 +32,7 @@ per section.
 
 **2. Take the structure, leave the subject.** Its "Benefits" chapter drops
 fifteen adjectives about teaching. Ours drops fourteen things a client can check
-after handover. The *shape* — a heap rather than a list — is what transfers;
+after handover. The _shape_ — a heap rather than a list — is what transfers;
 what is in the heap has to come from what is true about us. Same rule as the
 first film. See `docs/reference/README.md`, warning 3.
 
@@ -40,17 +40,17 @@ first film. See `docs/reference/README.md`, warning 3.
 
 ## The frames, and what each one is for
 
-| Frame | t | What it shows | What we took |
-| --- | --- | --- | --- |
-| `01-hero-orbiting-objects.jpg` | 1.0s | Objects drifting continuously around a fixed headline | Nothing. **Our hero is done and stays as built.** Here for the pacing only |
-| `02-sheet-rising-over-hero.jpg` | 2.75s | The light section sliding up over the dark hero behind a large top radius | `.band-dark` — the join that lets a page carry more than one dark chapter |
-| `03-two-tone-heading-and-discs.jpg` | 4.0s | A four-line heading alternating full-contrast and washed-out words, over scattered soft discs | `ToneReveal` and `.disc` — the opening statement |
-| `04-held-panel-first-step.jpg` | 6.25s | A panel held still on the left while copy scrolls on the right | The services chapter's whole shape |
-| `05-held-panel-mid-swap.jpg` | 8.5s | The two panel states cross-fading as the active step changes | Opacity only, 500ms — `services-chapter.tsx` |
-| `06-tags-falling.jpg` | 12.25s | Pills falling from above under gravity, mid-tumble | `PillPile`, Matter.js — the principles chapter |
-| `07-tags-settled.jpg` | 13.75s | The same pills at rest in a heap | The resting layout in `lib/home/qualities.ts`, which is also the no-JS state |
-| `08-photo-masonry.jpg` | 15.75s | Photographs at slight rotations, hand-drawn doodles between them | The tilted, drifting photograph in the place section |
-| `09-closing-annotated.jpg` | 20.5s | Dark close, heading with a drawn underline and a circled word, one link | `ClosingCta` and `MarkCircle` |
+| Frame                               | t      | What it shows                                                                                 | What we took                                                                 |
+| ----------------------------------- | ------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `01-hero-orbiting-objects.jpg`      | 1.0s   | Objects drifting continuously around a fixed headline                                         | Nothing. **Our hero is done and stays as built.** Here for the pacing only   |
+| `02-sheet-rising-over-hero.jpg`     | 2.75s  | The light section sliding up over the dark hero behind a large top radius                     | `.band-dark` — the join that lets a page carry more than one dark chapter    |
+| `03-two-tone-heading-and-discs.jpg` | 4.0s   | A four-line heading alternating full-contrast and washed-out words, over scattered soft discs | `ToneReveal` and `.disc` — the opening statement                             |
+| `04-held-panel-first-step.jpg`      | 6.25s  | A panel held still on the left while copy scrolls on the right                                | The services chapter's whole shape                                           |
+| `05-held-panel-mid-swap.jpg`        | 8.5s   | The two panel states cross-fading as the active step changes                                  | Opacity only, 500ms — `services-chapter.tsx`                                 |
+| `06-tags-falling.jpg`               | 12.25s | Pills falling from above under gravity, mid-tumble                                            | `PillPile`, Matter.js — the principles chapter                               |
+| `07-tags-settled.jpg`               | 13.75s | The same pills at rest in a heap                                                              | The resting layout in `lib/home/qualities.ts`, which is also the no-JS state |
+| `08-photo-masonry.jpg`              | 15.75s | Photographs at slight rotations, hand-drawn doodles between them                              | The tilted, drifting photograph in the place section                         |
+| `09-closing-annotated.jpg`          | 20.5s  | Dark close, heading with a drawn underline and a circled word, one link                       | `ClosingCta` and `MarkCircle`                                                |
 
 ## The five rules the film actually teaches
 

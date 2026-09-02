@@ -15,7 +15,10 @@
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { accounts, type DbTx } from '@softmato/db';
-import { DEFAULT_REVENUE_BY_KIND, isInvoiceableKind } from '@softmato/accounting';
+import {
+  DEFAULT_REVENUE_BY_KIND,
+  isInvoiceableKind,
+} from '@softmato/accounting';
 
 import { PaymentError } from '../errors';
 

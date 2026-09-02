@@ -19,7 +19,9 @@ export default async function NewApplicationPage() {
 
   return (
     <div className="max-w-2xl">
-      <Breadcrumbs trail={[{ label: 'Applications', href: '/admin/applications' }]}>
+      <Breadcrumbs
+        trail={[{ label: 'Applications', href: '/admin/applications' }]}
+      >
         Register
       </Breadcrumbs>
 

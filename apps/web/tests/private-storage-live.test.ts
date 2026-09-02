@@ -29,12 +29,10 @@ const live = process.env['R2_LIVE_TEST'] === '1';
 
 describe.skipIf(!live)('private R2 bucket', () => {
   test('stores an object and reads back exactly what was written', async () => {
-    const { privateStorageConfigured } = await import(
-      '@/lib/storage/private-client'
-    );
-    const { readPrivateObject, writePrivateObject } = await import(
-      '@/lib/storage/private-object'
-    );
+    const { privateStorageConfigured } =
+      await import('@/lib/storage/private-client');
+    const { readPrivateObject, writePrivateObject } =
+      await import('@/lib/storage/private-object');
     const { documentPdfKey } = await import('@/lib/documents/object-key');
 
     expect(privateStorageConfigured).toBe(true);
@@ -73,9 +71,8 @@ const invoiceNo = process.env['SOFTMATO_LIVE_INVOICE'];
 
 describe.skipIf(!live || !invoiceNo)('a real invoice, end to end', () => {
   test('renders once, then comes back from the bucket', async () => {
-    const { buildInvoiceDocument } = await import(
-      '@/lib/documents/invoice-document'
-    );
+    const { buildInvoiceDocument } =
+      await import('@/lib/documents/invoice-document');
     const { invoiceHtml } = await import('@/lib/documents/render-html');
     const { documentPdf } = await import('@/lib/documents/document-pdf');
     const { pdfAvailable } = await import('@/lib/documents/pdf');
@@ -95,8 +92,8 @@ describe.skipIf(!live || !invoiceNo)('a real invoice, end to end', () => {
 
     const second = await documentPdf(document!, html);
     expect(second.ok && second.source).toBe('store');
-    expect(second.ok && second.pdf.equals(first.ok ? first.pdf : Buffer.alloc(0))).toBe(
-      true,
-    );
+    expect(
+      second.ok && second.pdf.equals(first.ok ? first.pdf : Buffer.alloc(0)),
+    ).toBe(true);
   }, 120_000);
 });

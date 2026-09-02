@@ -76,7 +76,8 @@ export function checkTotp(encryptedSecret: string, code: string): TotpCheck {
   }
 
   try {
-    return totpFor(secret, 'verify').validate({ token, window: WINDOW }) !== null
+    return totpFor(secret, 'verify').validate({ token, window: WINDOW }) !==
+      null
       ? 'ok'
       : 'invalid';
   } catch {

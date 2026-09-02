@@ -50,7 +50,9 @@ export function ClosingCta() {
     <section className="stage band-dark band-dark-end dark px-6 pb-40 pt-28 sm:pb-56 sm:pt-40">
       <div
         className="bloom opacity-55"
-        style={{ '--bloom-x': '50%', '--bloom-y': '84%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '84%' } as React.CSSProperties
+        }
       />
       <DarkNavZone />
 

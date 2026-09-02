@@ -44,7 +44,8 @@ export const SUPPRESSED_IN_TEST = 'email suppressed under test';
  * individual test. A guard the test has to remember to apply is a guard that
  * the next test forgets.
  */
-const underTest = Boolean(process.env.VITEST) || process.env.NODE_ENV === 'test';
+const underTest =
+  Boolean(process.env.VITEST) || process.env.NODE_ENV === 'test';
 
 /** A file to send alongside the message — an invoice PDF, a statement. */
 export interface EmailAttachment {

@@ -60,7 +60,12 @@ export async function startPayment(
 ): Promise<StartedPayment> {
   // Loads the session, settles expiry, refuses anything unpayable, checks the
   // provider was offered, and moves the session to `provider_selected`.
-  const session = await selectProvider(tx, input.sessionId, input.providerId, now);
+  const session = await selectProvider(
+    tx,
+    input.sessionId,
+    input.providerId,
+    now,
+  );
 
   const existing = await liveAttempt(tx, session.id, input.providerId);
 

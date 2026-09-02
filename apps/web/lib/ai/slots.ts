@@ -54,7 +54,13 @@ export function nptSlotInstant(date: string, time: string): Date | null {
   const [, y, mo, d] = match as unknown as [string, string, string, string];
   const [, h, mi] = clock as unknown as [string, string, string];
 
-  const asUtc = Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi));
+  const asUtc = Date.UTC(
+    Number(y),
+    Number(mo) - 1,
+    Number(d),
+    Number(h),
+    Number(mi),
+  );
   if (Number.isNaN(asUtc)) return null;
 
   return new Date(asUtc - NPT_OFFSET_MIN * 60_000);
@@ -91,9 +97,15 @@ export function generateSlots(now: Date = new Date()): MeetingSlot[] {
 }
 
 /** Is this a real slot the team offers — not merely a well-formed date? */
-export function isOfferedSlot(date: string, time: string, now: Date = new Date()): boolean {
+export function isOfferedSlot(
+  date: string,
+  time: string,
+  now: Date = new Date(),
+): boolean {
   const wanted = normaliseTime(time);
-  return generateSlots(now).some(s => s.date === date && normaliseTime(s.time) === wanted);
+  return generateSlots(now).some(
+    (s) => s.date === date && normaliseTime(s.time) === wanted,
+  );
 }
 
 /** `2:00 pm`, `14:00`, and `14:00 NPT` are the same slot. Compare on `HH:MM`. */
@@ -101,7 +113,12 @@ export function normaliseTime(time: string): string {
   const match = /^(\d{1,2}):(\d{2})\s*(am|pm)?/i.exec(time.trim());
   if (!match) return time.trim().toLowerCase();
 
-  const [, rawHour, minute, meridiem] = match as unknown as [string, string, string, string | undefined];
+  const [, rawHour, minute, meridiem] = match as unknown as [
+    string,
+    string,
+    string,
+    string | undefined,
+  ];
   let hour = Number(rawHour);
 
   if (meridiem) {

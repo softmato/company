@@ -17,10 +17,7 @@ import { CredentialsSignin } from 'next-auth';
 
 /** Every refusal the sign-in form knows how to explain. */
 export type LoginFailureCode =
-  | 'credentials'
-  | 'not_enrolled'
-  | 'totp_invalid'
-  | 'totp_unreadable';
+  'credentials' | 'not_enrolled' | 'totp_invalid' | 'totp_unreadable';
 
 /**
  * Carries the reason out of `authorize()`. next-auth rethrows this instance

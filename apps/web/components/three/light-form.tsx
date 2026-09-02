@@ -4,7 +4,11 @@ import dynamic from 'next/dynamic';
 import { useSyncExternalStore } from 'react';
 
 import { useNearViewport } from './use-near-viewport';
-import { noopSubscribe, serverSnapshot, webglSupported } from './webgl-supported';
+import {
+  noopSubscribe,
+  serverSnapshot,
+  webglSupported,
+} from './webgl-supported';
 
 /**
  * The kinds of light-form the marketing surface has.
@@ -38,7 +42,9 @@ export type FormGround = 'light' | 'dark';
  * paints its own bloom in CSS underneath, so the section reads as finished
  * whether the scene arrives, arrives late, or never arrives at all.
  */
-const LightFormScene = dynamic(() => import('./light-form-scene'), { ssr: false });
+const LightFormScene = dynamic(() => import('./light-form-scene'), {
+  ssr: false,
+});
 
 export function LightForm({
   kind,
@@ -61,7 +67,11 @@ export function LightForm({
    * client-only capability, which is exactly what the hook is for, and it
    * avoids the cascading render that calling setState from an effect causes.
    */
-  const enabled = useSyncExternalStore(noopSubscribe, webglSupported, serverSnapshot);
+  const enabled = useSyncExternalStore(
+    noopSubscribe,
+    webglSupported,
+    serverSnapshot,
+  );
 
   /*
    * **The scene waits until the reader is coming.**

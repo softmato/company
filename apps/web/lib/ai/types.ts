@@ -1,6 +1,6 @@
 /**
  * Softmato AI Company Assistant — Core Type Definitions
- * 
+ *
  * Defines message structures, tool parameters, context retrieval shapes,
  * and LLM provider interfaces as specified in Softmato_AI_Company_Assistant_Architecture.docx.
  */

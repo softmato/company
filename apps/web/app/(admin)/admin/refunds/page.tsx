@@ -40,11 +40,13 @@ export default async function AdminRefundsPage() {
         </p>
         <ul className="mt-2 space-y-1.5 leading-relaxed text-muted-foreground">
           <li>
-            <strong className="text-foreground">No provider can execute one.</strong>{' '}
-            The adapters&rsquo; <code className="font-mono">refund()</code> methods
-            were removed — two of them reported success without contacting the
-            provider at all, which would have posted reversing entries for money
-            that never went back.
+            <strong className="text-foreground">
+              No provider can execute one.
+            </strong>{' '}
+            The adapters&rsquo; <code className="font-mono">refund()</code>{' '}
+            methods were removed — two of them reported success without
+            contacting the provider at all, which would have posted reversing
+            entries for money that never went back.
           </li>
           <li>
             <strong className="text-foreground">
@@ -79,7 +81,10 @@ export default async function AdminRefundsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((refund) => (
-                <tr key={refund.id} className="transition-colors hover:bg-muted/30">
+                <tr
+                  key={refund.id}
+                  className="transition-colors hover:bg-muted/30"
+                >
                   <td className="px-4 py-3">
                     <div className="numeric font-semibold text-foreground">
                       {refund.refundNo}
@@ -88,7 +93,9 @@ export default async function AdminRefundsPage() {
                       {refund.txnNo}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-foreground">{refund.customerName}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    {refund.customerName}
+                  </td>
                   <td className="px-4 py-3 font-semibold uppercase text-primary">
                     {refund.providerId}
                   </td>

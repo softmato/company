@@ -32,19 +32,19 @@ people they apply to actually are.
 These come from the parent documents. A product may be more generous on any
 row. None may be less.
 
-| | Floor set by the parent | Where |
-| --- | --- | --- |
-| Invoice payment period | Never shorter than **7 days** | Terms §3 |
-| Grace before suspension for non-payment | At least **7 days** | Terms §5 |
-| Data retention after closure or suspension | At least **30 days** (default 90) | Terms §5 |
-| Export window after termination | At least **30 days** | Terms §10 |
-| New-subscription refund window | At least **7 days** | Refunds §2 |
-| Notice of termination | At least **30 days** | Terms §10 |
-| Notice of material change to terms | At least **14 days** | Terms §11 |
-| Liability cap | Never lower than the greater of 3 months' fees or the proposal value | Terms §8 |
-| Confidentiality survival | At least **3 years** | Terms §7 |
-| Auto-debit | **Never.** No product may take money without the customer initiating it | Terms §4 |
-| Charging the customer's own end users | **Never** by Softmato. Money moves payer → merchant directly | Terms §4 |
+|                                            | Floor set by the parent                                                 | Where      |
+| ------------------------------------------ | ----------------------------------------------------------------------- | ---------- |
+| Invoice payment period                     | Never shorter than **7 days**                                           | Terms §3   |
+| Grace before suspension for non-payment    | At least **7 days**                                                     | Terms §5   |
+| Data retention after closure or suspension | At least **30 days** (default 90)                                       | Terms §5   |
+| Export window after termination            | At least **30 days**                                                    | Terms §10  |
+| New-subscription refund window             | At least **7 days**                                                     | Refunds §2 |
+| Notice of termination                      | At least **30 days**                                                    | Terms §10  |
+| Notice of material change to terms         | At least **14 days**                                                    | Terms §11  |
+| Liability cap                              | Never lower than the greater of 3 months' fees or the proposal value    | Terms §8   |
+| Confidentiality survival                   | At least **3 years**                                                    | Terms §7   |
+| Auto-debit                                 | **Never.** No product may take money without the customer initiating it | Terms §4   |
+| Charging the customer's own end users      | **Never** by Softmato. Money moves payer → merchant directly            | Terms §4   |
 
 ## What every product must publish
 
@@ -118,14 +118,14 @@ The parent cannot answer these; write them into the product's own terms.
 
 ## Where the parent documents are
 
-| Document | File |
-| --- | --- |
-| Terms of Service | `packages/db/seed/legal/terms.ts` |
-| Privacy Policy | `packages/db/seed/legal/privacy.ts` |
-| Refund & Cancellation | `packages/db/seed/legal/refunds.ts` |
-| Service Level Agreement | `packages/db/seed/legal/sla.ts` |
-| Acceptable Use Policy | `packages/db/seed/legal/aup.ts` |
-| Cookie Policy | `packages/db/seed/legal/cookies.ts` |
+| Document                 | File                                   |
+| ------------------------ | -------------------------------------- |
+| Terms of Service         | `packages/db/seed/legal/terms.ts`      |
+| Privacy Policy           | `packages/db/seed/legal/privacy.ts`    |
+| Refund & Cancellation    | `packages/db/seed/legal/refunds.ts`    |
+| Service Level Agreement  | `packages/db/seed/legal/sla.ts`        |
+| Acceptable Use Policy    | `packages/db/seed/legal/aup.ts`        |
+| Cookie Policy            | `packages/db/seed/legal/cookies.ts`    |
 | Candidate Privacy Notice | `packages/db/seed/legal/candidates.ts` |
 
 Shared scaffolding, the draft banner, and the contact block:

@@ -103,9 +103,15 @@ function pendingOnly(match: SQL): SQL | undefined {
 }
 
 /** Null for an id that is absent, active, or already enrolled. */
-export async function findPendingAdmin(id: number): Promise<PendingAdmin | null> {
+export async function findPendingAdmin(
+  id: number,
+): Promise<PendingAdmin | null> {
   const [row] = await db
-    .select({ id: adminUsers.id, email: adminUsers.email, name: adminUsers.name })
+    .select({
+      id: adminUsers.id,
+      email: adminUsers.email,
+      name: adminUsers.name,
+    })
     .from(adminUsers)
     .where(pendingOnly(eq(adminUsers.id, id)))
     .limit(1);

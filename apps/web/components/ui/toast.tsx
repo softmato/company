@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -21,24 +27,27 @@ import { cn } from '@/lib/cn';
  */
 type Toast = { id: number; message: string; tone: 'default' | 'flag' };
 
-const ToastContext = createContext<((message: string, tone?: Toast['tone']) => void) | null>(
-  null,
-);
+const ToastContext = createContext<
+  ((message: string, tone?: Toast['tone']) => void) | null
+>(null);
 
 const DISMISS_AFTER_MS = 2600;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const show = useCallback((message: string, tone: Toast['tone'] = 'default') => {
-    const id = Date.now() + Math.random();
+  const show = useCallback(
+    (message: string, tone: Toast['tone'] = 'default') => {
+      const id = Date.now() + Math.random();
 
-    setToasts((current) => [...current, { id, message, tone }]);
-    setTimeout(
-      () => setToasts((current) => current.filter((t) => t.id !== id)),
-      DISMISS_AFTER_MS,
-    );
-  }, []);
+      setToasts((current) => [...current, { id, message, tone }]);
+      setTimeout(
+        () => setToasts((current) => current.filter((t) => t.id !== id)),
+        DISMISS_AFTER_MS,
+      );
+    },
+    [],
+  );
 
   const value = useMemo(() => show, [show]);
 

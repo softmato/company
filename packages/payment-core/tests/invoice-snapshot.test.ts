@@ -119,7 +119,13 @@ describe('invoiceMetadata', () => {
   test('a caller cannot supply its own snapshots', () => {
     const forged = {
       snapshots: {
-        customer: { name: 'Somebody Else', address: null, pan: '000000000', email: null, phone: null },
+        customer: {
+          name: 'Somebody Else',
+          address: null,
+          pan: '000000000',
+          email: null,
+          phone: null,
+        },
       },
     };
 
@@ -135,7 +141,9 @@ describe('invoiceMetadata', () => {
     expect(invoiceMetadata(null, buildSnapshots(null, CUSTOMER_ROW))).toEqual({
       snapshots: { customer: partySnapshot(CUSTOMER_ROW) },
     });
-    expect(invoiceMetadata(undefined, buildSnapshots(null, CUSTOMER_ROW))).toEqual({
+    expect(
+      invoiceMetadata(undefined, buildSnapshots(null, CUSTOMER_ROW)),
+    ).toEqual({
       snapshots: { customer: partySnapshot(CUSTOMER_ROW) },
     });
   });

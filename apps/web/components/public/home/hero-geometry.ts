@@ -52,7 +52,8 @@ const EXIT_DX = Math.sqrt(RADIUS ** 2 - CENTER_Y ** 2);
  * the moment someone drops `CENTER_Y` back below zero, and an arc drawn with
  * the wrong flag silently becomes its own complement.
  */
-const SWEEP_DEGREES = 2 * (90 - (Math.atan2(-CENTER_Y, EXIT_DX) * 180) / Math.PI);
+const SWEEP_DEGREES =
+  2 * (90 - (Math.atan2(-CENTER_Y, EXIT_DX) * 180) / Math.PI);
 const LARGE_ARC = SWEEP_DEGREES > 180 ? 1 : 0;
 
 export const ARC_PATH = `M ${(CENTER_X - EXIT_DX).toFixed(2)} 0 A ${RADIUS} ${RADIUS} 0 ${LARGE_ARC} 0 ${(
@@ -139,8 +140,7 @@ export const LENS_CROSS_Y = LENS_Y;
  * chosen — pick a radius by hand instead and the arc stops passing through the
  * apex you sized it for.
  */
-const LENS_RADIUS =
-  (LENS_RISE ** 2 + LENS_HALF_SPAN ** 2) / (2 * LENS_RISE);
+const LENS_RADIUS = (LENS_RISE ** 2 + LENS_HALF_SPAN ** 2) / (2 * LENS_RISE);
 
 const L = (n: number) => n.toFixed(2);
 

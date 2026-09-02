@@ -33,7 +33,9 @@ export function PlaceSection() {
     <section className="stage px-6 py-24 sm:py-32">
       <div
         className="bloom opacity-45"
-        style={{ '--bloom-x': '30%', '--bloom-y': '58%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '30%', '--bloom-y': '58%' } as React.CSSProperties
+        }
       />
       <LightForm kind="globe" />
 

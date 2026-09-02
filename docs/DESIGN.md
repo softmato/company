@@ -9,7 +9,7 @@
 > in `apps/web/app/globals.css`; the marketing surface's own classes are in
 > `apps/web/app/marketing.css`. **Read the tokens there, not §2 here.**
 >
-> §1's *emerald* is therefore right again by accident, and its palette table is
+> §1's _emerald_ is therefore right again by accident, and its palette table is
 > still wrong: `--primary` is back to `#047857`, but the ground, the type scale
 > and the display accents all moved. Do not read this section as current.
 >
@@ -73,18 +73,18 @@ Defined once as CSS custom properties in `apps/web/app/globals.css` and exposed
 to Tailwind through `@theme inline`. **Read the tokens there, not a copy here** —
 a palette duplicated into a doc is a palette that drifts. The shape:
 
-| Token                            | Role                                             |
-| -------------------------------- | ------------------------------------------------ |
-| `--background` / `--foreground`  | Page ground and text                             |
-| `--surface` / `--surface-strong` | Panels, secondary buttons, summary rails         |
-| `--card`, `--popover`            | Lifted containers                                |
-| `--primary`                      | Emerald `#047857`. Primary action, links, active. |
-| `--shadow-card` / `--shadow-float` | Card depth / overlay depth                     |
-| `--muted` / `--muted-foreground` | Recessed surfaces, secondary text                |
-| `--border`, `--input`, `--ring`  | Hairlines and focus                              |
-| `--destructive`                  | Destructive UI actions                           |
-| `--credit` / `--flag`            | **Money in / money out.** See below.             |
-| `--sidebar-*`                    | Admin navigation                                 |
+| Token                              | Role                                              |
+| ---------------------------------- | ------------------------------------------------- |
+| `--background` / `--foreground`    | Page ground and text                              |
+| `--surface` / `--surface-strong`   | Panels, secondary buttons, summary rails          |
+| `--card`, `--popover`              | Lifted containers                                 |
+| `--primary`                        | Emerald `#047857`. Primary action, links, active. |
+| `--shadow-card` / `--shadow-float` | Card depth / overlay depth                        |
+| `--muted` / `--muted-foreground`   | Recessed surfaces, secondary text                 |
+| `--border`, `--input`, `--ring`    | Hairlines and focus                               |
+| `--destructive`                    | Destructive UI actions                            |
+| `--credit` / `--flag`              | **Money in / money out.** See below.              |
+| `--sidebar-*`                      | Admin navigation                                  |
 
 **Colour carries meaning in this product.** `--credit` and `--flag` are not
 decoration — green means money in, red means money out or something reversed.

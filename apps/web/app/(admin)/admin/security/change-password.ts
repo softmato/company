@@ -5,7 +5,11 @@ import { eq } from 'drizzle-orm';
 import { adminUsers, db } from '@softmato/db';
 
 import { recordAudit } from '@/lib/audit';
-import { hashPassword, passwordMinLength, verifyPassword } from '@/lib/password.core';
+import {
+  hashPassword,
+  passwordMinLength,
+  verifyPassword,
+} from '@/lib/password.core';
 import { verifyTotp } from '@/lib/totp';
 
 import { requireAdmin } from '../cms/actions/shared';
@@ -84,8 +88,7 @@ export async function changePassword(
 
     return {
       ok: false,
-      message:
-        'Your current password or code was wrong. Nothing changed.',
+      message: 'Your current password or code was wrong. Nothing changed.',
     };
   }
 

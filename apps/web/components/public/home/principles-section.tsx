@@ -34,7 +34,9 @@ export function PrinciplesSection() {
     <section className="stage px-6 pb-24 pt-20 sm:pb-32 sm:pt-28">
       <div
         className="bloom opacity-45"
-        style={{ '--bloom-x': '50%', '--bloom-y': '70%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '70%' } as React.CSSProperties
+        }
       />
 
       <div className="mx-auto w-full max-w-6xl">

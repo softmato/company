@@ -33,13 +33,7 @@ const TRANSITIONS: Record<SessionStatus, readonly SessionStatus[]> = {
   ],
   // A failed attempt returns the customer to method selection on the same
   // session; the failed transaction stays behind as the record of it.
-  pending: [
-    'provider_selected',
-    'succeeded',
-    'failed',
-    'cancelled',
-    'expired',
-  ],
+  pending: ['provider_selected', 'succeeded', 'failed', 'cancelled', 'expired'],
   failed: ['provider_selected', 'cancelled', 'expired'],
   succeeded: [],
   cancelled: [],

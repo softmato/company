@@ -16,8 +16,7 @@ import { auth } from '@/lib/auth';
  * real 401 and a JSON body the client already knows how to read.
  */
 export type AdminGuard =
-  | { ok: true; adminId: string }
-  | { ok: false; response: NextResponse };
+  { ok: true; adminId: string } | { ok: false; response: NextResponse };
 
 export async function requireAdminApi(): Promise<AdminGuard> {
   const session = await auth();

@@ -17,7 +17,9 @@ import ws from 'ws';
 
 import * as schema from './schema/index';
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/softmato_dev';
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres:postgres@localhost:5432/softmato_dev';
 
 const isNeon = /neon\.tech/i.test(connectionString);
 

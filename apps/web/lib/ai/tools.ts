@@ -7,7 +7,8 @@ import type { ToolDefinition, ToolExecutionResult } from './types';
 export const AI_TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_available_meeting_slots',
-    description: 'Retrieves upcoming available meeting slots for client discovery and architecture calls with Softmato engineers.',
+    description:
+      'Retrieves upcoming available meeting slots for client discovery and architecture calls with Softmato engineers.',
     parameters: {
       type: 'object',
       properties: {},
@@ -15,42 +16,68 @@ export const AI_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'book_meeting',
-    description: 'Books a discovery meeting with the Softmato team. Requires client name, email, date, time slot, and project details.',
+    description:
+      'Books a discovery meeting with the Softmato team. Requires client name, email, date, time slot, and project details.',
     parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Full name of the client' },
-        email: { type: 'string', description: 'Valid email address of the client' },
-        date: { type: 'string', description: 'Meeting date in YYYY-MM-DD format (e.g., 2026-09-02)' },
-        time: { type: 'string', description: 'Selected time slot (e.g., "14:00 NPT" or "10:00 NPT")' },
-        details: { type: 'string', description: 'Brief description of project requirements or discussion topics' },
+        email: {
+          type: 'string',
+          description: 'Valid email address of the client',
+        },
+        date: {
+          type: 'string',
+          description: 'Meeting date in YYYY-MM-DD format (e.g., 2026-09-02)',
+        },
+        time: {
+          type: 'string',
+          description: 'Selected time slot (e.g., "14:00 NPT" or "10:00 NPT")',
+        },
+        details: {
+          type: 'string',
+          description:
+            'Brief description of project requirements or discussion topics',
+        },
       },
       required: ['name', 'email', 'date', 'time'],
     },
   },
   {
     name: 'create_lead',
-    description: 'Registers a project lead or business inquiry for a custom project quote or technical proposal.',
+    description:
+      'Registers a project lead or business inquiry for a custom project quote or technical proposal.',
     parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Client name' },
         email: { type: 'string', description: 'Client email' },
-        company: { type: 'string', description: 'Company name or organization (optional)' },
-        requirements: { type: 'string', description: 'Detailed summary of project requirements, timeline, or goal' },
+        company: {
+          type: 'string',
+          description: 'Company name or organization (optional)',
+        },
+        requirements: {
+          type: 'string',
+          description:
+            'Detailed summary of project requirements, timeline, or goal',
+        },
       },
       required: ['name', 'email', 'requirements'],
     },
   },
   {
     name: 'contact_human_team',
-    description: 'Hands off an inquiry or support request directly to the Softmato human team.',
+    description:
+      'Hands off an inquiry or support request directly to the Softmato human team.',
     parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Name of the contact person' },
         email: { type: 'string', description: 'Email of the contact person' },
-        message: { type: 'string', description: 'Support message or question for the team' },
+        message: {
+          type: 'string',
+          description: 'Support message or question for the team',
+        },
       },
       required: ['name', 'email', 'message'],
     },
@@ -85,7 +112,10 @@ const bookMeetingSchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD')
-    .refine(d => !Number.isNaN(Date.parse(d)), 'Date is not a real calendar date'),
+    .refine(
+      (d) => !Number.isNaN(Date.parse(d)),
+      'Date is not a real calendar date',
+    ),
   time: z.string().regex(/^\d{1,2}:\d{2}/, 'Time must be HH:MM'),
   details: z.string().optional(),
 });
@@ -108,13 +138,20 @@ const contactHumanSchema = z.object({
 /**
  * Server-side Tool Executors
  */
-export async function executeTool(toolName: string, rawArgs: Record<string, unknown> | string): Promise<ToolExecutionResult> {
+export async function executeTool(
+  toolName: string,
+  rawArgs: Record<string, unknown> | string,
+): Promise<ToolExecutionResult> {
   let argsObj: Record<string, unknown> = {};
   if (typeof rawArgs === 'string') {
     try {
       argsObj = JSON.parse(rawArgs);
     } catch {
-      return { toolName, success: false, error: 'Invalid JSON arguments provided' };
+      return {
+        toolName,
+        success: false,
+        error: 'Invalid JSON arguments provided',
+      };
     }
   } else {
     argsObj = rawArgs;
@@ -158,10 +195,10 @@ export async function executeTool(toolName: string, rawArgs: Record<string, unkn
             error:
               outcome.failure === 'ALREADY_TAKEN'
                 ? `That slot has just been taken. Still open: ${available
-                    .map(s => `${s.date} ${s.time}`)
+                    .map((s) => `${s.date} ${s.time}`)
                     .join(', ')}`
                 : `${parsed.date} at ${parsed.time} is not one of our open slots. Currently open: ${available
-                    .map(s => `${s.date} ${s.time}`)
+                    .map((s) => `${s.date} ${s.time}`)
                     .join(', ')}`,
           };
         }
@@ -183,7 +220,9 @@ export async function executeTool(toolName: string, rawArgs: Record<string, unkn
           // default is what actually carries founder alerts today. Set
           // COMPANY_EMAIL to route them elsewhere.
           if (!env.COMPANY_EMAIL) {
-            console.warn('[book_meeting] COMPANY_EMAIL unset — alerting the default address');
+            console.warn(
+              '[book_meeting] COMPANY_EMAIL unset — alerting the default address',
+            );
           }
           await sendEmail({
             to: env.COMPANY_EMAIL || 'admin@softmato.com',
@@ -261,8 +300,8 @@ export async function executeTool(toolName: string, rawArgs: Record<string, unkn
         return { toolName, success: false, error: `Unknown tool: ${toolName}` };
     }
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Tool execution error';
+    const errorMsg =
+      err instanceof Error ? err.message : 'Tool execution error';
     return { toolName, success: false, error: errorMsg };
   }
 }
-

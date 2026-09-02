@@ -56,10 +56,7 @@ export function Th({
 export function Tr({ className, ...props }: React.ComponentProps<'tr'>) {
   return (
     <tr
-      className={cn(
-        'h-11 even:bg-muted [table[data-dense]_&]:h-10',
-        className,
-      )}
+      className={cn('h-11 even:bg-muted [table[data-dense]_&]:h-10', className)}
       {...props}
     />
   );

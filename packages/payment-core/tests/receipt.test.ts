@@ -57,6 +57,8 @@ describe('buildReceipt', () => {
   });
 
   it('accepts a payment with no provider reference', () => {
-    expect(buildReceipt({ ...INPUT, providerRef: null }).providerRef).toBeNull();
+    expect(
+      buildReceipt({ ...INPUT, providerRef: null }).providerRef,
+    ).toBeNull();
   });
 });

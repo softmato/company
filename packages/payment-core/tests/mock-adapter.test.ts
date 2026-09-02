@@ -50,7 +50,12 @@ describe('poll', () => {
   it('walks one transaction through every outcome', async () => {
     const adapter = new MockProviderAdapter({ id: 'esewa' });
 
-    for (const status of ['pending', 'failed', 'cancelled', 'refunded'] as const) {
+    for (const status of [
+      'pending',
+      'failed',
+      'cancelled',
+      'refunded',
+    ] as const) {
       adapter.setForcedStatus(status);
       await expect(adapter.poll(txn)).resolves.toMatchObject({ status });
     }

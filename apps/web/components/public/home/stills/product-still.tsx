@@ -97,10 +97,7 @@ export function ProductStill() {
 
             <div className="mt-6 space-y-1 border-t border-border pt-4">
               {ROWS.map((row, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 py-2"
-                >
+                <div key={index} className="flex items-center gap-3 py-2">
                   <span className="size-6 flex-none rounded-full bg-surface-strong" />
                   <span
                     className="h-2 rounded-full bg-foreground/15"

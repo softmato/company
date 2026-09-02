@@ -63,7 +63,9 @@ export function useNearViewport<T extends HTMLElement>(rootMargin = '80% 0px') {
    * mode here has to be "costs more than it should", never "the section is
    * empty".
    */
-  const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined');
+  const [near, setNear] = useState(
+    () => typeof IntersectionObserver === 'undefined',
+  );
 
   useEffect(() => {
     if (!node || near || typeof IntersectionObserver === 'undefined') return;

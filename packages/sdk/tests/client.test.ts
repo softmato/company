@@ -33,14 +33,18 @@ describe('construction', () => {
 
 describe('requests', () => {
   it('sends the bearer secret and a JSON body', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ invoice_id: 'inv_1' }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ invoice_id: 'inv_1' }));
 
     await clientWith(fetchMock).createInvoice(INVOICE);
 
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('https://api.test/v1/invoices');
     expect(init.headers.Authorization).toBe('Bearer sk_test_123');
-    expect(JSON.parse(init.body)).toMatchObject({ external_ref: 'HH-2026-00123' });
+    expect(JSON.parse(init.body)).toMatchObject({
+      external_ref: 'HH-2026-00123',
+    });
   });
 
   /**
@@ -64,7 +68,9 @@ describe('requests', () => {
       { idempotencyKey: 'order-42' },
     );
 
-    expect(fetchMock.mock.calls[0]![1].headers['Idempotency-Key']).toBe('order-42');
+    expect(fetchMock.mock.calls[0]![1].headers['Idempotency-Key']).toBe(
+      'order-42',
+    );
   });
 
   it('sends no key or body on a read', async () => {
@@ -103,7 +109,9 @@ describe('errors', () => {
       ),
     );
 
-    await expect(clientWith(fetchMock).createInvoice(INVOICE)).rejects.toMatchObject({
+    await expect(
+      clientWith(fetchMock).createInvoice(INVOICE),
+    ).rejects.toMatchObject({
       code: 'VALIDATION_FAILED',
       status: 422,
       requestId: 'req_01J',
@@ -154,7 +162,9 @@ describe('retries', () => {
   it('retries a rate limit', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse({ error: { code: 'RATE_LIMITED' } }, 429))
+      .mockResolvedValueOnce(
+        jsonResponse({ error: { code: 'RATE_LIMITED' } }, 429),
+      )
       .mockResolvedValue(jsonResponse({ invoice_id: 'inv_1' }));
 
     await clientWith(fetchMock).createInvoice(INVOICE);
@@ -165,11 +175,13 @@ describe('retries', () => {
   it('never retries a validation failure', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ error: { code: 'VALIDATION_FAILED' } }, 422));
+      .mockResolvedValue(
+        jsonResponse({ error: { code: 'VALIDATION_FAILED' } }, 422),
+      );
 
-    await expect(clientWith(fetchMock).createInvoice(INVOICE)).rejects.toBeInstanceOf(
-      SoftmatoApiError,
-    );
+    await expect(
+      clientWith(fetchMock).createInvoice(INVOICE),
+    ).rejects.toBeInstanceOf(SoftmatoApiError);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -182,9 +194,13 @@ describe('retries', () => {
   it('never retries an idempotency conflict', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ error: { code: 'IDEMPOTENCY_CONFLICT' } }, 409));
+      .mockResolvedValue(
+        jsonResponse({ error: { code: 'IDEMPOTENCY_CONFLICT' } }, 409),
+      );
 
-    await expect(clientWith(fetchMock).createInvoice(INVOICE)).rejects.toMatchObject({
+    await expect(
+      clientWith(fetchMock).createInvoice(INVOICE),
+    ).rejects.toMatchObject({
       retryable: false,
     });
 

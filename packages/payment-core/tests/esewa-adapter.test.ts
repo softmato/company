@@ -105,7 +105,9 @@ describe('initiate', () => {
   it('returns the customer to our own callback, not session.returnUrl', async () => {
     const { formPost } = await adapter().initiate(session);
 
-    expect(formPost?.fields.success_url).toContain(`/checkout/${SESSION_ID}/callback`);
+    expect(formPost?.fields.success_url).toContain(
+      `/checkout/${SESSION_ID}/callback`,
+    );
     expect(formPost?.fields.success_url).not.toContain('merchant.example');
   });
 });
@@ -160,9 +162,9 @@ describe('handleCallback', () => {
   });
 
   it('rejects a payload that is not base64 JSON', async () => {
-    await expect(adapter().handleCallback({ data: 'not-base64-json' })).rejects.toThrow(
-      PaymentError,
-    );
+    await expect(
+      adapter().handleCallback({ data: 'not-base64-json' }),
+    ).rejects.toThrow(PaymentError);
     await expect(adapter().handleCallback({})).rejects.toThrow(PaymentError);
   });
 
@@ -190,7 +192,11 @@ describe('poll', () => {
   it('reads the status API and never invents a fee', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
-        JSON.stringify({ status: 'COMPLETE', ref_id: '000AE01', total_amount: '2,500.00' }),
+        JSON.stringify({
+          status: 'COMPLETE',
+          ref_id: '000AE01',
+          total_amount: '2,500.00',
+        }),
         { status: 200 },
       ),
     );
@@ -208,15 +214,22 @@ describe('poll', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ status: 'NOT_FOUND' }), { status: 200 }),
+        new Response(JSON.stringify({ status: 'NOT_FOUND' }), {
+          status: 200,
+        }),
       ),
     );
 
-    await expect(adapter().poll(txn)).resolves.toMatchObject({ status: 'failed' });
+    await expect(adapter().poll(txn)).resolves.toMatchObject({
+      status: 'failed',
+    });
   });
 
   it('surfaces an unreachable gateway as PROVIDER_UNAVAILABLE', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('ECONNREFUSED')),
+    );
 
     await expect(adapter().poll(txn)).rejects.toThrow(PaymentError);
   });

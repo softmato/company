@@ -22,7 +22,11 @@ import { db, type Transaction } from '@softmato/db';
 
 import type { AuditRecorder } from '../audit';
 import { isPaymentError, PaymentError } from '../errors';
-import { eventIdFor, recordProviderEvent, type ProviderEventType } from '../providers/events';
+import {
+  eventIdFor,
+  recordProviderEvent,
+  type ProviderEventType,
+} from '../providers/events';
 import { providerAdapter } from '../providers/registry';
 import { isProviderId } from '../providers/types';
 import type { ReceiptSender } from '../receipts/receipt';
@@ -36,10 +40,14 @@ export async function confirmTransaction(
   now = new Date(),
 ): Promise<SettlementOutcome> {
   if (!isProviderId(transaction.providerId)) {
-    throw new PaymentError('VALIDATION_FAILED', 'Unknown provider on transaction', {
-      txnNo: transaction.txnNo,
-      providerId: transaction.providerId,
-    });
+    throw new PaymentError(
+      'VALIDATION_FAILED',
+      'Unknown provider on transaction',
+      {
+        txnNo: transaction.txnNo,
+        providerId: transaction.providerId,
+      },
+    );
   }
 
   const adapter = providerAdapter(transaction.providerId);
@@ -53,7 +61,10 @@ export async function confirmTransaction(
     {
       providerId: transaction.providerId,
       eventType,
-      providerEventId: eventIdFor(transaction.providerRef ?? transaction.txnNo, verified),
+      providerEventId: eventIdFor(
+        transaction.providerRef ?? transaction.txnNo,
+        verified,
+      ),
       // The lookup travelled over our own authenticated connection to the
       // provider, so the channel is the assurance; no payload signature was
       // presented to check.

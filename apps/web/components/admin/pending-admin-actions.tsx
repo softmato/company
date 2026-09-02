@@ -107,9 +107,7 @@ export function PendingAdminActions({
           </Field>
 
           <div className="flex items-center gap-2">
-            <SubmitButton pendingLabel="Issuing…">
-              Issue new link
-            </SubmitButton>
+            <SubmitButton pendingLabel="Issuing…">Issue new link</SubmitButton>
             <Button
               type="button"
               variant="secondary"

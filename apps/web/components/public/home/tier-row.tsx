@@ -25,7 +25,10 @@ function Side({ label, side }: { label: string; side: TierSide }) {
             key={item}
             className="flex gap-3 text-[14px] leading-relaxed text-muted-foreground"
           >
-            <span aria-hidden="true" className="mt-2 size-1 flex-none rounded-full bg-primary" />
+            <span
+              aria-hidden="true"
+              className="mt-2 size-1 flex-none rounded-full bg-primary"
+            />
             {item}
           </li>
         ))}

@@ -24,10 +24,7 @@ import {
   SAMPLE_RECEIPT,
   SAMPLE_RECEIPT_PARTIAL,
 } from '../lib/documents/samples';
-import {
-  invoiceHtml,
-  receiptHtml,
-} from '../lib/documents/render-html';
+import { invoiceHtml, receiptHtml } from '../lib/documents/render-html';
 
 const argv = process.argv.slice(2);
 const flag = (name: string): string | undefined => {
@@ -58,9 +55,7 @@ for (const { name, html } of documents) {
 if (alsoPdf) {
   // Imported lazily: it is `server-only` in spirit and pulls in child_process,
   // which the HTML path has no business needing.
-  const { renderPdf, pdfAvailable } = await import(
-    '../lib/documents/pdf'
-  );
+  const { renderPdf, pdfAvailable } = await import('../lib/documents/pdf');
 
   if (!pdfAvailable()) {
     console.error(

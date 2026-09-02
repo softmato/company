@@ -16,7 +16,12 @@
  *    empty dashboard is honest; a populated fake one is not.
  */
 
-import { generateSlots, isOfferedSlot, normaliseTime, type MeetingSlot } from './slots';
+import {
+  generateSlots,
+  isOfferedSlot,
+  normaliseTime,
+  type MeetingSlot,
+} from './slots';
 
 export type { MeetingSlot };
 
@@ -72,7 +77,9 @@ function slotKey(date: string, time: string): string {
 
 /** Offered slots, minus anything already booked. */
 export function getAvailableSlots(now: Date = new Date()): MeetingSlot[] {
-  return generateSlots(now).filter(s => !takenSlots.has(slotKey(s.date, s.time)));
+  return generateSlots(now).filter(
+    (s) => !takenSlots.has(slotKey(s.date, s.time)),
+  );
 }
 
 /** A short, unambiguous reference. Excludes vowels so no reference reads as a word. */
@@ -194,7 +201,7 @@ export function getAllLeads(): LeadEntry[] {
 }
 
 export function updateLeadStatus(id: string, status: string): boolean {
-  const item = leadsStore.find(l => l.id === id);
+  const item = leadsStore.find((l) => l.id === id);
   if (item) {
     (item as unknown as Record<string, unknown>).status = status;
     return true;

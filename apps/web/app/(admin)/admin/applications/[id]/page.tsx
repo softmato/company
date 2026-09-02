@@ -29,7 +29,9 @@ export default async function ApplicationDetailPage({
 
   return (
     <div className="max-w-3xl">
-      <Breadcrumbs trail={[{ label: 'Applications', href: '/admin/applications' }]}>
+      <Breadcrumbs
+        trail={[{ label: 'Applications', href: '/admin/applications' }]}
+      >
         {application.name}
       </Breadcrumbs>
 
@@ -53,7 +55,10 @@ export default async function ApplicationDetailPage({
       ) : null}
 
       <section className="mt-8">
-        <ApplicationPanel application={application} scopes={APPLICATION_SCOPES} />
+        <ApplicationPanel
+          application={application}
+          scopes={APPLICATION_SCOPES}
+        />
       </section>
 
       <section className="mt-10">

@@ -12,11 +12,7 @@ import { cn } from '@/lib/cn';
  * button and the other way round.
  */
 export type ButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'ghost'
-  | 'destructive'
-  | 'link';
+  'primary' | 'secondary' | 'ghost' | 'destructive' | 'link';
 
 export type ButtonSize = 'sm' | 'default' | 'touch';
 

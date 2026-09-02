@@ -9,7 +9,11 @@ import { SURFACE, bar, fillRound, ground, label, strokeRound } from './draw';
  * the selection handles are what say so. A rendered mockup here would be a
  * fourth finished screen and the carousel would say the same thing four times.
  */
-export function drawDesign(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+export function drawDesign(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+): void {
   ground(ctx, w, h);
 
   /* Grid. */
@@ -33,7 +37,15 @@ export function drawDesign(ctx: CanvasRenderingContext2D, w: number, h: number):
   /* Toolbar. */
   fillRound(ctx, 22, 22, w - 44, 40, 12, SURFACE.panel);
   [0, 1, 2, 3].forEach((i) => {
-    fillRound(ctx, 40 + i * 34, 33, 18, 18, 5, i === 1 ? SURFACE.glow : SURFACE.line);
+    fillRound(
+      ctx,
+      40 + i * 34,
+      33,
+      18,
+      18,
+      5,
+      i === 1 ? SURFACE.glow : SURFACE.line,
+    );
   });
 
   /* Two frames being laid out. */

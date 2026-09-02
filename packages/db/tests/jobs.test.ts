@@ -107,7 +107,10 @@ beforeAll(async () => {
   registerProvider(new MockProviderAdapter({ id: PROVIDER }));
 });
 
-async function makeSession(expiresAt: Date, status: 'created' | 'pending' = 'created') {
+async function makeSession(
+  expiresAt: Date,
+  status: 'created' | 'pending' = 'created',
+) {
   const unique = Date.now() + Math.floor(Math.random() * 100_000);
 
   const [invoice] = await db
@@ -233,8 +236,7 @@ describe('expireStaleSessions', () => {
       audited
         .slice(before)
         .some(
-          (e) =>
-            e.action === 'session.expired' && e.resourceId === session.id,
+          (e) => e.action === 'session.expired' && e.resourceId === session.id,
         ),
     ).toBe(true);
   });

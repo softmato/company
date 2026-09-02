@@ -29,7 +29,8 @@ function genuine(
     total_amount: '2500.00',
     transaction_uuid: 'cs-test-0001',
     product_code: 'EPAYTEST',
-    signed_field_names: 'transaction_code,status,total_amount,transaction_uuid,product_code',
+    signed_field_names:
+      'transaction_code,status,total_amount,transaction_uuid,product_code',
     ...overrides,
   };
 
@@ -126,7 +127,9 @@ describe('assertSignature', () => {
    * the one eSewa signed — which passes for payloads eSewa never sent.
    */
   it('verifies over the field list the response itself declares', () => {
-    const shortened = genuine({ signed_field_names: 'total_amount,transaction_uuid' });
+    const shortened = genuine({
+      signed_field_names: 'total_amount,transaction_uuid',
+    });
 
     expect(() => assertSignature(SECRET, shortened)).not.toThrow();
   });
@@ -142,9 +145,9 @@ describe('assertSignature', () => {
 
   it('fails closed on a signature of the wrong length rather than crashing', () => {
     // `timingSafeEqual` throws on a length mismatch; the caller must not.
-    expect(() => assertSignature(SECRET, { ...genuine(), signature: 'x' })).toThrow(
-      PaymentError,
-    );
+    expect(() =>
+      assertSignature(SECRET, { ...genuine(), signature: 'x' }),
+    ).toThrow(PaymentError);
   });
 });
 

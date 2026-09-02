@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { requireAdminApi } from '@/lib/admin/api-guard';
 import { recordAudit } from '@/lib/audit';
-import {
-  detectImage,
-  MAX_UPLOAD_BYTES,
-} from '@/lib/storage/image-validation';
+import { detectImage, MAX_UPLOAD_BYTES } from '@/lib/storage/image-validation';
 import { parseCmsImageKey } from '@/lib/storage/object-key';
 import { publicUrl, r2Configured } from '@/lib/storage/r2-client';
 import {

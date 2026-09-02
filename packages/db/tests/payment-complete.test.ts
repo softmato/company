@@ -23,10 +23,7 @@ import { invoices } from '../schema/invoices';
 import { journalEntries, ledgerEntries } from '../schema/ledger';
 import { paymentSessions, transactions } from '../schema/payments';
 import { accountSeeds } from '../seed/accounts';
-import {
-  completePayment,
-  generateSessionId,
-} from '../../payment-core/index';
+import { completePayment, generateSessionId } from '../../payment-core/index';
 import type { AuditRecord } from '../../payment-core/audit';
 import type { Receipt } from '../../payment-core/receipts/receipt';
 import type { VerifiedResult } from '../../payment-core/providers/types';
@@ -165,7 +162,10 @@ async function makePayable(total = GROSS) {
   return { invoice: invoice!, session: session!, txn: txn! };
 }
 
-function settle(txn: Awaited<ReturnType<typeof makePayable>>['txn'], result = verified()) {
+function settle(
+  txn: Awaited<ReturnType<typeof makePayable>>['txn'],
+  result = verified(),
+) {
   return db.transaction((tx) =>
     completePayment(tx, txn, result, audit, sendReceipt, NOW),
   );
@@ -307,7 +307,10 @@ describe('completePayment', () => {
     ).rejects.toMatchObject({ code: 'AMOUNT_MISMATCH' });
 
     const [row] = await db
-      .select({ status: transactions.status, journalId: transactions.journalId })
+      .select({
+        status: transactions.status,
+        journalId: transactions.journalId,
+      })
       .from(transactions)
       .where(eq(transactions.id, txn.id))
       .limit(1);

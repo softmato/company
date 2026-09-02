@@ -30,7 +30,9 @@ export function Statement() {
     <section className="stage px-6 py-28 sm:py-40">
       <div
         className="bloom opacity-70"
-        style={{ '--bloom-x': '82%', '--bloom-y': '18%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '82%', '--bloom-y': '18%' } as React.CSSProperties
+        }
       />
 
       <div className="mx-auto w-full max-w-6xl">
@@ -48,9 +50,9 @@ export function Statement() {
 
         <p className="mt-10 max-w-[46ch] text-[16px] leading-relaxed text-muted-foreground">
           You talk to the people writing the code, not to an account manager
-          relaying messages. Scope, decisions and what changed are written
-          down, so a handover is a document rather than a conversation you have
-          to remember.
+          relaying messages. Scope, decisions and what changed are written down,
+          so a handover is a document rather than a conversation you have to
+          remember.
         </p>
 
         <CraftConstellation />

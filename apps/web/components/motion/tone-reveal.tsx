@@ -65,7 +65,8 @@ export function ToneReveal({
 
     /* Destinations first — see note 3 above. */
     const destinations = words.map((word) => getComputedStyle(word).color);
-    const from = tone === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(6,20,15,0.14)';
+    const from =
+      tone === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(6,20,15,0.14)';
 
     const ctx = gsap.context(() => {
       words.forEach((word, index) => {

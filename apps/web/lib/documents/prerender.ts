@@ -42,7 +42,9 @@ export function prerenderInvoicePdf(invoiceNo: string): void {
         const result = await documentPdf(document, invoiceHtml(document));
 
         if (!result.ok) {
-          console.info(`[documents] ${invoiceNo} not pre-rendered — ${result.reason}`);
+          console.info(
+            `[documents] ${invoiceNo} not pre-rendered — ${result.reason}`,
+          );
         }
       } catch (error) {
         console.warn(`[documents] ${invoiceNo} not pre-rendered —`, error);

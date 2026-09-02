@@ -68,7 +68,9 @@ export async function inviteAdmin(
   const currentPassword = String(form.get('current_password') ?? '');
   const currentCode = String(form.get('current_code') ?? '');
 
-  const email = String(form.get('email') ?? '').trim().toLowerCase();
+  const email = String(form.get('email') ?? '')
+    .trim()
+    .toLowerCase();
   const name = String(form.get('name') ?? '').trim();
   const password = String(form.get('password') ?? '');
 

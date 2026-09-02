@@ -135,7 +135,9 @@ export default async function AdminInvoiceDetailPage({
                       <StatusBadge status={payment.status} />
                     </td>
                     <td className="numeric px-4 py-3 text-muted-foreground">
-                      {formatAdDateTime(payment.succeededAt ?? payment.createdAt)}
+                      {formatAdDateTime(
+                        payment.succeededAt ?? payment.createdAt,
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {/* Only a payment that actually landed has a receipt. */}

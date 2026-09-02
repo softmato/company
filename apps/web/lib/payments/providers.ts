@@ -119,7 +119,11 @@ function registerMocks(): void {
  */
 function registerReal(): void {
   // Checked as a pair; `lib/env.ts` has already refused a half-configured one.
-  if (env.ESEWA_MERCHANT_CODE && env.ESEWA_SECRET_KEY && !hasProvider('esewa')) {
+  if (
+    env.ESEWA_MERCHANT_CODE &&
+    env.ESEWA_SECRET_KEY &&
+    !hasProvider('esewa')
+  ) {
     registerProvider(new EsewaProviderAdapter());
   }
 

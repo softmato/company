@@ -5,7 +5,13 @@ import { useEffect, useRef } from 'react';
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
 import { gsap, registerMotionPlugins } from '@/lib/motion/register';
 
-import { ARC_BLEED, LENS_ARC, LENS_FILL, LENS_ORIGIN, VIEW_BOX } from './hero-geometry';
+import {
+  ARC_BLEED,
+  LENS_ARC,
+  LENS_FILL,
+  LENS_ORIGIN,
+  VIEW_BOX,
+} from './hero-geometry';
 import { heroStart } from './hero-start';
 import { HERO } from './hero-timing';
 
@@ -66,8 +72,20 @@ import { HERO } from './hero-timing';
 const CRESCENT_LAYERS = [
   { key: 'halo', width: 30, spread: 9, opacity: 0.14, stroke: 'var(--glow)' },
   { key: 'tip', width: 2.4, spread: 17, opacity: 0.45, stroke: 'var(--glow)' },
-  { key: 'mid', width: 6, spread: 11.5, opacity: 0.6, stroke: 'var(--glow-core)' },
-  { key: 'belly', width: 11, spread: 6.5, opacity: 0.85, stroke: 'var(--glow-core)' },
+  {
+    key: 'mid',
+    width: 6,
+    spread: 11.5,
+    opacity: 0.6,
+    stroke: 'var(--glow-core)',
+  },
+  {
+    key: 'belly',
+    width: 11,
+    spread: 6.5,
+    opacity: 0.85,
+    stroke: 'var(--glow-core)',
+  },
   { key: 'core', width: 3.2, spread: 3.5, opacity: 1, stroke: '#ffffff' },
 ];
 
@@ -96,7 +114,10 @@ export function HeroEye() {
     registerMotionPlugins();
 
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: 'power2.out' }, paused: true });
+      const tl = gsap.timeline({
+        defaults: { ease: 'power2.out' },
+        paused: true,
+      });
 
       /*
        * The dome grows out of the bottom of the bowl rather than fading in
@@ -166,7 +187,13 @@ export function HeroEye() {
        */
       tl.to(
         '[data-eye-bloom]',
-        { opacity: BLOOM_REST, duration: 2.4, repeat: -1, yoyo: true, ease: 'sine.inOut' },
+        {
+          opacity: BLOOM_REST,
+          duration: 2.4,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut',
+        },
         HERO.eye.idle,
       );
 
@@ -241,8 +268,16 @@ export function HeroEye() {
           >
             <stop offset="0%" stopColor="var(--glow)" stopOpacity="0.9" />
             <stop offset="34%" stopColor="var(--glow)" stopOpacity="0.62" />
-            <stop offset="68%" stopColor="var(--glow-deep)" stopOpacity="0.52" />
-            <stop offset="100%" stopColor="var(--glow-deep)" stopOpacity="0.08" />
+            <stop
+              offset="68%"
+              stopColor="var(--glow-deep)"
+              stopOpacity="0.52"
+            />
+            <stop
+              offset="100%"
+              stopColor="var(--glow-deep)"
+              stopOpacity="0.08"
+            />
           </radialGradient>
 
           {/* The rim's soft halo, weighted to the lit side. */}
@@ -298,11 +333,20 @@ export function HeroEye() {
           <linearGradient id="hero-eye-edge" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="var(--glow-core)" stopOpacity="0.28" />
             <stop offset="50%" stopColor="var(--glow-core)" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="var(--glow-core)" stopOpacity="0.72" />
+            <stop
+              offset="100%"
+              stopColor="var(--glow-core)"
+              stopOpacity="0.72"
+            />
           </linearGradient>
         </defs>
 
-        <path d={LENS_ARC} fill="none" stroke="url(#hero-eye-edge)" strokeWidth="2" />
+        <path
+          d={LENS_ARC}
+          fill="none"
+          stroke="url(#hero-eye-edge)"
+          strokeWidth="2"
+        />
 
         {/*
           The crescent. Three round-capped windows sharing a centre: a wide

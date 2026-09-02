@@ -85,7 +85,10 @@ export default async function AdminPaymentsPage({
             </thead>
             <tbody className="divide-y divide-border">
               {payments.map((payment) => (
-                <tr key={payment.id} className="transition-colors hover:bg-muted/30">
+                <tr
+                  key={payment.id}
+                  className="transition-colors hover:bg-muted/30"
+                >
                   <td className="px-4 py-3">
                     <div className="numeric font-semibold text-foreground">
                       {payment.txnNo}
@@ -94,7 +97,9 @@ export default async function AdminPaymentsPage({
                       {payment.invoiceNo}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-foreground">{payment.customerName}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    {payment.customerName}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="font-semibold uppercase text-primary">
                       {payment.providerId}
@@ -161,7 +166,9 @@ function Metric({
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="numeric mt-1 text-xl font-semibold text-foreground">{value}</p>
+      <p className="numeric mt-1 text-xl font-semibold text-foreground">
+        {value}
+      </p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">{note}</p>
     </div>
   );

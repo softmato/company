@@ -27,7 +27,11 @@ import type { InvoiceDocument, ReceiptDocument } from './types';
 export async function invoiceAttachment(
   document: InvoiceDocument,
 ): Promise<EmailAttachment | null> {
-  return attach(document, invoiceHtml(document), `${safe(document.invoiceNo)}.pdf`);
+  return attach(
+    document,
+    invoiceHtml(document),
+    `${safe(document.invoiceNo)}.pdf`,
+  );
 }
 
 export async function receiptAttachment(

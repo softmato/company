@@ -25,7 +25,11 @@ import { Wordmark } from '@/components/public/wordmark';
  * The contact block reads platform settings rather than hardcoding an address:
  * a founder moves office by editing a form, not by waiting for a deploy.
  */
-export async function SiteFooter({ className }: { className?: string | undefined }) {
+export async function SiteFooter({
+  className,
+}: {
+  className?: string | undefined;
+}) {
   const [legal, settings] = await Promise.all([
     listPublishedLegalDocuments(),
     getSettings(),
@@ -43,7 +47,9 @@ export async function SiteFooter({ className }: { className?: string | undefined
       */}
       <div
         className="bloom opacity-50"
-        style={{ '--bloom-x': '50%', '--bloom-y': '128%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '128%' } as React.CSSProperties
+        }
       />
 
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
@@ -62,7 +68,9 @@ export async function SiteFooter({ className }: { className?: string | undefined
               every page. Email and the contact form are the public routes.
             */}
             {address ? (
-              <p className="mt-5 text-[14px] text-muted-foreground">{address}</p>
+              <p className="mt-5 text-[14px] text-muted-foreground">
+                {address}
+              </p>
             ) : null}
 
             {email ? (
@@ -89,13 +97,11 @@ export async function SiteFooter({ className }: { className?: string | undefined
                  * deployment, where the subdomain does not exist.
                  */
                 { href: '/developers', label: 'Developers' },
-              ].map(
-                (link) => (
-                  <li key={link.href}>
-                    <FooterLink href={link.href}>{link.label}</FooterLink>
-                  </li>
-                ),
-              )}
+              ].map((link) => (
+                <li key={link.href}>
+                  <FooterLink href={link.href}>{link.label}</FooterLink>
+                </li>
+              ))}
             </ul>
           </nav>
 
@@ -105,7 +111,9 @@ export async function SiteFooter({ className }: { className?: string | undefined
               <ul className="mt-4 grid gap-2.5">
                 {legal.map((doc) => (
                   <li key={doc.slug}>
-                    <FooterLink href={`/legal/${doc.slug}`}>{doc.title}</FooterLink>
+                    <FooterLink href={`/legal/${doc.slug}`}>
+                      {doc.title}
+                    </FooterLink>
                   </li>
                 ))}
               </ul>
@@ -121,7 +129,13 @@ export async function SiteFooter({ className }: { className?: string | undefined
   );
 }
 
-function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+function FooterLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}

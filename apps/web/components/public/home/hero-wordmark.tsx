@@ -147,7 +147,9 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
       );
 
       /* Layer hints off once the glyphs are settled type again. */
-      tl.eventCallback('onComplete', () => el.setAttribute('data-hero-settled', ''));
+      tl.eventCallback('onComplete', () =>
+        el.setAttribute('data-hero-settled', ''),
+      );
 
       void heroStart().then(() => tl.play());
     }, el);
@@ -165,7 +167,11 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
     <span ref={root} role="img" aria-label={name} className="hero-word">
       {[...name.toUpperCase()].map((letter, index) => (
         /* Letters repeat in "SOFTMATO"; the position is the identity. */
-        <span key={`${letter}-${index}`} aria-hidden="true" className="hero-letter">
+        <span
+          key={`${letter}-${index}`}
+          aria-hidden="true"
+          className="hero-letter"
+        >
           {letter}
         </span>
       ))}

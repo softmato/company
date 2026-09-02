@@ -80,7 +80,9 @@ export function documentPdfKey({
  */
 function segment(value: string, what: string): string {
   if (!/^[A-Za-z0-9][A-Za-z0-9/_.-]*$/.test(value) || value.includes('..')) {
-    throw new Error(`Unusable ${what} for an object key: ${JSON.stringify(value)}`);
+    throw new Error(
+      `Unusable ${what} for an object key: ${JSON.stringify(value)}`,
+    );
   }
 
   return value.replace(/\//g, '-');

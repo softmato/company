@@ -13,12 +13,7 @@
  * look clean here while rendering `[confirm: Registered address]` to a reader,
  * which is the exact failure this script exists to catch.
  */
-import {
-  closeDb,
-  db,
-  legalDocuments,
-  platformSettings,
-} from '@softmato/db';
+import { closeDb, db, legalDocuments, platformSettings } from '@softmato/db';
 
 import { legalReadiness } from '../apps/web/lib/cms/legal-readiness';
 import { resolveTokens } from '../apps/web/lib/cms/tokens';
@@ -40,9 +35,11 @@ for (const r of rows) {
    * a policy — see apps/web/lib/cms/legal-readiness.ts. Shared rather than
    * repeated, so this check and the site cannot drift apart.
    */
-  const { ready, unconfirmed: confirms, draftBanner: banner } = legalReadiness(
-    resolveTokens(r.body, settings),
-  );
+  const {
+    ready,
+    unconfirmed: confirms,
+    draftBanner: banner,
+  } = legalReadiness(resolveTokens(r.body, settings));
 
   const bad = r.status === 'published' && !ready;
 

@@ -25,12 +25,12 @@ and
 
 ## 1. Position and start
 
-| | |
-| --- | --- |
-| **Position** | [job title] |
-| **Reports to** | [name / role] |
-| **Start date** | [date] |
-| **Type** | Full-time, permanent, on our payroll |
+|                   |                                                                           |
+| ----------------- | ------------------------------------------------------------------------- |
+| **Position**      | [job title]                                                               |
+| **Reports to**    | [name / role]                                                             |
+| **Start date**    | [date]                                                                    |
+| **Type**          | Full-time, permanent, on our payroll                                      |
 | **Place of work** | [confirm: office address], with remote working as set out in the handbook |
 
 Your duties are those normally attaching to the role and others reasonably
@@ -63,11 +63,11 @@ compensated; it is never an unpaid expectation.**
 
 ## 4. Pay
 
-| | |
-| --- | --- |
-| **Gross monthly salary** | NPR [confirm: amount] |
-| **Of which basic salary** | NPR [confirm: amount] |
-| **Paid** | Monthly, by [confirm: date] of the following month, by bank transfer |
+|                           |                                                                      |
+| ------------------------- | -------------------------------------------------------------------- |
+| **Gross monthly salary**  | NPR [confirm: amount]                                                |
+| **Of which basic salary** | NPR [confirm: amount]                                                |
+| **Paid**                  | Monthly, by [confirm: date] of the following month, by bank transfer |
 
 Tax is deducted at source under the **Income Tax Act, 2058** and deposited with
 the Inland Revenue Department. You get a payslip each month showing gross,

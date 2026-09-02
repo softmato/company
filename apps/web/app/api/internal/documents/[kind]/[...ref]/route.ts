@@ -102,7 +102,11 @@ export async function GET(
 async function render(
   kind: string,
   reference: string,
-): Promise<{ document: StorableDocument; html: string; filename: string } | null> {
+): Promise<{
+  document: StorableDocument;
+  html: string;
+  filename: string;
+} | null> {
   if (kind === 'invoice') {
     const document = await buildInvoiceDocument(reference);
 

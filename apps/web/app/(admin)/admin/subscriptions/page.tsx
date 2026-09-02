@@ -79,8 +79,13 @@ export default async function AdminSubscriptionsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-muted/30">
-                  <td className="px-4 py-3 text-foreground">{row.customerName}</td>
+                <tr
+                  key={row.id}
+                  className="transition-colors hover:bg-muted/30"
+                >
+                  <td className="px-4 py-3 text-foreground">
+                    {row.customerName}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {row.productName}
                   </td>

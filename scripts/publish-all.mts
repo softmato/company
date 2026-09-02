@@ -38,10 +38,7 @@ const now = new Date();
 
 async function set(
   table:
-    | typeof pages
-    | typeof services
-    | typeof productPages
-    | typeof blogPosts,
+    typeof pages | typeof services | typeof productPages | typeof blogPosts,
   label: string,
 ): Promise<void> {
   const rows = await db
@@ -53,7 +50,9 @@ async function set(
     )
     .returning({ id: table.id });
 
-  console.log(`${label.padEnd(14)} ${rows.length} → ${draft ? 'draft' : 'published'}`);
+  console.log(
+    `${label.padEnd(14)} ${rows.length} → ${draft ? 'draft' : 'published'}`,
+  );
 }
 
 await set(pages, 'pages');
@@ -79,7 +78,12 @@ const legal = await db
   .update(legalDocuments)
   .set(
     draft
-      ? { status: 'draft', publishedAt: null, effectiveAt: null, updatedAt: now }
+      ? {
+          status: 'draft',
+          publishedAt: null,
+          effectiveAt: null,
+          updatedAt: now,
+        }
       : {
           status: 'published',
           publishedAt: now,

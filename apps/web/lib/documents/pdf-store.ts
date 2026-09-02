@@ -44,7 +44,8 @@ export function documentKeyFor(
 ): string {
   return documentPdfKey({
     kind: document.kind,
-    number: document.kind === 'invoice' ? document.invoiceNo : document.receiptNo,
+    number:
+      document.kind === 'invoice' ? document.invoiceNo : document.receiptNo,
     fiscalYear: document.fiscalYear,
     fingerprint: createHash('sha256')
       .update(html, 'utf8')

@@ -31,7 +31,9 @@ export function ReceiptSheet({ document }: { document: ReceiptDocument }) {
                 ? `PAN: ${document.seller.pan}`
                 : 'PAN not set'}
             </span>
-            {document.seller.email ? <span>{document.seller.email}</span> : null}
+            {document.seller.email ? (
+              <span>{document.seller.email}</span>
+            ) : null}
           </p>
         </div>
       </header>
@@ -61,7 +63,10 @@ export function ReceiptSheet({ document }: { document: ReceiptDocument }) {
         </tbody>
       </table>
 
-      <section className="parties" style={{ borderTop: '1px solid var(--doc-rule)', marginTop: '5mm' }}>
+      <section
+        className="parties"
+        style={{ borderTop: '1px solid var(--doc-rule)', marginTop: '5mm' }}
+      >
         <PartyBlock label="Received from" party={document.customer} />
       </section>
 

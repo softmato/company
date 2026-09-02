@@ -68,12 +68,7 @@ export interface InitiateResult {
  * else stays in `raw`, which is stored verbatim on `provider_events`.
  */
 export type VerifiedStatus =
-  | 'pending'
-  | 'succeeded'
-  | 'failed'
-  | 'cancelled'
-  | 'expired'
-  | 'refunded';
+  'pending' | 'succeeded' | 'failed' | 'cancelled' | 'expired' | 'refunded';
 
 export interface VerifiedResult {
   status: VerifiedStatus;

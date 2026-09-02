@@ -59,6 +59,8 @@ export const DEFAULT_RECEIVABLE_BY_KIND = {
 
 export type InvoiceableProductKind = keyof typeof DEFAULT_REVENUE_BY_KIND;
 
-export function isInvoiceableKind(kind: string): kind is InvoiceableProductKind {
+export function isInvoiceableKind(
+  kind: string,
+): kind is InvoiceableProductKind {
   return kind in DEFAULT_REVENUE_BY_KIND;
 }

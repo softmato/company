@@ -208,13 +208,17 @@ export class KhaltiProviderAdapter implements ProviderAdapter {
        */
       if (isLookupAnswer(parsed)) return parsed as T;
 
-      throw new PaymentError('PROVIDER_UNAVAILABLE', 'Khalti rejected the request', {
-        path,
-        status: response.status,
-        // Truncated: Khalti echoes merchant identifiers in some errors, and
-        // this reaches the log, not the client.
-        body: text.slice(0, 500),
-      });
+      throw new PaymentError(
+        'PROVIDER_UNAVAILABLE',
+        'Khalti rejected the request',
+        {
+          path,
+          status: response.status,
+          // Truncated: Khalti echoes merchant identifiers in some errors, and
+          // this reaches the log, not the client.
+          body: text.slice(0, 500),
+        },
+      );
     }
 
     return parsed as T;

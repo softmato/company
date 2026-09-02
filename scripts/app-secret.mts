@@ -28,7 +28,10 @@
  * knowable. Put it straight into the consuming application's secret store.
  */
 import { closeDb, db, applications } from '@softmato/db';
-import { rotateSecret, type AuditRecorder } from '../packages/payment-core/index.ts';
+import {
+  rotateSecret,
+  type AuditRecorder,
+} from '../packages/payment-core/index.ts';
 import { eq } from 'drizzle-orm';
 
 const argv = process.argv.slice(2);
@@ -100,7 +103,9 @@ console.log(
 console.log('  This value is shown once. It cannot be printed again.');
 
 if (argv.includes('--scopes')) {
-  console.log(`\n  scopes       ${(application.scopes as string[]).join(', ')}`);
+  console.log(
+    `\n  scopes       ${(application.scopes as string[]).join(', ')}`,
+  );
 }
 
 await closeDb();

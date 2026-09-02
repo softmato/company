@@ -115,7 +115,10 @@ export default async function AdminInvoicesPage({
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((invoice) => (
-                <tr key={invoice.id} className="transition-colors hover:bg-muted/30">
+                <tr
+                  key={invoice.id}
+                  className="transition-colors hover:bg-muted/30"
+                >
                   <td className="px-4 py-3">
                     <div className="numeric font-semibold text-foreground">
                       {invoice.invoiceNo}
@@ -126,7 +129,9 @@ export default async function AdminInvoicesPage({
                       </div>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-foreground">{invoice.customerName}</td>
+                  <td className="px-4 py-3 text-foreground">
+                    {invoice.customerName}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {invoice.productName}
                   </td>
@@ -145,7 +150,9 @@ export default async function AdminInvoicesPage({
                     */}
                     <div className="flex items-center gap-1.5">
                       <StatusBadge status={invoice.status} />
-                      {invoice.pastDue ? <StatusBadge status="past_due" /> : null}
+                      {invoice.pastDue ? (
+                        <StatusBadge status="past_due" />
+                      ) : null}
                     </div>
                   </td>
                   <td className="numeric px-4 py-3 text-[11px] text-muted-foreground">
@@ -187,7 +194,9 @@ function Metric({
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="numeric mt-1 text-xl font-semibold text-foreground">{value}</p>
+      <p className="numeric mt-1 text-xl font-semibold text-foreground">
+        {value}
+      </p>
       <p className="mt-0.5 text-[11px] text-muted-foreground">{note}</p>
     </div>
   );

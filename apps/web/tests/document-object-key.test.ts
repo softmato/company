@@ -81,9 +81,7 @@ describe('documentPdfKey', () => {
     expect(() => invoice({ fingerprint: '' })).toThrow();
     expect(() => invoice({ fingerprint: 'abc' })).toThrow();
     expect(() => invoice({ fingerprint: FINGERPRINT.toUpperCase() })).toThrow();
-    expect(() =>
-      invoice({ fingerprint: FINGERPRINT + '0' }),
-    ).toThrow();
+    expect(() => invoice({ fingerprint: FINGERPRINT + '0' })).toThrow();
     expect(FINGERPRINT).toHaveLength(FINGERPRINT_LENGTH);
   });
 });

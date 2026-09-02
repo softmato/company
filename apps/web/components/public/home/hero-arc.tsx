@@ -95,9 +95,24 @@ const BLOOM_LAYERS = [
    * ends by its own gradient is the cheap way to vary width along a path,
    * which SVG otherwise will not do.
    */
-  { filter: 'hero-arc-bloom', gradient: 'hero-arc-arms', width: 46, opacity: 0.85 },
-  { filter: 'hero-arc-bloom', gradient: 'hero-arc-halo', width: 26, opacity: 0.8 },
-  { filter: 'hero-arc-hot', gradient: 'hero-arc-hot-grad', width: 7, opacity: 1 },
+  {
+    filter: 'hero-arc-bloom',
+    gradient: 'hero-arc-arms',
+    width: 46,
+    opacity: 0.85,
+  },
+  {
+    filter: 'hero-arc-bloom',
+    gradient: 'hero-arc-halo',
+    width: 26,
+    opacity: 0.8,
+  },
+  {
+    filter: 'hero-arc-hot',
+    gradient: 'hero-arc-hot-grad',
+    width: 7,
+    opacity: 1,
+  },
 ];
 
 export function HeroArc() {
@@ -118,7 +133,10 @@ export function HeroArc() {
        * gate opens, so the first frame is not also the frame that reads every
        * computed style.
        */
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true });
+      const tl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
+        paused: true,
+      });
 
       /*
        * **Only the unfiltered half of the arc is allowed to move.**
@@ -183,13 +201,21 @@ export function HeroArc() {
       tl.fromTo(
         '[data-arc-spark="right"]',
         { drawSVG: '50% 52%', opacity: 1 },
-        { drawSVG: '96% 100%', duration: HERO.spark.duration, ease: 'power2.inOut' },
+        {
+          drawSVG: '96% 100%',
+          duration: HERO.spark.duration,
+          ease: 'power2.inOut',
+        },
         HERO.spark.at,
       );
       tl.fromTo(
         '[data-arc-spark="left"]',
         { drawSVG: '48% 50%', opacity: 1 },
-        { drawSVG: '0% 4%', duration: HERO.spark.duration, ease: 'power2.inOut' },
+        {
+          drawSVG: '0% 4%',
+          duration: HERO.spark.duration,
+          ease: 'power2.inOut',
+        },
         HERO.spark.at,
       );
       tl.to(
@@ -204,7 +230,9 @@ export function HeroArc() {
        * first second, and the hero is the one section a reader scrolls past on
        * every visit.
        */
-      tl.eventCallback('onComplete', () => el.setAttribute('data-hero-settled', ''));
+      tl.eventCallback('onComplete', () =>
+        el.setAttribute('data-hero-settled', ''),
+      );
 
       void heroStart().then(() => tl.play());
     }, el);
@@ -385,7 +413,6 @@ export function HeroArc() {
       </g>
 
       <g data-arc-shape>
-
         {/*
           The filament: the light itself, and it is thin.
 

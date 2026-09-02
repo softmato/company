@@ -13,12 +13,7 @@
  * writing to do, and lumping them together made every unfilled address look
  * like an editing task.
  */
-import {
-  closeDb,
-  db,
-  legalDocuments,
-  platformSettings,
-} from '@softmato/db';
+import { closeDb, db, legalDocuments, platformSettings } from '@softmato/db';
 
 import { tokensIn } from '../apps/web/lib/cms/tokens';
 import { definitionFor, resolve } from '../apps/web/lib/settings/registry';

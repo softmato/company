@@ -45,15 +45,15 @@ which only works with a real rota.
 
 Our policy, subject to the standing rule above:
 
-| Leave | Entitlement |
-| --- | --- |
-| **Public holidays** | [confirm: n days a year], per the list we publish each year, with the additional day the law provides for women employees |
-| **Home / annual leave** | [confirm: accrual — commonly 1 day for every 20 days worked], carried over up to [confirm: cap] |
-| **Sick leave** | [confirm: n days a year], paid. A medical certificate for more than [confirm: 3] consecutive days |
-| **Mourning (kriya) leave** | [confirm: n days] on the death of a close family member |
-| **Maternity leave** | [confirm: n days, of which n paid] — at least what the Labour Act requires |
-| **Paternity leave** | [confirm: n days], paid |
-| **Unpaid leave** | By agreement, where you have run out and have a real need |
+| Leave                      | Entitlement                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Public holidays**        | [confirm: n days a year], per the list we publish each year, with the additional day the law provides for women employees |
+| **Home / annual leave**    | [confirm: accrual — commonly 1 day for every 20 days worked], carried over up to [confirm: cap]                           |
+| **Sick leave**             | [confirm: n days a year], paid. A medical certificate for more than [confirm: 3] consecutive days                         |
+| **Mourning (kriya) leave** | [confirm: n days] on the death of a close family member                                                                   |
+| **Maternity leave**        | [confirm: n days, of which n paid] — at least what the Labour Act requires                                                |
+| **Paternity leave**        | [confirm: n days], paid                                                                                                   |
+| **Unpaid leave**           | By agreement, where you have run out and have a real need                                                                 |
 
 Book leave through **[confirm: how]**, **[confirm: how far]** ahead where you
 can. Sick leave, obviously, when it happens — tell your manager as early in the

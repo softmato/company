@@ -42,12 +42,13 @@ import {
 } from '../credentials';
 import { decimalFromMinor, minorFromDecimal } from '../money';
 import { mapProviderStatus, type StatusMap } from '../status';
-import type {
-  InitiateResult,
-  ProviderAdapter,
-  VerifiedResult,
-} from '../types';
-import { assertSignature, REQUEST_SIGNED_FIELDS, baseString, sign } from './signature';
+import type { InitiateResult, ProviderAdapter, VerifiedResult } from '../types';
+import {
+  assertSignature,
+  REQUEST_SIGNED_FIELDS,
+  baseString,
+  sign,
+} from './signature';
 
 const HOSTS: Record<ProviderEnv, string> = {
   sandbox: 'https://rc-epay.esewa.com.np',
@@ -101,7 +102,11 @@ export class EsewaProviderAdapter implements ProviderAdapter {
       'ESEWA_SECRET_KEY',
       config.secretKey ?? process.env.ESEWA_SECRET_KEY,
     );
-    this.baseUrl = resolveBaseUrl(env, HOSTS, config.baseUrl ?? process.env.ESEWA_BASE_URL);
+    this.baseUrl = resolveBaseUrl(
+      env,
+      HOSTS,
+      config.baseUrl ?? process.env.ESEWA_BASE_URL,
+    );
   }
 
   async initiate(session: PaymentSession): Promise<InitiateResult> {
@@ -132,7 +137,10 @@ export class EsewaProviderAdapter implements ProviderAdapter {
       success_url: returnUrl,
       failure_url: returnUrl,
       signed_field_names: REQUEST_SIGNED_FIELDS.join(','),
-      signature: sign(this.secretKey, baseString(REQUEST_SIGNED_FIELDS, signed)),
+      signature: sign(
+        this.secretKey,
+        baseString(REQUEST_SIGNED_FIELDS, signed),
+      ),
     };
 
     return {
@@ -239,11 +247,9 @@ export class EsewaProviderAdapter implements ProviderAdapter {
         headers: { Accept: 'application/json' },
       });
     } catch (error) {
-      throw new PaymentError(
-        'PROVIDER_UNAVAILABLE',
-        'Could not reach eSewa',
-        { error: String(error) },
-      );
+      throw new PaymentError('PROVIDER_UNAVAILABLE', 'Could not reach eSewa', {
+        error: String(error),
+      });
     }
 
     if (!response.ok) {

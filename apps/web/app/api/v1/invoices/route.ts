@@ -44,7 +44,10 @@ const schema = z.object({
         description: z.string().min(1).max(300),
         quantity: z.number().int().positive().max(10_000).optional(),
         unit_price_minor: minorAmount,
-        revenue_account: z.string().regex(/^[1-6][0-9]{3}$/).optional(),
+        revenue_account: z
+          .string()
+          .regex(/^[1-6][0-9]{3}$/)
+          .optional(),
       }),
     )
     .min(1)
@@ -113,7 +116,11 @@ export const POST = mutatingEndpoint(
          * still renders the way it renders today after the shape changes.
          */
         ...(input.presentation
-          ? { metadata: { presentation: toStoredPresentation(input.presentation) } }
+          ? {
+              metadata: {
+                presentation: toStoredPresentation(input.presentation),
+              },
+            }
           : {}),
       },
       recordAudit,

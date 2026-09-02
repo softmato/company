@@ -56,8 +56,7 @@ export type VerifyFailure =
   | 'signature_mismatch';
 
 export type VerifyResult =
-  | { valid: true }
-  | { valid: false; reason: VerifyFailure };
+  { valid: true } | { valid: false; reason: VerifyFailure };
 
 /**
  * Returns a reason rather than throwing, because a consumer's correct response
@@ -83,7 +82,9 @@ export function verify(input: VerifyInput): VerifyResult {
    * exist.
    */
   const raw =
-    typeof input.timestamp === 'number' ? input.timestamp : input.timestamp?.trim();
+    typeof input.timestamp === 'number'
+      ? input.timestamp
+      : input.timestamp?.trim();
 
   if (raw === '' || raw === undefined || raw === null) {
     return { valid: false, reason: 'malformed_timestamp' };
@@ -140,6 +141,5 @@ export const SHARED_VECTOR = {
   secret: 'whsec_test_2f9a1c',
   timestamp: 1754990400,
   body: '{"event":"payment.success","transaction_id":"TXN-2082/83-00000001"}',
-  signature:
-    '7b1621acf4b889b18381561a84badc43490db7d379de864fcfb4f5788a2498d3',
+  signature: '7b1621acf4b889b18381561a84badc43490db7d379de864fcfb4f5788a2498d3',
 } as const;

@@ -178,7 +178,7 @@ Two confirmation paths, one outcome (`ARCHITECTURE.md` §3):
   replays), enqueue to QStash, return 200, all under 200ms. Never process
   inline; providers time out and resend.
 - **Khalti does not push webhooks at all.** Confirmation is redirect-then-lookup
-  plus a polling job. The redirect only *triggers* a lookup; its query string is
+  plus a polling job. The redirect only _triggers_ a lookup; its query string is
   ignored.
 - `poll()` is **mandatory for every provider** and runs every minute against
   transactions in `created` / `pending`. It is the universal safety net.
@@ -211,7 +211,7 @@ Transaction states: `created`, `pending`, `succeeded`, `failed`, `cancelled`,
 `reconciliation_required`.
 
 **Receipts are a separate audience** (`API.md` §9). A confirmed payment emails a
-receipt to *the payer* — the person whose money moved. The *product* learns about
+receipt to _the payer_ — the person whose money moved. The _product_ learns about
 it from the webhook. Different audiences, different messages. The receipt number
 is `txn_no` (already gapless per fiscal year); there is no receipts table. The
 receipt shows the **gross**, never the net — the provider's fee is our cost, not
@@ -233,12 +233,12 @@ illustrative NPR 12,000 annual subscription):
 
 | Event                                     | Entry                                                                              |
 | ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| Subscription invoice issued               | Dr `1110` AR — SaaS 12,000 / Cr `2110` Deferred Revenue 12,000                      |
-| Payment verified via Khalti, fee 240      | Dr `1032` Khalti Wallet 11,760 + Dr `5010` Provider Fees 240 / Cr `1110` AR 12,000  |
-| Month end, revenue recognition            | Dr `2110` Deferred Revenue 1,000 / Cr `4010` SaaS Revenue 1,000                     |
-| Provider settles to bank                  | Dr `1020` Bank 11,760 / Cr `1032` Khalti Wallet 11,760                              |
-| Refund, 9 months unearned                 | Dr `2110` Deferred Revenue 3,000 / Cr `1032` Khalti Wallet 3,000                    |
-| Agency invoice, client withholds 1.5% TDS | Dr `1020` Bank 98,500 + Dr `1210` Advance Tax — TDS 1,500 / Cr `1120` AR 100,000    |
+| Subscription invoice issued               | Dr `1110` AR — SaaS 12,000 / Cr `2110` Deferred Revenue 12,000                     |
+| Payment verified via Khalti, fee 240      | Dr `1032` Khalti Wallet 11,760 + Dr `5010` Provider Fees 240 / Cr `1110` AR 12,000 |
+| Month end, revenue recognition            | Dr `2110` Deferred Revenue 1,000 / Cr `4010` SaaS Revenue 1,000                    |
+| Provider settles to bank                  | Dr `1020` Bank 11,760 / Cr `1032` Khalti Wallet 11,760                             |
+| Refund, 9 months unearned                 | Dr `2110` Deferred Revenue 3,000 / Cr `1032` Khalti Wallet 3,000                   |
+| Agency invoice, client withholds 1.5% TDS | Dr `1020` Bank 98,500 + Dr `1210` Advance Tax — TDS 1,500 / Cr `1120` AR 100,000   |
 
 Four things behind that table are worth stating plainly:
 

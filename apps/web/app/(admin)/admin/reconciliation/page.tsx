@@ -62,8 +62,9 @@ export default async function AdminReconciliationPage() {
         <p className="text-xs leading-relaxed text-muted-foreground">
           A provider reported an amount that did not match the invoice. Nothing
           was posted to the ledger and the invoice was not cleared. The
-          provider&rsquo;s own figure is in <code className="font-mono">provider_events</code>{' '}
-          — read it there, against the bank statement, before deciding anything.
+          provider&rsquo;s own figure is in{' '}
+          <code className="font-mono">provider_events</code> — read it there,
+          against the bank statement, before deciding anything.
         </p>
 
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
@@ -81,7 +82,10 @@ export default async function AdminReconciliationPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {held.map((row) => (
-                  <tr key={row.id} className="transition-colors hover:bg-muted/30">
+                  <tr
+                    key={row.id}
+                    className="transition-colors hover:bg-muted/30"
+                  >
                     <td className="px-4 py-3">
                       <div className="numeric font-semibold text-foreground">
                         {row.txnNo}
@@ -90,7 +94,9 @@ export default async function AdminReconciliationPage() {
                         {row.invoiceNo}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-foreground">{row.customerName}</td>
+                    <td className="px-4 py-3 text-foreground">
+                      {row.customerName}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-semibold uppercase text-primary">
                         {row.providerId}
@@ -144,9 +150,10 @@ export default async function AdminReconciliationPage() {
             </p>
             <p className="mt-1 leading-relaxed text-muted-foreground">
               An empty list here means nothing has been checked — not that
-              everything matches. The <code className="font-mono">reconcile-providers</code>{' '}
-              job compares our totals against each provider&rsquo;s statement and
-              is Phase 7 work.
+              everything matches. The{' '}
+              <code className="font-mono">reconcile-providers</code> job
+              compares our totals against each provider&rsquo;s statement and is
+              Phase 7 work.
             </p>
           </div>
         ) : (
@@ -165,7 +172,10 @@ export default async function AdminReconciliationPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {runItems.map((item) => (
-                    <tr key={item.id} className="transition-colors hover:bg-muted/30">
+                    <tr
+                      key={item.id}
+                      className="transition-colors hover:bg-muted/30"
+                    >
                       <td className="numeric px-4 py-3 text-foreground">
                         {item.providerRef ?? '—'}
                       </td>

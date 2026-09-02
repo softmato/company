@@ -48,7 +48,9 @@ export async function ProductsSection() {
       */}
       <div
         className="bloom opacity-45"
-        style={{ '--bloom-x': '50%', '--bloom-y': '98%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '98%' } as React.CSSProperties
+        }
       />
       <DarkNavZone />
 

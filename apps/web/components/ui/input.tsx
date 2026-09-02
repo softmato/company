@@ -48,7 +48,12 @@ export function Textarea({
     <textarea
       rows={rows}
       aria-invalid={invalid || undefined}
-      className={cn(FIELD_BASE, 'py-2 leading-relaxed', borderFor(invalid), className)}
+      className={cn(
+        FIELD_BASE,
+        'py-2 leading-relaxed',
+        borderFor(invalid),
+        className,
+      )}
       {...props}
     />
   );

@@ -67,7 +67,11 @@ export function Parallax({
   }, [speed]);
 
   return (
-    <div ref={ref} className={cn('will-change-transform', className)} style={style}>
+    <div
+      ref={ref}
+      className={cn('will-change-transform', className)}
+      style={style}
+    >
       {children}
     </div>
   );

@@ -1,6 +1,10 @@
 import 'server-only';
 
-import type { InvoiceDocument, Party, ReceiptDocument } from '@/lib/documents/types';
+import type {
+  InvoiceDocument,
+  Party,
+  ReceiptDocument,
+} from '@/lib/documents/types';
 
 /**
  * Documents → API bodies, for a SaaS listing them in its own settings screen.

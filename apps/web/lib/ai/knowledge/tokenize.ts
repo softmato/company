@@ -12,11 +12,59 @@
  * its meaning if "how much" goes.
  */
 const STOPWORDS = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'been', 'but', 'by', 'can', 'do',
-  'does', 'for', 'from', 'get', 'had', 'has', 'have', 'i', 'if', 'in', 'is',
-  'it', 'its', 'me', 'my', 'of', 'on', 'or', 'our', 'so', 'that', 'the',
-  'their', 'them', 'then', 'there', 'these', 'they', 'this', 'to', 'us', 'was',
-  'we', 'were', 'what', 'when', 'which', 'will', 'with', 'you', 'your',
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'been',
+  'but',
+  'by',
+  'can',
+  'do',
+  'does',
+  'for',
+  'from',
+  'get',
+  'had',
+  'has',
+  'have',
+  'i',
+  'if',
+  'in',
+  'is',
+  'it',
+  'its',
+  'me',
+  'my',
+  'of',
+  'on',
+  'or',
+  'our',
+  'so',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'to',
+  'us',
+  'was',
+  'we',
+  'were',
+  'what',
+  'when',
+  'which',
+  'will',
+  'with',
+  'you',
+  'your',
 ]);
 
 /**
@@ -87,7 +135,17 @@ function stem(word: string): string {
    */
   let base = word;
 
-  for (const suffix of ['ality', 'ility', 'ness', 'ment', 'ies', 'ing', 'ity', 'es', 's']) {
+  for (const suffix of [
+    'ality',
+    'ility',
+    'ness',
+    'ment',
+    'ies',
+    'ing',
+    'ity',
+    'es',
+    's',
+  ]) {
     if (!word.endsWith(suffix)) continue;
     if (word.length - suffix.length < 4) continue;
 
@@ -117,7 +175,7 @@ export function tokenize(text: string): string[] {
     .toLowerCase()
     .replace(/[^a-z0-9\s'-]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length > 1 && !STOPWORDS.has(w))
+    .filter((w) => w.length > 1 && !STOPWORDS.has(w))
     .map(stem);
 }
 
@@ -128,8 +186,15 @@ export function tokenize(text: string): string[] {
  * literal hit — "pricing" in the query should beat "pricing" inferred from
  * "cheap".
  */
-export function expandQuery(query: string): { terms: string[]; expanded: string[] } {
-  const raw = query.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').split(/\s+/).filter(Boolean);
+export function expandQuery(query: string): {
+  terms: string[];
+  expanded: string[];
+} {
+  const raw = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
   const terms = tokenize(query);
 
   const expanded = new Set<string>();

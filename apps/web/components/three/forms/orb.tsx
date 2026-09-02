@@ -34,7 +34,11 @@ export function Orb() {
 
     const angle = t.current * Math.PI * 2;
 
-    comet.current.position.set(Math.cos(angle) * 4.6, Math.sin(angle) * 1.9 + 0.4, 2.4);
+    comet.current.position.set(
+      Math.cos(angle) * 4.6,
+      Math.sin(angle) * 1.9 + 0.4,
+      2.4,
+    );
     comet.current.rotation.z = angle + Math.PI / 2;
   });
 

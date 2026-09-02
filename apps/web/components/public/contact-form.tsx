@@ -25,8 +25,8 @@ export function ContactForm() {
       >
         <p className="headline text-[17px]">{state.message}</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          We reply within two working days. If it is urgent, the phone number
-          in the footer reaches us faster.
+          We reply within two working days. If it is urgent, the phone number in
+          the footer reaches us faster.
         </p>
       </div>
     );
@@ -58,7 +58,12 @@ export function ContactForm() {
         )}
       </Field>
 
-      <Field id="email" label="Email" required error={state?.fieldErrors?.email}>
+      <Field
+        id="email"
+        label="Email"
+        required
+        error={state?.fieldErrors?.email}
+      >
         {(props) => (
           <Input
             {...props}
@@ -116,7 +121,11 @@ function SendButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" disabled={pending} className="mt-1 justify-self-start">
+    <Button
+      type="submit"
+      disabled={pending}
+      className="mt-1 justify-self-start"
+    >
       {pending ? (
         <>
           <Spinner />

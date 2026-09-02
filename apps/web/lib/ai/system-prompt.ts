@@ -5,10 +5,18 @@ import type { RetrievedContext } from './types';
  * Enforces casual human support persona, token efficiency,
  * dynamic greeting variation, equal founder representation, and active discovery booking guidance.
  */
-export function buildSystemPrompt(retrievedContexts: RetrievedContext[] = []): string {
-  const formattedContext = retrievedContexts.length > 0
-    ? retrievedContexts.map(c => `--- Knowledge (${c.filename}) ---\n${c.content}\n--- End ---`).join('\n\n')
-    : 'Softmato Technology Pvt Ltd: Kathmandu-based software engineering agency (Web Apps, Mobile Apps, SaaS platforms). Founded & equally led by Jiwan Mijhar (Founder & CEO - Business & Legal Operations) and Siddhant Yadav (Founder & CTO - Engineering & Product Strategy).';
+export function buildSystemPrompt(
+  retrievedContexts: RetrievedContext[] = [],
+): string {
+  const formattedContext =
+    retrievedContexts.length > 0
+      ? retrievedContexts
+          .map(
+            (c) =>
+              `--- Knowledge (${c.filename}) ---\n${c.content}\n--- End ---`,
+          )
+          .join('\n\n')
+      : 'Softmato Technology Pvt Ltd: Kathmandu-based software engineering agency (Web Apps, Mobile Apps, SaaS platforms). Founded & equally led by Jiwan Mijhar (Founder & CEO - Business & Legal Operations) and Siddhant Yadav (Founder & CTO - Engineering & Product Strategy).';
 
   return `You are Alex, a casual and helpful human support & solution consultant at Softmato Technology Pvt Ltd in Kathmandu, Nepal.
 

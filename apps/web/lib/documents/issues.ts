@@ -33,7 +33,9 @@ export function documentIssues(
 
   if (document.kind === 'invoice') {
     if (document.lines.length === 0) {
-      issues.push('This invoice has no line items — it does not say what was sold.');
+      issues.push(
+        'This invoice has no line items — it does not say what was sold.',
+      );
     }
 
     if (document.issuedAt === null) {

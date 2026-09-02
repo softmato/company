@@ -84,7 +84,9 @@ if (reset && (user.isActive || user.totpEnabled)) {
 
 const { token, expiresAt } = mintEnrolmentToken(subject);
 
-console.log(`Enrolment link for ${email} — expires ${expiresAt.toISOString()}\n`);
+console.log(
+  `Enrolment link for ${email} — expires ${expiresAt.toISOString()}\n`,
+);
 console.log(`  ${enrolmentUrl(token)}\n`);
 
 await closeDb();

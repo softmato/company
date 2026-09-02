@@ -44,7 +44,8 @@ export async function authenticateApplication(
   authorizationHeader: string | null | undefined,
 ): Promise<AuthenticatedApplication> {
   const secret = bearerToken(authorizationHeader);
-  if (!secret) throw unauthenticated('Missing or malformed Authorization header');
+  if (!secret)
+    throw unauthenticated('Missing or malformed Authorization header');
 
   const clientId = clientIdFromSecret(secret);
   if (!clientId) throw unauthenticated('Bearer token is not a client secret');

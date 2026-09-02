@@ -16,7 +16,10 @@ export function Wordmark({ className }: { className?: string }) {
     <span
       role="img"
       aria-label="Softmato"
-      className={cn('headline inline-flex items-baseline text-[19px]', className)}
+      className={cn(
+        'headline inline-flex items-baseline text-[19px]',
+        className,
+      )}
     >
       <span aria-hidden="true">s</span>
       <span aria-hidden="true" className="inline-block animate-sway">

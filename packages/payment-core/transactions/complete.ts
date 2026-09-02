@@ -45,7 +45,11 @@ import {
 import type { AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import type { VerifiedResult } from '../providers/types';
-import { buildReceipt, type Receipt, type ReceiptSender } from '../receipts/receipt';
+import {
+  buildReceipt,
+  type Receipt,
+  type ReceiptSender,
+} from '../receipts/receipt';
 import { transitionSession } from '../sessions/transition';
 import { assertTransition, type TxnStatus } from './state-machine';
 
@@ -221,7 +225,12 @@ export async function completePayment(
     );
   }
 
-  return { transaction: settled, journalNo: posted.journalNo, receipt, posted: true };
+  return {
+    transaction: settled,
+    journalNo: posted.journalNo,
+    receipt,
+    posted: true,
+  };
 }
 
 /** Everything the journal and the receipt need, read once. */
@@ -410,7 +419,11 @@ async function journalNoOf(
 ): Promise<string> {
   if (journalId === null) {
     // `succeeded_needs_journal` makes this unreachable for a settled row.
-    throw new PaymentError('INTERNAL', 'Settled transaction has no journal', {});
+    throw new PaymentError(
+      'INTERNAL',
+      'Settled transaction has no journal',
+      {},
+    );
   }
 
   const [journal] = await tx

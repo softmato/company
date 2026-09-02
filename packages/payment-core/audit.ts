@@ -27,10 +27,7 @@ export interface AuditRecord {
  * Pass `tx` when the audited change is transactional, so the record and the
  * change commit or roll back together.
  */
-export type AuditRecorder = (
-  entry: AuditRecord,
-  tx?: DbTx,
-) => Promise<void>;
+export type AuditRecorder = (entry: AuditRecord, tx?: DbTx) => Promise<void>;
 
 /** Who asked for an operation. Every mutating entry point carries one. */
 export interface Actor {

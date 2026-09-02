@@ -4,7 +4,10 @@ import { redirect } from 'next/navigation';
 
 import { recordAudit } from '@/lib/audit';
 import { encryptSecret } from '@/lib/crypto';
-import { activateWithSecret, findEnrolmentSubject } from '@/lib/enrolment/queries';
+import {
+  activateWithSecret,
+  findEnrolmentSubject,
+} from '@/lib/enrolment/queries';
 import { enrolmentSecret } from '@/lib/enrolment/secret';
 import { claimedAdminId, verifyEnrolmentToken } from '@/lib/enrolment/token';
 import { verifyTotp } from '@/lib/totp';

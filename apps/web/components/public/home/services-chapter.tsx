@@ -89,7 +89,10 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
             />
           </div>
 
-          <DrawIn className="hidden shrink-0 text-primary/60 sm:block" delay={0.2}>
+          <DrawIn
+            className="hidden shrink-0 text-primary/60 sm:block"
+            delay={0.2}
+          >
             <MarkSpark className="size-10" />
           </DrawIn>
         </div>

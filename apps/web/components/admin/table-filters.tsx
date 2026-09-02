@@ -23,7 +23,10 @@ interface TableFiltersProps {
   searchPlaceholder: string;
 }
 
-export function TableFilters({ statuses, searchPlaceholder }: TableFiltersProps) {
+export function TableFilters({
+  statuses,
+  searchPlaceholder,
+}: TableFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();

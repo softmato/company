@@ -6,7 +6,9 @@ import type { LeadEntry } from '@/lib/ai/leads-store';
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'booking' | 'lead' | 'support'>('all');
+  const [activeTab, setActiveTab] = useState<
+    'all' | 'booking' | 'lead' | 'support'
+  >('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<LeadEntry | null>(null);
 
@@ -37,11 +39,18 @@ export default function AdminLeadsPage() {
         body: JSON.stringify({ id, status: newStatus }),
       });
       if (res.ok) {
-        setLeads(prev =>
-          prev.map(item => (item.id === id ? ({ ...item, status: newStatus } as LeadEntry) : item))
+        setLeads((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? ({ ...item, status: newStatus } as LeadEntry)
+              : item,
+          ),
         );
         if (selectedRecord && selectedRecord.id === id) {
-          setSelectedRecord({ ...selectedRecord, status: newStatus } as LeadEntry);
+          setSelectedRecord({
+            ...selectedRecord,
+            status: newStatus,
+          } as LeadEntry);
         }
       }
     } catch (err) {
@@ -50,12 +59,12 @@ export default function AdminLeadsPage() {
   };
 
   // Metrics
-  const bookingCount = leads.filter(l => l.type === 'booking').length;
-  const leadCount = leads.filter(l => l.type === 'lead').length;
-  const supportCount = leads.filter(l => l.type === 'support').length;
+  const bookingCount = leads.filter((l) => l.type === 'booking').length;
+  const leadCount = leads.filter((l) => l.type === 'lead').length;
+  const supportCount = leads.filter((l) => l.type === 'support').length;
 
   // Filtered List
-  const filteredLeads = leads.filter(item => {
+  const filteredLeads = leads.filter((item) => {
     if (activeTab !== 'all' && item.type !== activeTab) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -71,17 +80,30 @@ export default function AdminLeadsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="headline text-[28px] font-bold text-foreground">Leads & Discovery Bookings</h1>
+          <h1 className="headline text-[28px] font-bold text-foreground">
+            Leads & Discovery Bookings
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Real-time pipeline of client discovery calls, project quotes, and AI assistant handoffs.
+            Real-time pipeline of client discovery calls, project quotes, and AI
+            assistant handoffs.
           </p>
         </div>
         <button
           onClick={fetchLeads}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors self-start sm:self-auto"
         >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
           Refresh Leads
         </button>
@@ -91,29 +113,53 @@ export default function AdminLeadsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Booked Meetings</span>
-            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">📅</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Booked Meetings
+            </span>
+            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+              📅
+            </span>
           </div>
-          <div className="mt-2 text-2xl font-bold text-foreground font-mono">{bookingCount}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Discovery calls reserved with engineering team</p>
+          <div className="mt-2 text-2xl font-bold text-foreground font-mono">
+            {bookingCount}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Discovery calls reserved with engineering team
+          </p>
         </div>
 
         <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Project Quotes & Leads</span>
-            <span className="text-xl font-bold text-blue-700 dark:text-blue-300">📋</span>
+            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+              Project Quotes & Leads
+            </span>
+            <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
+              📋
+            </span>
           </div>
-          <div className="mt-2 text-2xl font-bold text-foreground font-mono">{leadCount}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Software inquiries awaiting proposal</p>
+          <div className="mt-2 text-2xl font-bold text-foreground font-mono">
+            {leadCount}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Software inquiries awaiting proposal
+          </p>
         </div>
 
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Support Handoffs</span>
-            <span className="text-xl font-bold text-amber-700 dark:text-amber-300">💬</span>
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              Support Handoffs
+            </span>
+            <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
+              💬
+            </span>
           </div>
-          <div className="mt-2 text-2xl font-bold text-foreground font-mono">{supportCount}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Direct client questions submitted</p>
+          <div className="mt-2 text-2xl font-bold text-foreground font-mono">
+            {supportCount}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Direct client questions submitted
+          </p>
         </div>
       </div>
 
@@ -123,7 +169,9 @@ export default function AdminLeadsPage() {
           <button
             onClick={() => setActiveTab('all')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeTab === 'all' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              activeTab === 'all'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             All Items ({leads.length})
@@ -131,7 +179,9 @@ export default function AdminLeadsPage() {
           <button
             onClick={() => setActiveTab('booking')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeTab === 'booking' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              activeTab === 'booking'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Bookings ({bookingCount})
@@ -139,7 +189,9 @@ export default function AdminLeadsPage() {
           <button
             onClick={() => setActiveTab('lead')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeTab === 'lead' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              activeTab === 'lead'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Leads ({leadCount})
@@ -147,7 +199,9 @@ export default function AdminLeadsPage() {
           <button
             onClick={() => setActiveTab('support')}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeTab === 'support' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+              activeTab === 'support'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             Handoffs ({supportCount})
@@ -159,7 +213,7 @@ export default function AdminLeadsPage() {
             type="text"
             placeholder="Search by name, email, ref ID..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full sm:w-64 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -168,9 +222,13 @@ export default function AdminLeadsPage() {
       {/* Leads Table */}
       <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
         {loading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">Loading leads data...</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Loading leads data...
+          </div>
         ) : filteredLeads.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">No lead records found matching your filters.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            No lead records found matching your filters.
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -186,9 +244,14 @@ export default function AdminLeadsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredLeads.map(item => (
-                  <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold text-foreground">{item.id}</td>
+                {filteredLeads.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-mono font-bold text-foreground">
+                      {item.id}
+                    </td>
                     <td className="px-4 py-3">
                       {item.type === 'booking' && (
                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
@@ -207,31 +270,55 @@ export default function AdminLeadsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-foreground">{item.name}</div>
-                      <div className="text-muted-foreground font-mono text-[11px]">{item.email}</div>
-                      {item.phone && <div className="text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">{item.phone}</div>}
+                      <div className="font-semibold text-foreground">
+                        {item.name}
+                      </div>
+                      <div className="text-muted-foreground font-mono text-[11px]">
+                        {item.email}
+                      </div>
+                      {item.phone && (
+                        <div className="text-emerald-600 dark:text-emerald-400 font-mono text-[10px]">
+                          {item.phone}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 max-w-xs truncate">
                       {item.type === 'booking' && (
                         <div>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{item.date} at {item.time}</span>
-                          {item.details && <p className="text-muted-foreground truncate">{item.details}</p>}
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            {item.date} at {item.time}
+                          </span>
+                          {item.details && (
+                            <p className="text-muted-foreground truncate">
+                              {item.details}
+                            </p>
+                          )}
                         </div>
                       )}
                       {item.type === 'lead' && (
                         <div>
-                          {item.company && <span className="font-medium text-foreground block">{item.company}</span>}
-                          <p className="text-muted-foreground truncate">{item.requirements}</p>
+                          {item.company && (
+                            <span className="font-medium text-foreground block">
+                              {item.company}
+                            </span>
+                          )}
+                          <p className="text-muted-foreground truncate">
+                            {item.requirements}
+                          </p>
                         </div>
                       )}
                       {item.type === 'support' && (
-                        <p className="text-muted-foreground truncate">{item.message}</p>
+                        <p className="text-muted-foreground truncate">
+                          {item.message}
+                        </p>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={item.status}
-                        onChange={e => handleStatusChange(item.id, e.target.value)}
+                        onChange={(e) =>
+                          handleStatusChange(item.id, e.target.value)
+                        }
                         className="rounded-md border border-border bg-background px-2 py-1 text-[11px] font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                       >
                         {item.type === 'booking' && (
@@ -258,7 +345,12 @@ export default function AdminLeadsPage() {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground font-mono text-[11px]">
-                      {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {new Date(item.createdAt).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -285,7 +377,9 @@ export default function AdminLeadsPage() {
                 <span className="font-mono text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
                   {selectedRecord.id}
                 </span>
-                <h2 className="text-lg font-bold text-foreground mt-1">Lead Details</h2>
+                <h2 className="text-lg font-bold text-foreground mt-1">
+                  Lead Details
+                </h2>
               </div>
               <button
                 onClick={() => setSelectedRecord(null)}
@@ -298,48 +392,82 @@ export default function AdminLeadsPage() {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3 bg-muted/40 p-3 rounded-lg">
                 <div>
-                  <span className="text-muted-foreground font-medium block">Client Name</span>
-                  <span className="font-semibold text-foreground text-sm">{selectedRecord.name}</span>
+                  <span className="text-muted-foreground font-medium block">
+                    Client Name
+                  </span>
+                  <span className="font-semibold text-foreground text-sm">
+                    {selectedRecord.name}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground font-medium block">Email Address</span>
-                  <a href={`mailto:${selectedRecord.email}`} className="font-mono text-emerald-600 dark:text-emerald-400 hover:underline">
+                  <span className="text-muted-foreground font-medium block">
+                    Email Address
+                  </span>
+                  <a
+                    href={`mailto:${selectedRecord.email}`}
+                    className="font-mono text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
                     {selectedRecord.email}
                   </a>
                 </div>
                 {selectedRecord.phone && (
                   <div>
-                    <span className="text-muted-foreground font-medium block">Phone</span>
-                    <span className="font-mono text-foreground font-medium">{selectedRecord.phone}</span>
+                    <span className="text-muted-foreground font-medium block">
+                      Phone
+                    </span>
+                    <span className="font-mono text-foreground font-medium">
+                      {selectedRecord.phone}
+                    </span>
                   </div>
                 )}
                 <div>
-                  <span className="text-muted-foreground font-medium block">Record Type</span>
-                  <span className="font-bold text-foreground capitalize">{selectedRecord.type}</span>
+                  <span className="text-muted-foreground font-medium block">
+                    Record Type
+                  </span>
+                  <span className="font-bold text-foreground capitalize">
+                    {selectedRecord.type}
+                  </span>
                 </div>
               </div>
 
               {selectedRecord.type === 'booking' && (
                 <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-lg space-y-1">
-                  <span className="text-emerald-700 dark:text-emerald-300 font-bold block">📅 Meeting Schedule</span>
-                  <p className="text-foreground font-semibold">{selectedRecord.date} at {selectedRecord.time}</p>
+                  <span className="text-emerald-700 dark:text-emerald-300 font-bold block">
+                    📅 Meeting Schedule
+                  </span>
+                  <p className="text-foreground font-semibold">
+                    {selectedRecord.date} at {selectedRecord.time}
+                  </p>
                   {selectedRecord.details && (
-                    <p className="text-muted-foreground mt-2"><strong className="text-foreground">Notes:</strong> {selectedRecord.details}</p>
+                    <p className="text-muted-foreground mt-2">
+                      <strong className="text-foreground">Notes:</strong>{' '}
+                      {selectedRecord.details}
+                    </p>
                   )}
                 </div>
               )}
 
               {selectedRecord.type === 'lead' && (
                 <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg space-y-1">
-                  <span className="text-blue-700 dark:text-blue-300 font-bold block">📋 Project Scope</span>
-                  {selectedRecord.company && <p className="text-foreground"><strong>Company:</strong> {selectedRecord.company}</p>}
-                  <p className="text-foreground"><strong>Requirements:</strong> {selectedRecord.requirements}</p>
+                  <span className="text-blue-700 dark:text-blue-300 font-bold block">
+                    📋 Project Scope
+                  </span>
+                  {selectedRecord.company && (
+                    <p className="text-foreground">
+                      <strong>Company:</strong> {selectedRecord.company}
+                    </p>
+                  )}
+                  <p className="text-foreground">
+                    <strong>Requirements:</strong> {selectedRecord.requirements}
+                  </p>
                 </div>
               )}
 
               {selectedRecord.type === 'support' && (
                 <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg space-y-1">
-                  <span className="text-amber-700 dark:text-amber-300 font-bold block">💬 Support Inquiry</span>
+                  <span className="text-amber-700 dark:text-amber-300 font-bold block">
+                    💬 Support Inquiry
+                  </span>
                   <p className="text-foreground">{selectedRecord.message}</p>
                 </div>
               )}

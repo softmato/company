@@ -61,7 +61,9 @@ export default async function AuditLogPage({
         {entries.length === 0 ? (
           <div className="p-5">
             <EmptyState
-              title={selected ? 'Nothing under this action' : 'Nothing recorded yet'}
+              title={
+                selected ? 'Nothing under this action' : 'Nothing recorded yet'
+              }
               description={
                 selected
                   ? 'No entry carries this action. It may have been filtered from a stale link.'
@@ -87,7 +89,9 @@ export default async function AuditLogPage({
                   <Td className="py-2.5">
                     <BsDate date={entry.occurredAt} format="numeric" />
                   </Td>
-                  <Td className="py-2.5 font-mono text-[13px]">{entry.action}</Td>
+                  <Td className="py-2.5 font-mono text-[13px]">
+                    {entry.action}
+                  </Td>
                   <Td className="py-2.5 text-muted-foreground">
                     {entry.resourceType}
                     {entry.resourceId ? (

@@ -77,7 +77,7 @@ The first real money moves here. Take your time.
 > contains a provider anyone can pay with: `manual_qr` was the only one needing
 > no external credentials, so the first payment now waits on Phase 9 (Fonepay)
 > or Phases 4–5 (Khalti, eSewa), whichever set of credentials arrives first.
-> The phase can be *built* and *accepted for everything except a live payment*
+> The phase can be _built_ and _accepted for everything except a live payment_
 > before then.
 
 **Build**

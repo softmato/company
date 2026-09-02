@@ -25,9 +25,12 @@ export function webglSupported(): boolean {
   if (supported !== undefined) return supported;
 
   const canvas = document.createElement('canvas');
-  const hasWebgl = Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'));
+  const hasWebgl = Boolean(
+    canvas.getContext('webgl2') ?? canvas.getContext('webgl'),
+  );
 
-  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const memory = (navigator as Navigator & { deviceMemory?: number })
+    .deviceMemory;
   const lowEnd = typeof memory === 'number' && memory < 4;
 
   supported = hasWebgl && !lowEnd;

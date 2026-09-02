@@ -37,7 +37,11 @@ export function CardList({
 }) {
   if (items.length === 0) {
     return (
-      <EmptyState className="mt-12" title="Nothing here yet" description={empty} />
+      <EmptyState
+        className="mt-12"
+        title="Nothing here yet"
+        description={empty}
+      />
     );
   }
 

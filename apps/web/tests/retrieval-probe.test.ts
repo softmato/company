@@ -12,12 +12,27 @@ import { retrieveContext } from '../lib/ai/retrieve-context';
  */
 const CASES: Array<{ query: string; answer: RegExp }> = [
   { query: 'how much does a mobile app cost?', answer: /tier|quote|proposal/i },
-  { query: 'do you sign an NDA before we share our idea?', answer: /nda|confidential/i },
+  {
+    query: 'do you sign an NDA before we share our idea?',
+    answer: /nda|confidential/i,
+  },
   { query: 'who founded softmato?', answer: /jiwan|siddhant/i },
-  { query: 'what payment gateways do you support in nepal?', answer: /esewa|khalti|fonepay/i },
-  { query: 'do you build iOS and android apps?', answer: /ios|android|mobile/i },
-  { query: 'who owns the code when the project finishes?', answer: /copyright|intellectual property/i },
-  { query: 'when can we have a call this week?', answer: /weekday|10:00|11:30|14:00|slot/i },
+  {
+    query: 'what payment gateways do you support in nepal?',
+    answer: /esewa|khalti|fonepay/i,
+  },
+  {
+    query: 'do you build iOS and android apps?',
+    answer: /ios|android|mobile/i,
+  },
+  {
+    query: 'who owns the code when the project finishes?',
+    answer: /copyright|intellectual property/i,
+  },
+  {
+    query: 'when can we have a call this week?',
+    answer: /weekday|10:00|11:30|14:00|slot/i,
+  },
   { query: 'is the discovery call free?', answer: /free|no charge/i },
 ];
 
@@ -25,7 +40,7 @@ describe('Retrieval behaviour on real questions', () => {
   for (const { query, answer } of CASES) {
     it(`"${query}" retrieves the fact that answers it`, async () => {
       const contexts = await retrieveContext(query);
-      const combined = contexts.map(c => c.content).join('\n');
+      const combined = contexts.map((c) => c.content).join('\n');
 
       expect(combined).toMatch(answer);
     });

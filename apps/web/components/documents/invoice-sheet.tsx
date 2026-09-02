@@ -22,7 +22,8 @@ import { formatPaisa } from '@/lib/format/money';
 import { DocumentDate, PartyBlock, StatusBadge, vatNote } from './parts';
 
 export function InvoiceSheet({ document }: { document: InvoiceDocument }) {
-  const voided = document.status === 'void' || document.status === 'written_off';
+  const voided =
+    document.status === 'void' || document.status === 'written_off';
 
   return (
     <article className="sheet">
@@ -42,7 +43,9 @@ export function InvoiceSheet({ document }: { document: InvoiceDocument }) {
             {document.seller.phone ? (
               <span className="num">{document.seller.phone}</span>
             ) : null}
-            {document.seller.email ? <span>{document.seller.email}</span> : null}
+            {document.seller.email ? (
+              <span>{document.seller.email}</span>
+            ) : null}
             {/* Mandatory on our side, and stated as absent when it is. */}
             <span className={document.seller.pan ? 'num' : 'absent'}>
               {document.seller.pan

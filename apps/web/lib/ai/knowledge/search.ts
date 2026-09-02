@@ -97,7 +97,12 @@ function idf(index: ChunkIndex, term: string): number {
  * pricing. An inferred word is evidence about a section's topic; it is much
  * weaker evidence than a word the visitor typed.
  */
-function scoreTerm(index: ChunkIndex, docId: number, term: string, isExpansion: boolean): number {
+function scoreTerm(
+  index: ChunkIndex,
+  docId: number,
+  term: string,
+  isExpansion: boolean,
+): number {
   const frequency = index.frequencies[docId]?.get(term) ?? 0;
   const inHeading = index.headingTerms[docId]?.has(term) ?? false;
 
@@ -107,7 +112,11 @@ function scoreTerm(index: ChunkIndex, docId: number, term: string, isExpansion: 
   const normalised = K1 * (1 - B + (B * length) / (index.averageLength || 1));
   const saturated = (frequency * (K1 + 1)) / (frequency + normalised);
 
-  const boost = inHeading ? (isExpansion ? HEADING_BOOST * 0.25 : HEADING_BOOST) : 0;
+  const boost = inHeading
+    ? isExpansion
+      ? HEADING_BOOST * 0.25
+      : HEADING_BOOST
+    : 0;
 
   return idf(index, term) * (saturated + boost);
 }
@@ -122,7 +131,8 @@ export function rankChunks(query: string, index: ChunkIndex): ScoredChunk[] {
   for (let docId = 0; docId < index.chunks.length; docId += 1) {
     let score = 0;
     for (const term of terms) score += scoreTerm(index, docId, term, false);
-    for (const term of expanded) score += EXPANSION_WEIGHT * scoreTerm(index, docId, term, true);
+    for (const term of expanded)
+      score += EXPANSION_WEIGHT * scoreTerm(index, docId, term, true);
 
     if (score > 0) {
       scored.push({ chunk: index.chunks[docId]!, score });
@@ -148,7 +158,10 @@ export interface BudgetOptions {
  * document — "app", say — returning six chunks of `services.md` and nothing
  * from `pricing.md`, when the visitor plainly wanted both.
  */
-export function selectWithinBudget(ranked: ScoredChunk[], options: BudgetOptions): ScoredChunk[] {
+export function selectWithinBudget(
+  ranked: ScoredChunk[],
+  options: BudgetOptions,
+): ScoredChunk[] {
   const selected: ScoredChunk[] = [];
   const perFile = new Map<string, number>();
   let used = 0;

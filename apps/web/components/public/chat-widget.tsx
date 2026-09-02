@@ -16,16 +16,34 @@ interface ChatMessageUI {
 }
 
 const QUICK_ACTIONS = [
-  { label: '📅 Available Slots', prompt: 'What meeting slots are available for a call?' },
-  { label: '💼 Our Services', prompt: 'What software development services does Softmato offer?' },
-  { label: '💰 Pricing & Quotes', prompt: 'How do project quotes and pricing tiers work?' },
-  { label: '📞 Contact Team', prompt: 'I want to speak directly with the Softmato technical team.' },
+  {
+    label: '📅 Available Slots',
+    prompt: 'What meeting slots are available for a call?',
+  },
+  {
+    label: '💼 Our Services',
+    prompt: 'What software development services does Softmato offer?',
+  },
+  {
+    label: '💰 Pricing & Quotes',
+    prompt: 'How do project quotes and pricing tiers work?',
+  },
+  {
+    label: '📞 Contact Team',
+    prompt: 'I want to speak directly with the Softmato technical team.',
+  },
 ];
 
 /**
  * Lightweight Markdown Renderer for Chat Assistant Responses.
  */
-function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDarkMode: boolean }) {
+function FormattedMarkdownText({
+  content,
+  isDarkMode,
+}: {
+  content: string;
+  isDarkMode: boolean;
+}) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
 
@@ -74,7 +92,7 @@ function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDar
             }`}
           >
             {currentList}
-          </ol>
+          </ol>,
         );
       } else {
         elements.push(
@@ -85,7 +103,7 @@ function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDar
             }`}
           >
             {currentList}
-          </ul>
+          </ul>,
         );
       }
       currentList = [];
@@ -111,19 +129,23 @@ function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDar
           }`}
         >
           {renderInline(headingText)}
-        </h4>
+        </h4>,
       );
       return;
     }
 
-    if (trimmed.startsWith('•') || trimmed.startsWith('*') || trimmed.startsWith('-')) {
+    if (
+      trimmed.startsWith('•') ||
+      trimmed.startsWith('*') ||
+      trimmed.startsWith('-')
+    ) {
       const itemText = trimmed.replace(/^[•*-]\s*/, '');
       if (isNumberedList) flushList(`list-switch-${lineIdx}`);
       isNumberedList = false;
       currentList.push(
         <li key={`item-${lineIdx}`} className="leading-relaxed">
           {renderInline(itemText)}
-        </li>
+        </li>,
       );
       return;
     }
@@ -135,7 +157,7 @@ function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDar
       currentList.push(
         <li key={`item-${lineIdx}`} className="leading-relaxed">
           {renderInline(itemText)}
-        </li>
+        </li>,
       );
       return;
     }
@@ -144,7 +166,7 @@ function FormattedMarkdownText({ content, isDarkMode }: { content: string; isDar
     elements.push(
       <p key={`p-${lineIdx}`} className="leading-relaxed my-1">
         {renderInline(trimmed)}
-      </p>
+      </p>,
     );
   });
 
@@ -171,22 +193,36 @@ function ToolResultDataCard({
   const toolData = data as Record<string, unknown>;
 
   // 1. Available Meeting Slots Card & Interactive Booking Form
-  if (toolName === 'get_available_meeting_slots' && Array.isArray(toolData.availableSlots)) {
-    const slots = toolData.availableSlots as Array<{ date: string; time: string; available: boolean }>;
+  if (
+    toolName === 'get_available_meeting_slots' &&
+    Array.isArray(toolData.availableSlots)
+  ) {
+    const slots = toolData.availableSlots as Array<{
+      date: string;
+      time: string;
+      available: boolean;
+    }>;
     const [selectedSlotIdx, setSelectedSlotIdx] = useState<number>(0);
-    const [formData, setFormData] = useState({ name: '', email: '', phone: '', details: '' });
+    const [formData, setFormData] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      details: '',
+    });
     const [showForm, setShowForm] = useState(false);
 
     const handleFormSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (!formData.name.trim() || !formData.email.trim()) {
-        alert('Please provide your name and email address to confirm the booking.');
+        alert(
+          'Please provide your name and email address to confirm the booking.',
+        );
         return;
       }
       const slot = slots[selectedSlotIdx] || slots[0];
       const slotStr = slot ? `on ${slot.date} at ${slot.time}` : '';
       onSelectSlot(
-        `Book discovery call for ${formData.name.trim()}, email: ${formData.email.trim()}${formData.phone ? `, phone: ${formData.phone.trim()}` : ''} ${slotStr}. Scope: ${formData.details.trim() || 'General software project discussion'}`
+        `Book discovery call for ${formData.name.trim()}, email: ${formData.email.trim()}${formData.phone ? `, phone: ${formData.phone.trim()}` : ''} ${slotStr}. Scope: ${formData.details.trim() || 'General software project discussion'}`,
       );
     };
 
@@ -203,7 +239,9 @@ function ToolResultDataCard({
             <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
             Select Discovery Meeting Slot
           </span>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">NPT (UTC+5:45)</span>
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
+            NPT (UTC+5:45)
+          </span>
         </div>
 
         {/* Available Slot Pills */}
@@ -220,8 +258,8 @@ function ToolResultDataCard({
                 selectedSlotIdx === idx && showForm
                   ? 'border-emerald-500 bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950 font-bold shadow-sm'
                   : isDarkMode
-                  ? 'border-emerald-500/30 bg-[#072014] text-emerald-200 hover:border-emerald-400 hover:bg-emerald-500/30'
-                  : 'border-emerald-300 bg-white text-emerald-900 hover:border-emerald-500 hover:bg-emerald-600 hover:text-white'
+                    ? 'border-emerald-500/30 bg-[#072014] text-emerald-200 hover:border-emerald-400 hover:bg-emerald-500/30'
+                    : 'border-emerald-300 bg-white text-emerald-900 hover:border-emerald-500 hover:bg-emerald-600 hover:text-white'
               }`}
             >
               <span>📅 {s.date}</span>
@@ -240,9 +278,13 @@ function ToolResultDataCard({
             ✍️ Enter Your Details to Confirm Booking
           </button>
         ) : (
-          <form onSubmit={handleFormSubmit} className="mt-3 pt-2.5 border-t border-emerald-500/30 space-y-2">
+          <form
+            onSubmit={handleFormSubmit}
+            className="mt-3 pt-2.5 border-t border-emerald-500/30 space-y-2"
+          >
             <div className="font-semibold text-emerald-800 dark:text-emerald-300 text-[11px]">
-              Confirm details for {slots[selectedSlotIdx]?.date} at {slots[selectedSlotIdx]?.time}:
+              Confirm details for {slots[selectedSlotIdx]?.date} at{' '}
+              {slots[selectedSlotIdx]?.time}:
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <input
@@ -250,7 +292,9 @@ function ToolResultDataCard({
                 required
                 placeholder="Full Name *"
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full rounded-md border border-emerald-400/40 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
               <input
@@ -258,7 +302,9 @@ function ToolResultDataCard({
                 required
                 placeholder="Email Address *"
                 value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="w-full rounded-md border border-emerald-400/40 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
@@ -267,14 +313,18 @@ function ToolResultDataCard({
                 type="tel"
                 placeholder="Phone Number (optional)"
                 value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 className="w-full rounded-md border border-emerald-400/40 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
               <input
                 type="text"
                 placeholder="Project Scope / Notes (optional)"
                 value={formData.details}
-                onChange={e => setFormData({ ...formData, details: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, details: e.target.value })
+                }
                 className="w-full rounded-md border border-emerald-400/40 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
@@ -310,12 +360,20 @@ function ToolResultDataCard({
         </div>
         <div className="space-y-1 text-[11px] font-sans">
           <div className="flex justify-between">
-            <span className="text-emerald-700 dark:text-emerald-400">Date & Time:</span>
-            <span className="font-semibold">{String(toolData.date)} at {String(toolData.time)}</span>
+            <span className="text-emerald-700 dark:text-emerald-400">
+              Date & Time:
+            </span>
+            <span className="font-semibold">
+              {String(toolData.date)} at {String(toolData.time)}
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-emerald-700 dark:text-emerald-400">Client:</span>
-            <span className="font-semibold">{String(toolData.client)} ({String(toolData.email)})</span>
+            <span className="text-emerald-700 dark:text-emerald-400">
+              Client:
+            </span>
+            <span className="font-semibold">
+              {String(toolData.client)} ({String(toolData.email)})
+            </span>
           </div>
         </div>
       </div>
@@ -341,8 +399,13 @@ function ToolResultDataCard({
           </span>
         </div>
         <div className="text-[11px] space-y-1">
-          <p>Registered for <strong>{String(toolData.name)}</strong> ({String(toolData.email)})</p>
-          <p className="text-[10px] text-emerald-700 dark:text-emerald-400">Status: Assigned to Solutions Engineer (24h SLA)</p>
+          <p>
+            Registered for <strong>{String(toolData.name)}</strong> (
+            {String(toolData.email)})
+          </p>
+          <p className="text-[10px] text-emerald-700 dark:text-emerald-400">
+            Status: Assigned to Solutions Engineer (24h SLA)
+          </p>
         </div>
       </div>
     );
@@ -367,7 +430,8 @@ function ToolResultDataCard({
           </span>
         </div>
         <p className="text-[11px]">
-          Handed off to leadership. Confirmation sent to <strong>{String(toolData.email)}</strong>.
+          Handed off to leadership. Confirmation sent to{' '}
+          <strong>{String(toolData.email)}</strong>.
         </p>
       </div>
     );
@@ -385,7 +449,10 @@ const DEFAULT_WELCOME_MESSAGE: ChatMessageUI = {
     'Hi there! I am the **Softmato AI Consultant** 👋\n\n' +
     'We build high-performance Web Apps, Mobile Apps, and Custom SaaS platforms.\n\n' +
     'How can I help you today? Feel free to ask about our engineering services, project pricing, or schedule a quick **15-minute discovery call** with our team!',
-  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  timestamp: new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  }),
 };
 
 export function ChatWidget() {
@@ -393,7 +460,9 @@ export function ChatWidget() {
   const [isDarkMode, setIsDarkMode] = useState(false); // Default is Light Base Theme (White background)
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessageUI[]>([DEFAULT_WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState<ChatMessageUI[]>([
+    DEFAULT_WELCOME_MESSAGE,
+  ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -409,7 +478,10 @@ export function ChatWidget() {
         }
       }
     } catch (err) {
-      console.error('[ChatWidget] Failed to load history from localStorage:', err);
+      console.error(
+        '[ChatWidget] Failed to load history from localStorage:',
+        err,
+      );
     }
   }, []);
 
@@ -419,7 +491,10 @@ export function ChatWidget() {
       try {
         localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
       } catch (err) {
-        console.error('[ChatWidget] Failed to save history to localStorage:', err);
+        console.error(
+          '[ChatWidget] Failed to save history to localStorage:',
+          err,
+        );
       }
     }
   }, [messages]);
@@ -434,7 +509,10 @@ export function ChatWidget() {
       {
         ...DEFAULT_WELCOME_MESSAGE,
         id: `welcome-${Date.now()}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
       },
     ]);
   };
@@ -457,15 +535,18 @@ export function ChatWidget() {
       id: `user-${Date.now()}`,
       role: 'user',
       content: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInput('');
     setLoading(true);
 
     try {
-      const apiMessages = [...messages, userMsg].map(m => ({
+      const apiMessages = [...messages, userMsg].map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -487,18 +568,25 @@ export function ChatWidget() {
         content: data.message || 'Sorry, I could not generate a response.',
         retrievedDocs: data.retrievedDocs,
         executedTools: data.executedTools,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
       };
 
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages((prev) => [...prev, assistantMsg]);
     } catch {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
           role: 'assistant',
-          content: '⚠️ Connection issue. Please try again or reach our technical team via the Contact form.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          content:
+            '⚠️ Connection issue. Please try again or reach our technical team via the Contact form.',
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
         },
       ]);
     } finally {
@@ -546,9 +634,12 @@ export function ChatWidget() {
                 </span>
               </div>
               <div>
-                <h3 className="text-xs font-bold tracking-wide">Softmato AI Consultant</h3>
+                <h3 className="text-xs font-bold tracking-wide">
+                  Softmato AI Consultant
+                </h3>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1 font-medium">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Online • Technical Support
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{' '}
+                  Online • Technical Support
                 </p>
               </div>
             </div>
@@ -566,7 +657,12 @@ export function ChatWidget() {
                 aria-label="Clear chat history"
                 title="Reset / Clear Chat History"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -585,11 +681,18 @@ export function ChatWidget() {
                     : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'
                 }`}
                 aria-label="Toggle theme"
-                title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+                title={
+                  isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'
+                }
               >
                 {isDarkMode ? (
                   /* Sun Icon */
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -599,7 +702,12 @@ export function ChatWidget() {
                   </svg>
                 ) : (
                   /* Moon Icon */
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -620,8 +728,18 @@ export function ChatWidget() {
                 }`}
                 aria-label="Close chat window"
               >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -633,13 +751,13 @@ export function ChatWidget() {
             data-lenis-prevent="true"
             data-lenis-prevent-touch="true"
             data-lenis-prevent-wheel="true"
-            onWheel={e => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
             style={{ overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
             className={`flex-1 overflow-y-auto custom-scrollbar p-3.5 space-y-3 text-xs ${
               isDarkMode ? 'bg-slate-950' : 'bg-white'
             }`}
           >
-            {messages.map(msg => (
+            {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
@@ -656,9 +774,14 @@ export function ChatWidget() {
                   }`}
                 >
                   {msg.role === 'assistant' ? (
-                    <FormattedMarkdownText content={msg.content} isDarkMode={isDarkMode} />
+                    <FormattedMarkdownText
+                      content={msg.content}
+                      isDarkMode={isDarkMode}
+                    />
                   ) : (
-                    <p className="whitespace-pre-wrap leading-relaxed font-medium">{msg.content}</p>
+                    <p className="whitespace-pre-wrap leading-relaxed font-medium">
+                      {msg.content}
+                    </p>
                   )}
 
                   {/* Render Detailed Interactive Tool Data Cards (Emerald highlighted for important data) */}
@@ -669,7 +792,7 @@ export function ChatWidget() {
                         toolName={tool.toolName}
                         data={tool.data}
                         isDarkMode={isDarkMode}
-                        onSelectSlot={slotPrompt => handleSend(slotPrompt)}
+                        onSelectSlot={(slotPrompt) => handleSend(slotPrompt)}
                       />
                     ))}
                 </div>
@@ -693,7 +816,9 @@ export function ChatWidget() {
                   }`}
                 >
                   <span className="h-2 w-2 animate-ping rounded-full bg-emerald-500"></span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400">alex is checking schedule & details...</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">
+                    alex is checking schedule & details...
+                  </span>
                 </div>
               </div>
             )}
@@ -728,7 +853,7 @@ export function ChatWidget() {
 
           {/* Input Bar */}
           <form
-            onSubmit={e => {
+            onSubmit={(e) => {
               e.preventDefault();
               handleSend();
             }}
@@ -741,7 +866,7 @@ export function ChatWidget() {
             <input
               type="text"
               value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about pricing, services, or meeting..."
               disabled={loading}
               className={`flex-1 rounded-xl border px-3.5 py-2 text-xs font-medium focus:outline-none focus:ring-1 disabled:opacity-50 ${
@@ -760,7 +885,11 @@ export function ChatWidget() {
               }`}
               aria-label="Send message"
             >
-              <svg className="h-3.5 w-3.5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="h-3.5 w-3.5 transform rotate-90"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
             </button>
@@ -775,13 +904,33 @@ export function ChatWidget() {
         aria-label="Toggle Softmato AI Assistant"
       >
         {isOpen ? (
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         ) : (
           <div className="relative">
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+              />
             </svg>
             <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>

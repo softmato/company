@@ -16,13 +16,13 @@ becomes a labour claim.
 
 ## Person leaving
 
-| | |
-| --- | --- |
-| Name | |
-| Role / track | |
-| Last working day | |
-| Reason | Resignation / end of placement / end of contract / dismissal / redundancy |
-| Notice given | |
+|                  |                                                                           |
+| ---------------- | ------------------------------------------------------------------------- |
+| Name             |                                                                           |
+| Role / track     |                                                                           |
+| Last working day |                                                                           |
+| Reason           | Resignation / end of placement / end of contract / dismissal / redundancy |
+| Notice given     |                                                                           |
 
 ---
 
@@ -118,11 +118,11 @@ that keeps a bad day from becoming an incident.
 
 ## Sign-off
 
-| | Name | Signature | Date |
-| --- | --- | --- | --- |
-| Person leaving | | | |
-| Manager | | | |
-| Founder | | | |
+|                | Name | Signature | Date |
+| -------------- | ---- | --------- | ---- |
+| Person leaving |      |           |      |
+| Manager        |      |           |      |
+| Founder        |      |           |      |
 
 **Person leaving — confirmation.** I have returned all company property,
 deleted all company and client material from my personal devices and accounts,

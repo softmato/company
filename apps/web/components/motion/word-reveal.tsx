@@ -58,7 +58,8 @@ export function WordReveal({
 
     registerMotionPlugins();
 
-    const dim = tone === 'dark' ? 'rgba(245,244,248,0.22)' : 'rgba(16,16,28,0.20)';
+    const dim =
+      tone === 'dark' ? 'rgba(245,244,248,0.22)' : 'rgba(16,16,28,0.20)';
     /*
      * Resolved before the split so it survives it: SplitText rewrites the
      * element's children, and reading the computed colour afterwards can pick

@@ -61,7 +61,9 @@ export function Hero({
       */}
       <div
         className="bloom opacity-40"
-        style={{ '--bloom-x': '50%', '--bloom-y': '62%' } as React.CSSProperties}
+        style={
+          { '--bloom-x': '50%', '--bloom-y': '62%' } as React.CSSProperties
+        }
       />
       <DarkNavZone />
 

@@ -33,11 +33,8 @@ vi.mock('@/lib/documents/pdf-store', async () => {
   return {
     ...actual,
     readDocumentPdf: (key: string) => readDocumentPdf(key),
-    writeDocumentPdf: (
-      document: unknown,
-      key: string,
-      pdf: Buffer,
-    ) => writeDocumentPdf(document, key, pdf),
+    writeDocumentPdf: (document: unknown, key: string, pdf: Buffer) =>
+      writeDocumentPdf(document, key, pdf),
   };
 });
 
@@ -134,7 +131,10 @@ describe('documentPdf', () => {
 
   test('passes a missing engine straight through, and stores nothing', async () => {
     readDocumentPdf.mockResolvedValue(null);
-    renderPdf.mockResolvedValue({ ok: false, reason: 'No PDF engine configured.' });
+    renderPdf.mockResolvedValue({
+      ok: false,
+      reason: 'No PDF engine configured.',
+    });
 
     const result = await documentPdf(invoice, '<p>a</p>');
 
@@ -147,7 +147,8 @@ describe('documentPdf', () => {
     renderPdf.mockResolvedValue({
       ok: true,
       pdf: Buffer.from('%PDF-wrong-font'),
-      degraded: 'Web fonts did not load; the document is set in a fallback face.',
+      degraded:
+        'Web fonts did not load; the document is set in a fallback face.',
     });
 
     const result = await documentPdf(invoice, '<p>a</p>');

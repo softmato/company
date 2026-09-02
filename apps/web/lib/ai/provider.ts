@@ -18,36 +18,51 @@ export class GeminiAiProvider implements AiProvider {
   name = 'Google Gemini Provider';
   private apiKey: string;
   private primaryModel: string;
-  private fallbackModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  private fallbackModels = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+  ];
 
   constructor(apiKey?: string, model?: string) {
-    this.apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '';
-    this.primaryModel = model || process.env.GEMINI_MODEL_NAME || 'gemini-2.5-flash';
+    this.apiKey =
+      apiKey ||
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+      '';
+    this.primaryModel =
+      model || process.env.GEMINI_MODEL_NAME || 'gemini-2.5-flash';
   }
 
   isConfigured(): boolean {
     return Boolean(this.apiKey);
   }
 
-  private async callModel(model: string, params: AiProviderChatParams): Promise<AiProviderResponse> {
+  private async callModel(
+    model: string,
+    params: AiProviderChatParams,
+  ): Promise<AiProviderResponse> {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`;
-    
+
     // Format messages for Gemini API
-    const contents = params.messages.map(m => ({
+    const contents = params.messages.map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
 
     // Format tools for Gemini API
-    const toolsPayload = params.tools && params.tools.length > 0 ? [
-      {
-        functionDeclarations: params.tools.map(t => ({
-          name: t.name,
-          description: t.description,
-          parameters: t.parameters,
-        })),
-      },
-    ] : undefined;
+    const toolsPayload =
+      params.tools && params.tools.length > 0
+        ? [
+            {
+              functionDeclarations: params.tools.map((t) => ({
+                name: t.name,
+                description: t.description,
+                parameters: t.parameters,
+              })),
+            },
+          ]
+        : undefined;
 
     const payload = {
       systemInstruction: {
@@ -104,7 +119,10 @@ export class GeminiAiProvider implements AiProvider {
       throw new Error('GEMINI_API_KEY is not set');
     }
 
-    const modelsToTry = [this.primaryModel, ...this.fallbackModels.filter(m => m !== this.primaryModel)];
+    const modelsToTry = [
+      this.primaryModel,
+      ...this.fallbackModels.filter((m) => m !== this.primaryModel),
+    ];
     let lastError: unknown;
 
     for (const model of modelsToTry) {
@@ -114,8 +132,14 @@ export class GeminiAiProvider implements AiProvider {
         lastError = err;
         // If 429 (quota exceeded), continue to try next lightweight Gemini model
         const errStr = String(err);
-        if (errStr.includes('429') || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('quota')) {
-          console.warn(`[GeminiAiProvider] Model ${model} rate-limited (429), failing over to next model...`);
+        if (
+          errStr.includes('429') ||
+          errStr.includes('RESOURCE_EXHAUSTED') ||
+          errStr.includes('quota')
+        ) {
+          console.warn(
+            `[GeminiAiProvider] Model ${model} rate-limited (429), failing over to next model...`,
+          );
           continue;
         }
         throw err;
@@ -135,7 +159,8 @@ export class GroqAiProvider implements AiProvider {
 
   constructor(apiKey?: string, model?: string) {
     this.apiKey = apiKey || process.env.GROQ_API_KEY || '';
-    this.model = model || process.env.GROQ_DEFAULT_MODEL || 'llama-3.3-70b-versatile';
+    this.model =
+      model || process.env.GROQ_DEFAULT_MODEL || 'llama-3.3-70b-versatile';
   }
 
   isConfigured(): boolean {
@@ -152,7 +177,7 @@ export class GroqAiProvider implements AiProvider {
       ...params.messages,
     ];
 
-    const formattedTools = params.tools?.map(t => ({
+    const formattedTools = params.tools?.map((t) => ({
       type: 'function' as const,
       function: {
         name: t.name,
@@ -165,18 +190,19 @@ export class GroqAiProvider implements AiProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
         model: this.model,
-        messages: formattedMessages.map(m => ({
+        messages: formattedMessages.map((m) => ({
           role: m.role,
           content: m.content,
           tool_calls: m.tool_calls,
           tool_call_id: m.tool_call_id,
         })),
         tools: formattedTools,
-        tool_choice: formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
+        tool_choice:
+          formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
       }),
     });
 
@@ -225,7 +251,7 @@ export class OpenAiProvider implements AiProvider {
       ...params.messages,
     ];
 
-    const formattedTools = params.tools?.map(t => ({
+    const formattedTools = params.tools?.map((t) => ({
       type: 'function' as const,
       function: {
         name: t.name,
@@ -238,18 +264,19 @@ export class OpenAiProvider implements AiProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify({
         model: this.model,
-        messages: formattedMessages.map(m => ({
+        messages: formattedMessages.map((m) => ({
           role: m.role,
           content: m.content,
           tool_calls: m.tool_calls,
           tool_call_id: m.tool_call_id,
         })),
         tools: formattedTools,
-        tool_choice: formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
+        tool_choice:
+          formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
       }),
     });
 
@@ -281,7 +308,10 @@ export class OpenRouterAiProvider implements AiProvider {
 
   constructor(apiKey?: string, model?: string) {
     this.apiKey = apiKey || process.env.OPENROUTER_API_KEY || '';
-    this.model = model || process.env.OPENROUTER_LIGHT_MODEL_NAME || 'mistralai/mistral-7b-instruct';
+    this.model =
+      model ||
+      process.env.OPENROUTER_LIGHT_MODEL_NAME ||
+      'mistralai/mistral-7b-instruct';
   }
 
   isConfigured(): boolean {
@@ -298,7 +328,7 @@ export class OpenRouterAiProvider implements AiProvider {
       ...params.messages,
     ];
 
-    const formattedTools = params.tools?.map(t => ({
+    const formattedTools = params.tools?.map((t) => ({
       type: 'function' as const,
       function: {
         name: t.name,
@@ -311,20 +341,21 @@ export class OpenRouterAiProvider implements AiProvider {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         'HTTP-Referer': 'https://softmato.com',
         'X-Title': 'Softmato AI Assistant',
       },
       body: JSON.stringify({
         model: this.model,
-        messages: formattedMessages.map(m => ({
+        messages: formattedMessages.map((m) => ({
           role: m.role,
           content: m.content,
           tool_calls: m.tool_calls,
           tool_call_id: m.tool_call_id,
         })),
         tools: formattedTools,
-        tool_choice: formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
+        tool_choice:
+          formattedTools && formattedTools.length > 0 ? 'auto' : undefined,
       }),
     });
 
@@ -355,41 +386,85 @@ export class OpenRouterAiProvider implements AiProvider {
 export class SmartFallbackProvider implements AiProvider {
   name = 'Softmato Local Engine';
 
-  private detectPriorSuggestion(messages: ChatMessage[]): 'booking' | 'lead' | 'handoff' | 'slots' | null {
-    const assistantMsgs = messages.filter(m => m.role === 'assistant');
-    const lastAssistant = assistantMsgs[assistantMsgs.length - 1]?.content?.toLowerCase() || '';
-    if (/discovery call|book.*meeting|schedule.*call|15.?min|grab a slot|reserve a/.test(lastAssistant)) return 'booking';
-    if (/register.*lead|log.*lead|project lead|quote|estimate|requirements/.test(lastAssistant)) return 'lead';
-    if (/human team|speak.*founder|talk.*person|hand.*off|support team/.test(lastAssistant)) return 'handoff';
-    if (/available.*slot|meeting.*slot|check.*availability/.test(lastAssistant)) return 'slots';
+  private detectPriorSuggestion(
+    messages: ChatMessage[],
+  ): 'booking' | 'lead' | 'handoff' | 'slots' | null {
+    const assistantMsgs = messages.filter((m) => m.role === 'assistant');
+    const lastAssistant =
+      assistantMsgs[assistantMsgs.length - 1]?.content?.toLowerCase() || '';
+    if (
+      /discovery call|book.*meeting|schedule.*call|15.?min|grab a slot|reserve a/.test(
+        lastAssistant,
+      )
+    )
+      return 'booking';
+    if (
+      /register.*lead|log.*lead|project lead|quote|estimate|requirements/.test(
+        lastAssistant,
+      )
+    )
+      return 'lead';
+    if (
+      /human team|speak.*founder|talk.*person|hand.*off|support team/.test(
+        lastAssistant,
+      )
+    )
+      return 'handoff';
+    if (/available.*slot|meeting.*slot|check.*availability/.test(lastAssistant))
+      return 'slots';
     return null;
   }
 
   async chat(params: AiProviderChatParams): Promise<AiProviderResponse> {
-    const lastUserMessage = [...params.messages].reverse().find(m => m.role === 'user')?.content || '';
+    const lastUserMessage =
+      [...params.messages].reverse().find((m) => m.role === 'user')?.content ||
+      '';
     const lowerQuery = lastUserMessage.toLowerCase().trim();
 
     const toolCalls: ToolCall[] = [];
 
     // SLOTS
-    const wantsSlots = /slot|available.*meet|time.*meet|when.*can.*meet|show.*time|schedule.*call|free.*time|open.*time|check.*availab/.test(lowerQuery);
+    const wantsSlots =
+      /slot|available.*meet|time.*meet|when.*can.*meet|show.*time|schedule.*call|free.*time|open.*time|check.*availab/.test(
+        lowerQuery,
+      );
 
     // BOOKING
-    const wantsBooking = /\bbook\b|reserve|schedule.*meet|set.?up.*call|lock.*in.*time|confirm.*call|lets.*meet|book.*15|book.*call|book.*meeting/.test(lowerQuery);
+    const wantsBooking =
+      /\bbook\b|reserve|schedule.*meet|set.?up.*call|lock.*in.*time|confirm.*call|lets.*meet|book.*15|book.*call|book.*meeting/.test(
+        lowerQuery,
+      );
 
     // LEAD
-    const wantsLead = /\blead\b|\bquote\b|estimate|hire|build my|start.*project|need.*develop|interested.*work|want.*build|create.*project/.test(lowerQuery);
+    const wantsLead =
+      /\blead\b|\bquote\b|estimate|hire|build my|start.*project|need.*develop|interested.*work|want.*build|create.*project/.test(
+        lowerQuery,
+      );
 
     // HUMAN
-    const wantsHuman = /talk.*team|speak.*with|talk.*person|talk.*someone|connect.*me|real.*person|\bhuman\b|talk.*founder|speak.*founder|reach.*team|contact.*team/.test(lowerQuery);
+    const wantsHuman =
+      /talk.*team|speak.*with|talk.*person|talk.*someone|connect.*me|real.*person|\bhuman\b|talk.*founder|speak.*founder|reach.*team|contact.*team/.test(
+        lowerQuery,
+      );
 
     // AGREEMENT
-    const isAgreement = /^(yeah|yes|yep|yup|sure|ok|okay|lets do|let's do|sounds good|go ahead|do it|please|absolutely|definitely|for sure|why not|im down|i'm down|alright|right|cool)/.test(lowerQuery)
-      || /lets do that|let's do that|that works|works for me|i'd like that|i would like|sign me up|count me in/.test(lowerQuery);
+    const isAgreement =
+      /^(yeah|yes|yep|yup|sure|ok|okay|lets do|let's do|sounds good|go ahead|do it|please|absolutely|definitely|for sure|why not|im down|i'm down|alright|right|cool)/.test(
+        lowerQuery,
+      ) ||
+      /lets do that|let's do that|that works|works for me|i'd like that|i would like|sign me up|count me in/.test(
+        lowerQuery,
+      );
 
     let bodyText = '';
 
-    if (isAgreement && !wantsSlots && !wantsBooking && !wantsLead && !wantsHuman) {
+    if (
+      isAgreement &&
+      !wantsSlots &&
+      !wantsBooking &&
+      !wantsLead &&
+      !wantsHuman
+    ) {
       const priorSuggestion = this.detectPriorSuggestion(params.messages);
       if (priorSuggestion === 'booking' || priorSuggestion === 'slots') {
         toolCalls.push({
@@ -462,7 +537,8 @@ export class SmartFallbackProvider implements AiProvider {
         const missing: string[] = [];
         if (!parsed.name) missing.push('your name');
         if (!parsed.email) missing.push('your email');
-        if (!parsed.date || !parsed.time) missing.push('which slot works for you');
+        if (!parsed.date || !parsed.time)
+          missing.push('which slot works for you');
         bodyText = `almost there — just need ${missing.join(' and ')} and I'll lock it in.`;
       } else {
         toolCalls.push({
@@ -536,24 +612,39 @@ export class SmartFallbackProvider implements AiProvider {
     }
 
     // Conversational Responses
-    const isGreeting = /^(hi|hello|hey|greetings|sup|hola|yo|howdy|good\s?(morning|evening|afternoon))/i.test(lowerQuery)
-      || /anyone there|anyone here|anybody|is someone|are you there|you there/i.test(lowerQuery);
+    const isGreeting =
+      /^(hi|hello|hey|greetings|sup|hola|yo|howdy|good\s?(morning|evening|afternoon))/i.test(
+        lowerQuery,
+      ) ||
+      /anyone there|anyone here|anybody|is someone|are you there|you there/i.test(
+        lowerQuery,
+      );
 
     if (isGreeting) {
       bodyText = `hey! yep, I'm right here. I'm Alex from Softmato. what software idea or project are you looking to build?`;
-    } else if (/who.*founder|who.*lead|who.*behind|\bfounder\b|leadership/i.test(lowerQuery)) {
-      bodyText = `Softmato is founded and equally led by **Jiwan Mijhar** (Founder & CEO) and **Siddhant Yadav** (Founder & CTO).\n\n` +
+    } else if (
+      /who.*founder|who.*lead|who.*behind|\bfounder\b|leadership/i.test(
+        lowerQuery,
+      )
+    ) {
+      bodyText =
+        `Softmato is founded and equally led by **Jiwan Mijhar** (Founder & CEO) and **Siddhant Yadav** (Founder & CTO).\n\n` +
         `• **Jiwan** leads business strategy, external operations, client relations, and legal compliance.\n` +
         `• **Siddhant** leads software engineering, technical architecture, internal product dev, and mapping strategy.\n\n` +
         `want to grab a quick 15-minute call with our team to discuss your project idea?`;
     } else if (/company|about|softmato|what do you do/i.test(lowerQuery)) {
-      bodyText = `we're **Softmato Technology**, a product engineering agency based in Kathmandu, Nepal! 🚀\n\n` +
+      bodyText =
+        `we're **Softmato Technology**, a product engineering agency based in Kathmandu, Nepal! 🚀\n\n` +
         `we build high-performance web applications, mobile apps, SaaS platforms, and custom software systems for startups and enterprises worldwide.\n\n` +
         `Softmato is founded and equally led by **Jiwan Mijhar** (Founder & CEO) and **Siddhant Yadav** (Founder & CTO).\n\n` +
         `what kind of project are you looking to build? I can help you scope it out or set up a quick 15-min discovery call!`;
-    } else if (/price|cost|how much|budget|afford|expensive|cheap/i.test(lowerQuery)) {
+    } else if (
+      /price|cost|how much|budget|afford|expensive|cheap/i.test(lowerQuery)
+    ) {
       bodyText = `we structure custom software into static sites, SaaS web platforms, and mobile apps. what kind of project do you have in mind? I can give you an estimate or grab a quick 15-min call with our engineering team!`;
-    } else if (/service|what.*offer|capabilit|specializ|expertise/i.test(lowerQuery)) {
+    } else if (
+      /service|what.*offer|capabilit|specializ|expertise/i.test(lowerQuery)
+    ) {
       bodyText = `we build high-performance web apps, mobile apps, custom SaaS products, and APIs. what are you planning to build?`;
     } else if (/thank|thanks|thx|cheers|appreciate/i.test(lowerQuery)) {
       bodyText = `anytime! let me know if you want to scope out a project or grab a call with our team.`;
@@ -611,7 +702,10 @@ export class ResilientAiProvider implements AiProvider {
       try {
         return await provider.chat(params);
       } catch (err) {
-        console.warn(`[AiProvider] Provider (${provider.name}) failed/rate-limited, trying next provider in cascade...`, err);
+        console.warn(
+          `[AiProvider] Provider (${provider.name}) failed/rate-limited, trying next provider in cascade...`,
+          err,
+        );
       }
     }
 

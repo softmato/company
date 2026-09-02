@@ -97,7 +97,9 @@ describe('enrolment token', () => {
     const [id, , sig] = token.split('.');
     const distant = Date.now() + ENROLMENT_TTL_MS * 30;
 
-    expect(verifyEnrolmentToken(`${id}.${distant}.${sig}`, pending)).toBe(false);
+    expect(verifyEnrolmentToken(`${id}.${distant}.${sig}`, pending)).toBe(
+      false,
+    );
   });
 
   it.each(['', 'nonsense', '7', '7.abc', '..', '7.123'])(
@@ -115,7 +117,6 @@ describe('enrolment token', () => {
     expect(claimedAdminId('nope')).toBeNull();
   });
 });
-
 
 /**
  * The property the enrolment page depends on: `/enrol` re-renders on every
@@ -136,10 +137,7 @@ describe('enrolmentSecret', () => {
   });
 
   it('differs between tokens', () => {
-    const other = mintEnrolmentToken(
-      { ...pending, id: 8 },
-      new Date(),
-    ).token;
+    const other = mintEnrolmentToken({ ...pending, id: 8 }, new Date()).token;
 
     expect(enrolmentSecret(token)).not.toBe(enrolmentSecret(other));
   });

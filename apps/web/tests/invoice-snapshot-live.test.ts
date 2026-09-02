@@ -28,9 +28,8 @@ const invoiceNo = process.env['SOFTMATO_LIVE_INVOICE'];
 describe.skipIf(!invoiceNo)('an invoice issued with snapshots', () => {
   test('renders from the frozen parties, not from live data', async () => {
     const { findInvoice } = await import('@/lib/documents/queries');
-    const { buildInvoiceDocument } = await import(
-      '@/lib/documents/invoice-document'
-    );
+    const { buildInvoiceDocument } =
+      await import('@/lib/documents/invoice-document');
 
     const record = await findInvoice(invoiceNo!);
     expect(record, `no invoice ${invoiceNo}`).not.toBeNull();
