@@ -14,6 +14,86 @@ this file tracks what was delivered.
 
 ### Added
 
+- **The integration surface is now allowlisted.** A new `application_domains`
+  table records the hostnames each application may send customers to and
+  receive webhooks on, written by an admin in advance and never taken from a
+  request. `POST /v1/checkout` refuses a `return_url` on an unregistered host
+  with a 422 naming the host, and every path that writes `webhook_url` is
+  checked the same way — that URL is fetched by our own server, so an
+  unregistered address there is an SSRF rather than a typo. One helper,
+  `assertRegisteredHost`, is the only reader; matching is exact hostname
+  equality, never `endsWith`, which would match `evilquestioncall.com` against
+  a `questioncall.com` entry. No wildcards, in the database as well as the
+  form. A unit test caught that the shape check alone still admitted
+  `169.254.169.254` — the cloud metadata address is four legal hostname labels
+  — so an all-numeric final label is refused separately, in both the
+  normaliser and the CHECK constraint.
+- **`/admin/applications`.** The credential lifecycle moved out of the products
+  screen and gained the allowlist beside it: register (with domains captured on
+  the same form, so an application never exists without one), rotate, revoke,
+  add and remove domains, and reveal or rotate the webhook signing secret.
+  Minting a live credential and revealing a signing key both require
+  re-authentication — password and a code — and every act writes an audit row,
+  including the reveal. Both secrets are handed over once, on one page, with
+  the direction of trust spelled out, because they are different credentials
+  and neither works in the other's place.
+- **A way back to the product.** The checkout callback page now renders a link
+  — _"Return to QuestionCall"_ — on every outcome. A link the customer clicks,
+  never an automatic redirect: three of the five outcomes are not "paid", and
+  forwarding would carry someone past "this payment is being reviewed, please
+  do not pay again". No payment status is appended to the URL, and the host is
+  re-checked against the allowlist when the link is drawn, so a domain removed
+  after a session was created stops being linkable at once.
+- **`/developers`**, also served as `developer.softmato.com` through a rewrite
+  in `proxy.ts`. Renders `docs/INTEGRATION.md` from git at build time — not
+  from the CMS, because documentation that describes code drifts the moment
+  someone who is not editing the code can edit it. `INTEGRATION.md` gained a
+  "Connecting securely" section covering the domain rule, signature
+  verification, what may be provisioned on, rate limits and rotation. **The DNS
+  record and Vercel domain for the subdomain still have to be added.**
+- **`/legal/partner-terms`**, seeded `draft`. Its technical clauses describe
+  behaviour that is enforced in code; its commercial half is a `[confirm: …]`
+  block, which keeps the page unpublished and unindexed until a lawyer fills
+  it in.
+- **`future_implementation.md`** at the repository root — five numbered
+  deferrals, each saying what unblocks it.
+- **`@softmato/sdk` is now installable outside this monorepo.** It was
+  `"private": true` at version `0.0.0` with `main` pointing at raw
+  `index.ts` — reachable only through `workspace:*`, so a Softmato product in
+  its own repository (QuestionCall) could not install the client the docs told
+  it to import. It now builds to `dist/` and publishes privately to GitHub
+  Packages under the `softmato` org, via `.github/workflows/publish-sdk.yml`
+  on an `sdk-v*` tag. `docs/INTEGRATION.md` gained an "Installing the SDK"
+  section with the `.npmrc`, the `read:packages` token, and the difference
+  between the 401 and the 404 you get when one of them is wrong.
+
+### Changed
+
+- **`PaymentError` can carry an opt-in `publicDetail`**, serialised as a
+  separate `detail` field on the error response. `message` still comes from the
+  fixed table keyed by error code, so "never leak internals" stays structural;
+  this is the deliberate exception for refusals whose whole value is the
+  specific, like naming the hostname an allowlist rejected.
+- **`docs/API.md` §7 now says Vercel, not Upstash**, and separates the built
+  edge IP rule from the deferred per-application limits. §2 gains the
+  registered-domain requirement beside scopes and rotation; §3 documents what
+  `return_url` is now held to. `docs/RULES.md` §7 drops
+  `@upstash/ratelimit`; `docs/DATABASE.md` documents `application_domains`.
+- `pnpm app:secret` and `pnpm webhook:status` are labelled break-glass in their
+  own headers. The admin panel is the normal path.
+- **The SDK's relative imports carry `.js` extensions** (`from './client.js'`).
+  They resolved fine under the bundler and would have broken the moment the
+  package was installed anywhere else: Node's ESM resolver requires the
+  extension, so the emitted `dist/index.js` was importing `./client` and
+  finding nothing. Caught by installing the packed tarball into a clean project
+  and importing it, which is now the way to check this.
+- **`docs/INTEGRATION.md` opens by saying who it is for.** The page is public,
+  and the reader it could most easily mislead is an outside developer looking
+  for a sign-up button. It now states plainly that this is the internal guide
+  for Softmato's own product teams, that there is no self-service API, and
+  points anyone else at `/contact` — where we build it for them. The
+  `/developers` page repeats the short version as a callout above the fold.
+
 - **Company details in the legal documents are now admin-configurable.**
   `{{settings.key}}` tokens in a document body are resolved from
   `platform_settings` as the page renders (`apps/web/lib/cms/tokens.ts`), so
@@ -36,6 +116,7 @@ this file tracks what was delivered.
   empty rather than seven documents edited. `pnpm legal:check` and
   `pnpm legal:todo` both run against the resolved text, and `legal:todo` now
   separates settings to fill in from markers that need a document edit.
+
 - **Candidate Privacy Notice** (`/legal/candidates`) — the seventh public legal
   document, and the one that was overdue: `careers/` has been collecting CVs
   with nothing describing what happens to them, which the **Individual Privacy
@@ -49,7 +130,7 @@ this file tracks what was delivered.
   policy, and an offboarding checklist. **Not published and not CMS content**:
   these are handed to a person. Written against the Labour Act 2074, the Social
   Security Act 2074, and the Sexual Harassment at Workplace (Prevention) Act
-  2071, which requires an employer to *have* a policy and a complaints route.
+  2071, which requires an employer to _have_ a policy and a complaints route.
   Each carries a standing clause that the Act wins wherever it gives someone
   more than the template does, so no template has to restate a statutory
   figure exactly.
@@ -66,7 +147,7 @@ this file tracks what was delivered.
   page shows the QR and setup key, takes one code to prove the scan landed, and
   activates the account.
 - **`/admin/security`** — password change and authenticator replacement for the
-  signed-in admin. Both re-authenticate with the current password *and* a
+  signed-in admin. Both re-authenticate with the current password _and_ a
   current code: a session cookie alone must not be enough to change the
   credentials it was issued against. Rotating the authenticator only commits
   the new secret after a code from the **new** device verifies, so the old one
@@ -103,7 +184,7 @@ this file tracks what was delivered.
   favourable to the customer applies. Project work gained client
   responsibilities, scope-change handling, an acceptance window, and an
   explicit **no-ranking-guarantee** clause for SEO work. The liability cap is
-  now the greater of three months' fees *or* the proposal value, because for
+  now the greater of three months' fees _or_ the proposal value, because for
   project work the old cap could sit far below what the client had paid.
 - **The pass-through payment model is described for the first time.** Where a
   product routes a customer's own end users' payments using the customer's own
@@ -118,7 +199,7 @@ this file tracks what was delivered.
   are not our customers.
 - **SLA** keeps its 99.5% and 24/7 one-hour P1 numbers unchanged on the
   founder's instruction; only the payments framing was removed. It now says
-  explicitly that a delivered project site is *not* covered by it, which a
+  explicitly that a delivered project site is _not_ covered by it, which a
   footer link had left ambiguous.
 - Commercial periods are now expressed as **floors rather than flat numbers**
   (grace "at least 7 days", retention "at least 30"), so a product may be more
@@ -141,7 +222,7 @@ this file tracks what was delivered.
   with no server-side revocation, so one issued before the change stays valid
   until it expires (8 hours). Fixing it needs a token version on `admin_users`
   and a check in the jwt callback — a migration, so it is noted rather than
-  done. Rotating TOTP *does* take effect immediately, which is the lever to
+  done. Rotating TOTP _does_ take effect immediately, which is the lever to
   pull if a session is believed compromised.
 - An enrolment token is bound to the admin's `isActive` and `totpEnabled`, so
   completing enrolment invalidates the link that authorised it — single-use

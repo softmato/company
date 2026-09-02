@@ -61,6 +61,27 @@ reads, provider configuration, admin anything.
 
 Rotation issues a new secret with a 24-hour overlap. Revocation is immediate.
 
+### A credential is not sufficient on its own
+
+Every application also has a **registered domain list** (`application_domains`),
+set by an admin in advance and never taken from a request. The credential says
+who the caller is; the domain list says where they are allowed to send a
+customer, and where we are willing to deliver a webhook.
+
+- `return_url` on `POST /v1/checkout` must be https and on a registered
+  hostname, or the request is refused `422 VALIDATION_FAILED` with the rejected
+  hostname in the response's `detail` field.
+- `webhook_url` must be on a registered hostname. It is fetched by our server,
+  so an unregistered address there is an SSRF, not a typo.
+
+Matching is **exact hostname equality**. No wildcards — a subdomain is a
+different host and needs its own row. `endsWith` is never used: it would match
+`evilquestioncall.com` against a `questioncall.com` entry.
+
+`assertRegisteredHost` in `packages/payment-core/applications/domains.ts` is the
+only place this is decided, and it owns the https check too, so there is one
+answer to "is this an acceptable destination" rather than one per call site.
+
 ---
 
 ## 3. Endpoints
@@ -93,6 +114,115 @@ Rotation issues a new secret with a 24-hour overlap. Revocation is immediate.
 work. `external_ref` is unique per application — a repeat returns the existing
 invoice.
 
+#### `presentation` — what you are selling, in your words
+
+Optional. Softmato knows the invoice line says "HostelHub Standard — 12 months"
+for NPR 12,000. It does not know the plan includes 500 beds and nightly
+backups, because that is **your** product. Send this block and we render it in
+two places: on the checkout page beside the amount, and on the invoice PDF
+under the line items.
+
+```json
+{
+  "presentation": {
+    "plan_name": "HostelHub Growth — Annual",
+    "tagline": "For properties running more than one building.",
+    "features": [
+      "Up to 500 beds across unlimited properties",
+      "Nightly off-site backups, restorable to any point in 30 days",
+      "Guest check-in and check-out from a phone"
+    ],
+    "highlights": ["Priority support", "Free onboarding"],
+    "billing_period": "12 months"
+  }
+}
+```
+
+**It is presentation, never arithmetic.** Nothing in it can change what is
+charged — the amount comes from `lines` and the ledger. That separation is the
+only reason we can accept free text from an integrator and print it on a
+statutory document.
+
+##### The rules
+
+Every one is enforced. A request that breaks one is rejected with
+`VALIDATION_FAILED` naming the field — a customer-facing document is not the
+place to discover that a bullet was four thousand characters long.
+
+| Field            | Limit                   |                                              |
+| ---------------- | ----------------------- | -------------------------------------------- |
+| `plan_name`      | 80 chars                | Required if the block is sent at all         |
+| `tagline`        | 140 chars               | One line, not a paragraph                    |
+| `features`       | 8 items, 120 chars each | The bullet list                              |
+| `highlights`     | 3 items, 60 chars each  | Set apart visually; a fourth is not emphasis |
+| `billing_period` | 60 chars                | Free text — `12 months`, `until 2027-08-24`  |
+
+1. **Plain text only.** No HTML, no Markdown. It is escaped on render, so a
+   tag arrives as a literal `<b>` and looks like a mistake. A value containing
+   `<` or `>` is rejected outright.
+2. **No prices, in any field.** `NPR 5,000`, `Rs. 5000`, `रू ५०००` and
+   `5,000/-` are all rejected. The amount is stated once, by us, from the
+   invoice. A bullet reading "Only NPR 15,000!" beside a charge of NPR 20,000
+   is a billing dispute, and the customer would be right.
+3. **No claims about payment, refunds, or Softmato.** The refund policy is
+   ours and is linked from the checkout page. A plan bullet promising a
+   different one creates an obligation you cannot settle on our behalf. This
+   one is not machine-checkable; it is part of the integration contract.
+4. **Omitting it renders nothing.** No placeholder plan name is invented on
+   your behalf, and no "Standard plan" appears where you sent none.
+5. **It is frozen at the version it was sent at.** An invoice raised today
+   renders the way it renders today, after the shape changes.
+
+`billing_period` is free text because billing periods are not ours to model.
+The invoice's own `service_starts_at`/`service_ends_at` remain the
+authoritative dates; this is the phrase a human reads.
+
+### `GET /v1/invoices/{invoice_no}` — scope `invoice:read`
+
+One invoice in full: lines, both parties, totals, and the `presentation` you
+sent, echoed back. This is what you build a billing screen in your own
+settings from.
+
+```
+GET /v1/invoices/INV-2083/84-000010
+GET /v1/invoices/INV-2083/84-000010?format=pdf
+GET /v1/invoices/INV-2083/84-000010?format=html
+```
+
+**The invoice number contains a slash and is sent as path segments**, not
+percent-encoded. A `%2F` in a path is decoded inconsistently by proxies and
+can arrive as a different identifier than the one you asked for.
+
+`status` here is the _reader's_ status, not the stored one: `past_due` is
+`issued` plus a due date in the past, computed when you ask. An invoice three
+weeks late says so rather than saying `issued`.
+
+Scoped to your application. Another integrator's invoice answers
+`RESOURCE_NOT_FOUND` — the same as one that does not exist, which is the right
+amount to tell a caller with no business knowing either way.
+
+### `GET /v1/receipts/{txn_no}` — scope `payment:read`
+
+The receipt for a settled payment, in the same three formats. The natural
+follow-up to a `payment.success` webhook: the event tells you money arrived,
+this is the document that proves it.
+
+`amount_minor` is the **gross** — what left the payer's account. The provider's
+fee is our cost, not a deduction from what they paid, and a receipt for the net
+would understate what they are owed on a refund.
+
+A payment that has not succeeded has no receipt and answers
+`RESOURCE_NOT_FOUND`. Read the payment's state from the webhook or
+`GET /v1/transactions/:id`; do not infer it from which 404 you got.
+
+#### `format=pdf` can answer with HTML
+
+If no PDF engine is configured on the deployment you are calling, both document
+endpoints return the HTML rendering instead — a complete, printable document —
+with an `X-Softmato-PDF-Fallback` header saying why. **Check the response's
+`Content-Type` before naming the file.** An HTML body saved as `invoice.pdf` is
+a file your customer's reader refuses to open.
+
 ### `POST /v1/checkout` — scope `payment:create`
 
 ```json
@@ -106,6 +236,21 @@ invoice.
 **Note there is no `amount` field.** The server reads it from the invoice.
 A client-supplied amount would be a vulnerability.
 
+`return_url` is optional, and when present must be **https and on a hostname
+registered against the application** (§2). An unregistered host is refused
+`422` before any session row is written, with the rejected hostname in the
+response's `detail` field.
+
+It is stored, and used for one thing: after the customer has paid, our callback
+page renders a **link** back to it — _"Return to QuestionCall"_. It is never an
+automatic redirect, and **no payment status is appended to it**. Three of the
+five outcomes that page renders are not "paid", and forwarding a customer
+automatically would carry them past "this payment is being reviewed, please do
+not pay again". Your product learns what happened from the webhook.
+
+The host is re-checked when that link is drawn, not only when the session was
+created, so a domain removed after the fact stops being linkable immediately.
+
 ```json
 {
   "session_id": "cs_live_8f7d92a1...",
@@ -115,9 +260,10 @@ A client-supplied amount would be a vulnerability.
 }
 ```
 
-Server steps, in order: authenticate → check scope → validate → verify invoice
-ownership → recompute amount → compute `allowed_providers` by amount → create
-session (32+ bytes CSPRNG, 30-minute expiry).
+Server steps, in order: authenticate → check scope → validate → **check
+`return_url` against the registered domains** → verify invoice ownership →
+recompute amount → compute `allowed_providers` by amount → create session
+(32+ bytes CSPRNG, 30-minute expiry).
 
 ### `GET /v1/transactions/:id` — scope `payment:read`
 
@@ -389,15 +535,42 @@ insert audit_logs row
 
 ## 7. Rate limits
 
-| Endpoint            | Limit                             |
-| ------------------- | --------------------------------- |
-| `POST /v1/checkout` | 60/min per application            |
-| `GET /v1/*`         | 300/min per application           |
-| Provider callbacks  | 600/min per IP                    |
-| Admin login         | 5 per 15 min per IP, then lockout |
-| Contact form        | 3/hour per IP                     |
+**Vercel's firewall, not Upstash.** This changed, and the reason matters: Upstash
+bills per command, so a flood would cost money to reject. Vercel denies at the
+edge, and denied traffic is free — it never starts a function, never runs the
+argon2id verify that `authenticateApplication` deliberately makes slow, and
+never opens a Neon connection.
 
-Upstash Redis. Return 429 with `Retry-After`.
+### Built
+
+| Scope             | Limit       | Where           |
+| ----------------- | ----------- | --------------- |
+| `/api/v1`, per IP | 600 per 60s | Vercel firewall |
+
+One rule, at the edge, keyed on IP. It is what stops an unauthenticated stranger
+pinning the CPU, which is the attack that does not need a credential.
+
+### Deferred
+
+| Endpoint            | Limit                   |
+| ------------------- | ----------------------- |
+| `POST /v1/checkout` | 60/min per application  |
+| `GET /v1/*`         | 300/min per application |
+
+Per-application limits need `@vercel/firewall`'s `checkRateLimit` keyed on
+`client_id`, and a second firewall rule that the Hobby plan does not allow —
+Hobby permits one rate-limit rule per project, and it is spent on the edge rule
+above, which is worth more. See `future_implementation.md` §1.
+
+Note that a per-application limit runs _inside_ the function, so it could not
+stop a flood anyway; it limits a credential that is behaving badly, which is a
+different problem from a stranger with no credential at all.
+
+The `RATE_LIMITED` code and its 429 with `Retry-After` are reserved in §1 and
+are part of that same deferred work. Nothing returns them today.
+
+Admin login lockout (5 per 15 min per IP) and the contact form limit (3/hour per
+IP) are application-level and unaffected by any of the above.
 
 ---
 
@@ -440,14 +613,14 @@ A receipt is a rendering of a succeeded transaction, not a record of its own.
 There is no receipts table and no separate receipt sequence: `txn_no` is the
 receipt number, and it is already gapless per fiscal year.
 
-| Field       | Source                                                     |
-| ----------- | ---------------------------------------------------------- |
-| Receipt no. | `transactions.txn_no`                                      |
-| Invoice no. | `invoices.invoice_no`                                      |
-| Amount      | `gross_amount_minor` — what left the customer's account    |
-| Paid with   | `payment_providers.display_name`                           |
-| Reference   | `transactions.provider_ref`, to match against a statement  |
-| Date        | `succeeded_at`                                             |
+| Field       | Source                                                    |
+| ----------- | --------------------------------------------------------- |
+| Receipt no. | `transactions.txn_no`                                     |
+| Invoice no. | `invoices.invoice_no`                                     |
+| Amount      | `gross_amount_minor` — what left the customer's account   |
+| Paid with   | `payment_providers.display_name`                          |
+| Reference   | `transactions.provider_ref`, to match against a statement |
+| Date        | `succeeded_at`                                            |
 
 Three rules govern it:
 

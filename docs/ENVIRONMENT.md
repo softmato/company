@@ -92,14 +92,34 @@ NEXT_PUBLIC_APP_URL=http://softmato.local:3000
 NEXT_PUBLIC_CHECKOUT_URL=http://payment.softmato.local:3000
 
 # ── Payment providers ──────────────────────────────────────
-PAYMENT_MODE=sandbox|live
+PAYMENT_MODE=mock|sandbox|live
 
-ESEWA_PRODUCT_CODE=EPAYTEST
-ESEWA_SECRET_KEY=LB0REg8HUSw3MTYrI1s6JTE8Kyc6JyAqJiA3MQ==   # eSewa's published dev key
-ESEWA_BASE_URL=https://rc-checkout.esewa.com.np
+# eSewa. Verified against the live sandbox on 2026-09-02: a form signed with
+# this key returns a 302 into the payment page. Quote it — it contains '&',
+# ':' and '/', and an unquoted value truncates at the '&', which surfaces as
+# eSewa's ES104 "Invalid payload signature" rather than as a parse error.
+#
+# Two older values in this repo were wrong and both are gone: this file's
+# 'LB0REg8HUSw3...' and .env.example's '8gBwcE4DOHB28vvi'. Neither is an eSewa
+# key. The variable was also named ESEWA_PRODUCT_CODE here while the code has
+# always read ESEWA_MERCHANT_CODE, so this block could not have worked as
+# written.
+ESEWA_MERCHANT_CODE=EPAYTEST
+ESEWA_SECRET_KEY="8gBm/:&EnhH.1/q"
+ESEWA_ENV=sandbox|live
+ESEWA_BASE_URL=               # optional override; default follows ESEWA_ENV
+                              # sandbox https://rc-epay.esewa.com.np
+                              # live    https://epay.esewa.com.np
 
-KHALTI_SECRET_KEY=
-KHALTI_BASE_URL=https://dev.khalti.com/api/v2
+# Khalti. The value below is the shared sandbox test key Khalti publishes in
+# its own integration examples; a merchant-specific one comes from
+# test-admin.khalti.com (login OTP 987654). Khalti names the sandbox key
+# 'live_secret_key' too — confusing, and not a live credential.
+KHALTI_SECRET_KEY=live_secret_key_68791341fdd94846a146f0457ff7b455
+KHALTI_ENV=sandbox|live
+KHALTI_BASE_URL=              # optional override; default follows KHALTI_ENV
+                              # sandbox https://dev.khalti.com/api/v2
+                              # live    https://khalti.com/api/v2
 
 FONEPAY_MERCHANT_CODE=
 FONEPAY_SECRET_KEY=
@@ -201,14 +221,76 @@ Key convention:
 
 ```
 company/proofs/{fiscal_year}/{transaction_id}/{uuid}.{ext}
-company/invoices/{fiscal_year}/{invoice_no}.pdf
+company/invoices/{fiscal_year}/{invoice_no}-{fingerprint}.pdf
+company/receipts/{fiscal_year}/{txn_no}-{fingerprint}.pdf
 company/documents/{client_id}/{project_id}/{uuid}-{filename}
 company/images/{uuid}-{slug}.{ext}          ← public bucket
 ```
 
-Built in `apps/web/lib/storage/object-key.ts`, never by concatenation at the
-call site. The slug is passed through a whitelist, so a filename cannot
-introduce a path segment or a `..`.
+Built in `apps/web/lib/storage/object-key.ts` (public) and
+`apps/web/lib/documents/object-key.ts` (documents), never by concatenation at
+the call site. The slug is passed through a whitelist, so a filename cannot
+introduce a path segment or a `..`; a document number and a fiscal year both
+contain a slash of their own (`INV-2083/84-000012`, `2083/84`) which becomes a
+dash, and anything else in them throws rather than being scrubbed into
+something key-shaped.
+
+### Document PDFs are stored, and the key says which version
+
+Rendering a PDF means running a browser — the slowest thing the app does. Each
+invoice and receipt is therefore rendered once and read back afterwards:
+`POST /v1/invoices` schedules the render for after its response has been sent,
+a receipt is stored by the same render that attaches it to the receipt email,
+and every download path (`/v1`, the admin screen) goes through
+`lib/documents/document-pdf.ts`, which reads the bucket before it reaches for
+the engine.
+
+The `{fingerprint}` is the first 16 hex characters of a SHA-256 of the rendered
+HTML, and it is what makes serving a stored copy safe. **An invoice is not
+frozen once issued** — its badge goes from UNPAID to PAID, its balance falls,
+`past_due` appears when the clock passes the due date. Keyed on the invoice
+number alone, the first render would be served for months, telling a customer
+their settled invoice is unpaid. Content-addressing removes that state rather
+than managing it: a document that has changed misses, and is rendered again.
+There is no invalidation step to forget and no TTL to tune.
+
+Superseded renders stay in the bucket on purpose. They are what the invoice
+looked like when it was sent, which is the question a dispute actually turns
+on.
+
+Storage is optional. With `R2_PRIVATE_BUCKET` unset, documents are rendered on
+every request exactly as they were before any of this existed, and with no PDF
+engine at all the download falls back to HTML with an
+`X-Softmato-PDF-Fallback` header. Neither is an error.
+
+### The PDF engine
+
+`lib/documents/pdf.ts` picks one of two, in this order:
+
+| | |
+| --- | --- |
+| A Chrome or Edge on the machine | `CHROME_PATH`, or a standard install location. Every developer, and any container built on a Chrome image. No dependency |
+| Chromium bundled into the deployment | `@sparticuz/chromium` + `puppeteer-core`. **This is the production engine** — Vercel's servers have no browser |
+
+The local binary wins where there is one: it starts faster than unpacking 65 MB
+of Chromium into `/tmp`, and the bundled build is Linux x64, so on a Mac or on
+Windows it declines and the local path is the only one that runs.
+
+Both packages are in `serverExternalPackages` — `@sparticuz/chromium` finds its
+own binary relative to its package directory, and a bundler that inlines the
+code moves it away from `bin/`. The binary is then traced into the five routes
+that can start a browser (`outputFileTracingIncludes`): the three that read a
+document as PDF, and the two that produce one — `POST /v1/invoices`, and the
+gateway return page and polling job that settle a payment and email its
+receipt. It is 65 MB against a function's size budget, so it goes to those and
+nowhere else.
+
+**A render that came out wrong is served but not stored.** If the Google Fonts
+faces do not arrive the document is laid out in a fallback face and its figures
+lose their tabular alignment; the person who asked still gets a PDF, but the
+key is the document's identity, so archiving that one would answer every future
+request with the wrong typeface. It is returned with a `degraded` reason and
+rendered again next time.
 
 Uploads: validate MIME by **magic bytes, not extension**; cap at 5 MB; strip
 EXIF from images. Never trust a client-declared content type.

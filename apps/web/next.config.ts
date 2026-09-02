@@ -74,6 +74,17 @@ function r2RemotePatterns(): RemotePatterns {
   }
 }
 
+/**
+ * The compressed Chromium, listed per route rather than globally.
+ *
+ * It is 65 MB against a function's size budget, so it goes only to the
+ * handlers that can actually start a browser: the ones that read a document as
+ * PDF, and the ones that produce a document — `POST /v1/invoices` and the two
+ * paths a payment can settle down. Adding it everywhere would put it in every
+ * API function on the deployment for the benefit of five.
+ */
+const CHROMIUM_BINARY = './node_modules/@sparticuz/chromium/bin/**';
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
@@ -95,7 +106,43 @@ const nextConfig: NextConfig = {
     '@node-rs/argon2',
     'pg',
     '@neondatabase/serverless',
+    /*
+     * The PDF engine. `@sparticuz/chromium` locates its own compressed binary
+     * relative to its package directory, so a bundler that inlines it moves
+     * the code away from `bin/` and the package throws at the point of use
+     * rather than at build. `puppeteer-core` is external for the same family
+     * of reasons — it resolves files at runtime.
+     */
+    '@sparticuz/chromium',
+    'puppeteer-core',
   ],
+  /*
+   * Externalising a package keeps it out of the bundle; it does not guarantee
+   * its non-JavaScript files are traced into the deployment. The 65 MB of
+   * compressed Chromium is exactly such a file, and a function that ships the
+   * loader without the binary fails only when someone downloads an invoice.
+   */
+  outputFileTracingIncludes: Object.fromEntries(
+    [
+      /* Reads a document: `?format=pdf`. */
+      '/api/v1/invoices/**',
+      '/api/v1/receipts/**',
+      '/api/internal/documents/**',
+      /*
+       * Writes one. `POST /v1/invoices` pre-renders after its response, and
+       * both settlement paths render the receipt that goes on the email —
+       * the gateway's return page and the polling job that catches the
+       * payments whose return never happened.
+       */
+      '/api/jobs/poll-pending-transactions/**',
+      /*
+       * `*` for the session id, not the literal `[sessionId]`: these keys are
+       * globs, and a bracketed segment reads as a character class that matches
+       * every route except the one meant.
+       */
+      '/checkout/*/callback',
+    ].map((route) => [route, [CHROMIUM_BINARY]]),
+  ),
 };
 
 export default nextConfig;

@@ -32,10 +32,32 @@ export function isProviderId(value: string): value is ProviderId {
   return (PROVIDER_IDS as readonly string[]).includes(value);
 }
 
+/**
+ * A gateway that must be entered by submitting a signed form rather than by
+ * following a link.
+ *
+ * eSewa's ePay v2 is the reason this exists. Its signature covers the field
+ * values, so the fields have to arrive exactly as they were signed, and it
+ * accepts them as a form POST — a `GET` with the same values in the query
+ * string is not a different style of the same request, it is a request eSewa
+ * does not answer. Expressing it as a `redirectUrl` was why the previous
+ * adapter could not have completed a sandbox payment.
+ *
+ * The browser gets an auto-submitting form. Nothing here is secret: the
+ * signature is over public values and is worthless for anything but this one
+ * transaction.
+ */
+export interface FormPost {
+  url: string;
+  fields: Readonly<Record<string, string>>;
+}
+
 export interface InitiateResult {
-  /** Khalti: pidx. eSewa: booking_id. Fonepay: per the bank's spec. */
+  /** Khalti: pidx. eSewa: transaction_uuid. Fonepay: per the bank's spec. */
   providerRef: string;
   redirectUrl?: string;
+  /** For gateways entered by form POST rather than a link. */
+  formPost?: FormPost;
   deeplink?: string;
   qrPayload?: string;
   correlationId?: string;

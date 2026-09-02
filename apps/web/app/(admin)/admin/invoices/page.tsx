@@ -1,292 +1,194 @@
-'use client';
+/**
+ * `/admin/invoices` — the invoice ledger, from the database.
+ *
+ * Replaces a client component over a hardcoded `MOCK_INVOICES` array that also
+ * carried an "issue invoice" form writing to React state.
+ *
+ * **No creation form here, deliberately.** Invoices are raised through
+ * `POST /v1/invoices` or by the subscription billing run, both of which
+ * allocate a gapless number inside the transaction that inserts the row
+ * (docs/DATABASE.md §3). A form that posted to something else would be a
+ * second numbering path, and the failure it produces — a hole in the sequence
+ * an auditor asks about — surfaces months later. Manual issuance belongs in
+ * Phase 6, built on the same allocator.
+ */
+import type { Metadata } from 'next';
 
-import { useState } from 'react';
+import { StatusBadge } from '@/components/admin/status-badge';
+import { TableFilters } from '@/components/admin/table-filters';
+import { formatAd } from '@/lib/format/date';
+import { formatNpr, formatPaisa } from '@/lib/format/money';
+import {
+  INVOICE_STATUSES,
+  invoiceTotals,
+  listInvoices,
+  numberingGaps,
+} from '@/lib/admin/invoices-queries';
 
-interface InvoiceRecord {
-  id: number;
-  invoiceNo: string;
-  customerName: string;
-  customerEmail: string;
-  productName: string;
-  amountMinor: number;
-  status: 'draft' | 'issued' | 'paid' | 'past_due' | 'cancelled';
-  issueDate: string;
-  dueDate: string;
-}
+export const dynamic = 'force-dynamic';
 
-const MOCK_INVOICES: InvoiceRecord[] = [
-  {
-    id: 1001,
-    invoiceNo: 'INV-2083/84-00000001',
-    customerName: 'Himalayan Tech Pvt Ltd',
-    customerEmail: 'billing@himalayantech.com',
-    productName: 'SaaS Platform License',
-    amountMinor: 2500000,
-    status: 'paid',
-    issueDate: '2026-08-01',
-    dueDate: '2026-08-15',
-  },
-  {
-    id: 1002,
-    invoiceNo: 'INV-2083/84-00000002',
-    customerName: 'Kathmandu Digital Solutions',
-    customerEmail: 'accounts@kds.com.np',
-    productName: 'Enterprise Custom SLA',
-    amountMinor: 7500000,
-    status: 'paid',
-    issueDate: '2026-08-10',
-    dueDate: '2026-08-25',
-  },
-  {
-    id: 1003,
-    invoiceNo: 'INV-2083/84-00000003',
-    customerName: 'Pokhara Software Hub',
-    customerEmail: 'finance@pokharasoft.com',
-    productName: 'Mobile App Development Retainer',
-    amountMinor: 12000000,
-    status: 'issued',
-    issueDate: '2026-08-20',
-    dueDate: '2026-09-04',
-  },
-  {
-    id: 1004,
-    invoiceNo: 'INV-2083/84-00000004',
-    customerName: 'Everest Cloud Services',
-    customerEmail: 'info@everestcloud.np',
-    productName: 'Cloud Hosting & DevOps Maintenance',
-    amountMinor: 5000000,
-    status: 'past_due',
-    issueDate: '2026-07-15',
-    dueDate: '2026-07-30',
-  },
-];
+export const metadata: Metadata = { title: 'Invoices' };
 
-export default function AdminInvoicesPage() {
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>(MOCK_INVOICES);
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [newCustomer, setNewCustomer] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newAmount, setNewAmount] = useState('25000');
+export default async function AdminInvoicesPage({
+  searchParams,
+}: PageProps<'/admin/invoices'>) {
+  const { status, q } = await searchParams;
 
-  const filteredInvoices = invoices.filter((item) => {
-    if (activeTab !== 'all' && item.status !== activeTab) return false;
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      item.invoiceNo.toLowerCase().includes(q) ||
-      item.customerName.toLowerCase().includes(q) ||
-      item.customerEmail.toLowerCase().includes(q)
-    );
-  });
-
-  const handleCreateInvoice = (e: React.FormEvent) => {
-    e.preventDefault();
-    const nextNum = invoices.length + 1;
-    const formattedNum = String(nextNum).padStart(8, '0');
-    const newInv: InvoiceRecord = {
-      id: 1000 + nextNum,
-      invoiceNo: `INV-2083/84-${formattedNum}`,
-      customerName: newCustomer || 'New Client',
-      customerEmail: newEmail || 'client@example.com',
-      productName: 'Custom Web & Mobile Development',
-      amountMinor: parseFloat(newAmount) * 100,
-      status: 'issued',
-      issueDate: new Date().toISOString().split('T')[0] as string,
-      dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0] as string,
-    };
-
-    setInvoices([newInv, ...invoices]);
-    setIsCreating(false);
-    setNewCustomer('');
-    setNewEmail('');
-  };
+  const [rows, totals, gaps] = await Promise.all([
+    listInvoices({
+      status: typeof status === 'string' ? status : undefined,
+      query: typeof q === 'string' ? q : undefined,
+    }),
+    invoiceTotals(),
+    numberingGaps(),
+  ]);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
-        <div>
-          <h1 className="headline text-[28px] font-bold text-foreground">
-            Invoices & Billing
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gapless fiscal numbering per BS calendar, PDF generation, and automated status management.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity self-start sm:self-auto"
-        >
-          + Issue New Invoice
-        </button>
+      <div>
+        <h1 className="headline text-[30px] leading-tight">Invoices</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Raised through the API or the billing run. Numbers are gapless within
+          a fiscal year.
+        </p>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border p-2 rounded-xl">
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg overflow-x-auto">
-          {['all', 'issued', 'paid', 'past_due', 'draft'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
-                activeTab === tab
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab.replace('_', ' ')}
-            </button>
-          ))}
+      {/*
+        Only rendered when something is actually wrong. A permanent "numbering
+        healthy" panel is a thing people stop reading.
+      */}
+      {gaps.length > 0 ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 text-sm">
+          <p className="font-medium text-foreground">
+            Invoice numbering has a gap.
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {gaps
+              .map(
+                (gap) =>
+                  `${gap.fiscalYear}: highest number ${gap.expected}, but ${gap.actual} invoices exist`,
+              )
+              .join('. ')}
+            . A number was allocated and its invoice never committed. This is
+            the thing an auditor asks about, so find it before year end.
+          </p>
         </div>
+      ) : null}
 
-        <input
-          type="text"
-          placeholder="Search Invoice #, client..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full sm:w-64 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Metric
+          label="Outstanding"
+          value={formatNpr(totals.outstandingMinor)}
+          note="Issued and partially paid, net of what has been received"
+        />
+        <Metric
+          label="Received"
+          value={formatNpr(totals.paidMinor)}
+          note="Across every invoice"
+        />
+        <Metric
+          label="Past due"
+          value={String(totals.pastDueCount)}
+          note={`${totals.draftCount} still in draft`}
+          alarming={totals.pastDueCount > 0}
         />
       </div>
 
-      {/* Invoices Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+      <TableFilters
+        statuses={INVOICE_STATUSES}
+        searchPlaceholder="Invoice no, reference, customer…"
+      />
+
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-border bg-muted/50 font-medium text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">Invoice Number</th>
-                <th className="px-4 py-3">Client</th>
-                <th className="px-4 py-3">Product / Service</th>
-                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Invoice</th>
+                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3 text-right">Total</th>
+                <th className="px-4 py-3 text-right">Paid</th>
                 <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Issue Date</th>
-                <th className="px-4 py-3">Due Date</th>
+                <th className="px-4 py-3">Due</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filteredInvoices.map((item) => (
-                <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-mono font-bold text-foreground">
-                    {item.invoiceNo}
+              {rows.map((invoice) => (
+                <tr key={invoice.id} className="transition-colors hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <div className="numeric font-semibold text-foreground">
+                      {invoice.invoiceNo}
+                    </div>
+                    {invoice.externalRef ? (
+                      <div className="numeric text-[11px] text-muted-foreground">
+                        {invoice.externalRef}
+                      </div>
+                    ) : null}
+                  </td>
+                  <td className="px-4 py-3 text-foreground">{invoice.customerName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {invoice.productName}
+                  </td>
+                  <td className="numeric px-4 py-3 text-right font-semibold text-foreground">
+                    {formatPaisa(invoice.totalMinor)}
+                  </td>
+                  <td className="numeric px-4 py-3 text-right text-muted-foreground">
+                    {formatPaisa(invoice.paidMinor)}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-semibold text-foreground">{item.customerName}</div>
-                    <div className="text-muted-foreground font-mono text-[11px]">
-                      {item.customerEmail}
+                    {/*
+                      `past_due` is derived, so it is shown alongside the stored
+                      status rather than replacing it — the row really is still
+                      `issued`, and an admin comparing this screen to the
+                      database should not find them disagreeing.
+                    */}
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={invoice.status} />
+                      {invoice.pastDue ? <StatusBadge status="past_due" /> : null}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{item.productName}</td>
-                  <td className="px-4 py-3 font-mono font-semibold text-foreground">
-                    NPR {(item.amountMinor / 100).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase ${
-                        item.status === 'paid'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                          : item.status === 'issued'
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30'
-                            : item.status === 'past_due'
-                              ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'
-                              : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {item.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground font-mono text-[11px]">
-                    {item.issueDate}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground font-mono text-[11px]">
-                    {item.dueDate}
+                  <td className="numeric px-4 py-3 text-[11px] text-muted-foreground">
+                    {invoice.dueAt ? formatAd(invoice.dueAt) : '—'}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        {rows.length === 0 ? (
+          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+            No invoices match this view.
+          </p>
+        ) : null}
       </div>
+    </div>
+  );
+}
 
-      {/* Create Modal */}
-      {isCreating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <form
-            onSubmit={handleCreateInvoice}
-            className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="text-lg font-bold text-foreground">Issue New Invoice</h2>
-              <button
-                type="button"
-                onClick={() => setIsCreating(false)}
-                className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-muted-foreground font-medium mb-1">
-                  Client / Organization Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Acme Tech Pvt Ltd"
-                  value={newCustomer}
-                  onChange={(e) => setNewCustomer(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background p-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-muted-foreground font-medium mb-1">
-                  Client Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="billing@acme.com"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background p-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="block text-muted-foreground font-medium mb-1">
-                  Amount (NPR)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={newAmount}
-                  onChange={(e) => setNewAmount(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background p-2 text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 border-t border-border pt-3">
-              <button
-                type="button"
-                onClick={() => setIsCreating(false)}
-                className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-              >
-                Issue Invoice
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+function Metric({
+  label,
+  value,
+  note,
+  alarming = false,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  alarming?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border bg-card p-4 shadow-xs ${
+        alarming ? 'border-amber-500/40' : 'border-border'
+      }`}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="numeric mt-1 text-xl font-semibold text-foreground">{value}</p>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">{note}</p>
     </div>
   );
 }

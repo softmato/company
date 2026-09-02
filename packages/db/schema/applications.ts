@@ -13,6 +13,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 import { products } from './accounts';
@@ -84,3 +85,62 @@ export const applications = pgTable(
 );
 
 export type Application = typeof applications.$inferSelect;
+
+/**
+ * The hostnames an application is allowed to send people to, and to receive
+ * webhooks on. A secret answers "who is this"; this table answers "and where
+ * may they send my customer".
+ *
+ * Written by an admin, signed in, in advance. Never sent by the caller and
+ * never inferred from a request — a caller who can name their own return
+ * address has an allowlist in name only.
+ *
+ * **No wildcards.** `*.questioncall.com` is not accepted, because a wildcard
+ * is how an allowlist quietly becomes an allow-anything the day someone loses
+ * control of a subdomain. List the subdomains.
+ *
+ * Matching is exact hostname equality — see `assertRegisteredHost` in
+ * packages/payment-core/applications/domains.ts, which is the only place that
+ * reads this table. `endsWith('questioncall.com')` would match
+ * `evilquestioncall.com`, so the helper exists partly to make sure nobody
+ * writes that at a call site.
+ */
+export const applicationDomains = pgTable(
+  'application_domains',
+  {
+    id: bigint('id', { mode: 'number' })
+      .generatedAlwaysAsIdentity()
+      .primaryKey(),
+    applicationId: bigint('application_id', { mode: 'number' })
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    /** `questioncall.com` — lowercase punycode, no scheme, port or path. */
+    hostname: text('hostname').notNull(),
+    /** Why it is on the list, for the admin reading it in a year. */
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    /** The admin who added it. */
+    createdBy: text('created_by'),
+  },
+  (t) => [
+    uniqueIndex('application_domains_unique').on(t.applicationId, t.hostname),
+    index('application_domains_application_idx').on(t.applicationId),
+    /*
+     * The shape rules live in the database, not only in the form that writes
+     * them. A hostname that arrived through a script, a migration or a psql
+     * session is the one that will not have been normalised.
+     */
+    check(
+      'hostname_is_bare_lowercase',
+      sql`${t.hostname} = lower(${t.hostname})
+          AND ${t.hostname} !~ '[/:*[:space:]]'
+          AND ${t.hostname} ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+          AND ${t.hostname} !~ '\\.[0-9]+$'
+          AND length(${t.hostname}) BETWEEN 4 AND 253`,
+    ),
+  ],
+);
+
+export type ApplicationDomain = typeof applicationDomains.$inferSelect;

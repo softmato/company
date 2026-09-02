@@ -78,7 +78,18 @@ export async function SiteFooter({ className }: { className?: string | undefined
           <nav aria-label="Footer">
             <p className="eyebrow">Company</p>
             <ul className="mt-4 grid gap-2.5">
-              {[...NAV_LINKS, { href: '/careers', label: 'Careers' }, { href: '/contact', label: 'Contact' }].map(
+              {[
+                ...NAV_LINKS,
+                { href: '/careers', label: 'Careers' },
+                { href: '/contact', label: 'Contact' },
+                /*
+                 * Linked as the path, not as `developer.softmato.com`. The
+                 * subdomain is a rewrite onto this route, so the path is the
+                 * address that resolves everywhere — including in a preview
+                 * deployment, where the subdomain does not exist.
+                 */
+                { href: '/developers', label: 'Developers' },
+              ].map(
                 (link) => (
                   <li key={link.href}>
                     <FooterLink href={link.href}>{link.label}</FooterLink>

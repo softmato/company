@@ -10,6 +10,7 @@ import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
 import {
+  applicationDomains,
   applications,
   db,
   type Application,
@@ -19,9 +20,20 @@ import {
 import type { Actor, AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import { generateClientId, issueSecret } from './credentials';
+import {
+  assertRegisteredHost,
+  normalizeHostname,
+  normalizeHostnameInput,
+} from './domains';
 
 /** docs/API.md §2 — "Rotation issues a new secret with a 24-hour overlap." */
 const ROTATION_OVERLAP_MS = 24 * 60 * 60 * 1000;
+
+export interface DomainInput {
+  /** Bare host: `questioncall.com`. No scheme, port or path. */
+  hostname: string;
+  note?: string | null;
+}
 
 export interface RegisterInput {
   productId: string;
@@ -29,6 +41,13 @@ export interface RegisterInput {
   scopes: ApplicationScope[];
   webhookUrl?: string | null;
   isLive: boolean;
+  /**
+   * At least one. Registered in the same transaction as the application, so
+   * an application cannot exist for even a moment without its allowlist — a
+   * credential that is briefly allowed to send customers anywhere is a
+   * credential that will be used in exactly that window.
+   */
+  domains: DomainInput[];
 }
 
 export interface IssuedCredential {
@@ -42,6 +61,36 @@ export async function registerApplication(
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<IssuedCredential> {
+  const hostnames = normalizeDomains(input.domains);
+
+  /*
+   * The webhook URL is checked against the domains arriving on this same
+   * request rather than against the table, because neither exists yet. Doing
+   * it before the insert means a form that names a webhook host it forgot to
+   * register fails with nothing written, instead of leaving an application
+   * whose webhook address skipped validation because it came in through the
+   * back door.
+   */
+  if (input.webhookUrl) {
+    const host = normalizeHostname(input.webhookUrl);
+
+    if (host === null) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        'webhook_url must be an absolute https:// URL with a valid hostname',
+        { field: 'webhookUrl' },
+      );
+    }
+
+    if (!hostnames.some((domain) => domain.hostname === host)) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        `webhook_url points at "${host}", which is not one of the domains being registered. Add it to the domain list.`,
+        { field: 'webhookUrl', hostname: host },
+      );
+    }
+  }
+
   const clientId = generateClientId(input.productId, input.isLive);
   const { secret, secretHash, secretLast4 } = await issueSecret(clientId);
 
@@ -70,6 +119,15 @@ export async function registerApplication(
       );
     }
 
+    await tx.insert(applicationDomains).values(
+      hostnames.map((domain) => ({
+        applicationId: created.id,
+        hostname: domain.hostname,
+        note: domain.note,
+        createdBy: actor.id,
+      })),
+    );
+
     await audit(
       {
         actorType: actor.type,
@@ -83,6 +141,7 @@ export async function registerApplication(
           scopes: input.scopes,
           isLive: input.isLive,
           secretLast4,
+          domains: hostnames.map((domain) => domain.hostname),
         },
       },
       tx,
@@ -138,7 +197,9 @@ export async function rotateSecret(
       existing.clientId,
     );
     const now = new Date();
-    const previousSecretExpiresAt = new Date(now.getTime() + ROTATION_OVERLAP_MS);
+    const previousSecretExpiresAt = new Date(
+      now.getTime() + ROTATION_OVERLAP_MS,
+    );
 
     const [updated] = await tx
       .update(applications)
@@ -216,9 +277,13 @@ export async function revokeApplication(
       .returning();
 
     if (!updated) {
-      throw new PaymentError('RESOURCE_NOT_FOUND', 'Revocation updated no row', {
-        applicationId,
-      });
+      throw new PaymentError(
+        'RESOURCE_NOT_FOUND',
+        'Revocation updated no row',
+        {
+          applicationId,
+        },
+      );
     }
 
     await audit(
@@ -241,7 +306,11 @@ export async function revokeApplication(
 /** Scopes and webhook URL are editable; credentials never are, only rotated. */
 export async function updateApplication(
   applicationId: number,
-  patch: { name?: string; scopes?: ApplicationScope[]; webhookUrl?: string | null },
+  patch: {
+    name?: string;
+    scopes?: ApplicationScope[];
+    webhookUrl?: string | null;
+  },
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<Application> {
@@ -257,6 +326,24 @@ export async function updateApplication(
       throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
         applicationId,
       });
+    }
+
+    /*
+     * The other door. `return_url` is checked in the checkout route; this is
+     * the path that writes `webhook_url`, and it is the one that matters more
+     * — that URL is fetched by our own server, so an unchecked internal
+     * address here is an SSRF with our own network position behind it.
+     *
+     * Checked on every write rather than only when the value changes: "it was
+     * already in the column" is not evidence it was ever validated.
+     */
+    if (patch.webhookUrl) {
+      await assertRegisteredHost(
+        applicationId,
+        patch.webhookUrl,
+        'webhook_url',
+        tx,
+      );
     }
 
     const [updated] = await tx
@@ -300,4 +387,51 @@ export async function updateApplication(
 
     return updated;
   });
+}
+
+/**
+ * Turns admin-typed hostnames into the rows that will be stored, refusing the
+ * whole set rather than silently dropping a bad one — an admin who mistypes
+ * one of three domains must not discover it by a customer being refused.
+ */
+function normalizeDomains(
+  domains: DomainInput[],
+): { hostname: string; note: string | null }[] {
+  const seen = new Map<string, string | null>();
+
+  for (const domain of domains) {
+    const raw = domain.hostname.trim();
+    if (raw === '') continue;
+
+    if (raw.startsWith('*')) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        `Wildcard domains are not accepted. List each subdomain instead of "${raw}".`,
+        { field: 'domains', hostname: raw },
+      );
+    }
+
+    const hostname = normalizeHostnameInput(raw);
+
+    if (hostname === null) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        `"${raw}" is not a bare hostname. Enter it without a scheme, port or path.`,
+        { field: 'domains', hostname: raw },
+      );
+    }
+
+    // Last note wins; the unique index would reject the duplicate row anyway.
+    seen.set(hostname, domain.note?.trim() || null);
+  }
+
+  if (seen.size === 0) {
+    throw new PaymentError(
+      'VALIDATION_FAILED',
+      'An application needs at least one registered domain. Without one it can be given neither a return URL nor a webhook address.',
+      { field: 'domains' },
+    );
+  }
+
+  return [...seen].map(([hostname, note]) => ({ hostname, note }));
 }

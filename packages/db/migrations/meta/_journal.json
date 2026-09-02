@@ -43,6 +43,13 @@
       "when": 1786762395296,
       "tag": "0005_lame_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788400000000,
+      "tag": "0006_application_domains",
+      "breakpoints": true
     }
   ]
 }

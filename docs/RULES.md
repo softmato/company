@@ -84,7 +84,8 @@ founder decides whether to relax it. Until they say so, leave it.
 | Auth             | `next-auth` (Auth.js)                           |
 | Password hashing | `@node-rs/argon2`                               |
 | TOTP             | `otpauth`                                       |
-| Redis            | `@upstash/redis`, `@upstash/ratelimit`          |
+| Redis            | `@upstash/redis`                                |
+| Rate limiting    | Vercel firewall (edge, no dependency)           |
 | Queue            | `@upstash/qstash`                               |
 | Object storage   | `@aws-sdk/client-s3` against R2                 |
 | Email            | `resend` + `@react-email/components`            |

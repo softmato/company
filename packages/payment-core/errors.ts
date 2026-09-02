@@ -73,6 +73,22 @@ export class PaymentError extends Error {
     /** Internal detail. Logged, never serialised to a client. */
     message: string,
     readonly context?: Record<string, unknown>,
+    /**
+     * An extra sentence that *is* safe to send, written for the caller who has
+     * to fix the problem.
+     *
+     * The table above stays the only source of `message`, so the default is
+     * still "say nothing specific". This is the deliberate exception, and it
+     * is opt-in per throw site precisely so that adding one is a decision
+     * somebody made rather than something that leaked.
+     *
+     * It exists for refusals whose whole value is the specific: telling a
+     * caller their `return_url` names an unregistered host, and which host, is
+     * the difference between a self-service fix and a support thread. Never
+     * put a provider string, a database message, or anything about our
+     * internals here (docs/RULES.md §5).
+     */
+    readonly publicDetail?: string,
   ) {
     super(message);
     this.name = 'PaymentError';

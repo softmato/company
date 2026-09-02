@@ -27,12 +27,23 @@ export interface ApiContext {
   body: unknown;
 }
 
-/** A read endpoint: authenticate, check scope, run. */
-export function readEndpoint(
+/**
+ * A read endpoint: authenticate, check scope, run.
+ *
+ * The handler receives the route's params — a document endpoint is addressed
+ * by `invoice_no`, which is in the path — and may return either a body to
+ * serialise or a `Response` of its own. The second is for the endpoints that
+ * serve a PDF: they are still `/v1` reads, with the same authentication and
+ * the same scope check, and routing them around this helper to get a
+ * non-JSON body would mean a second place that authenticates.
+ */
+export function readEndpoint<P = Record<string, never>>(
   scope: ApplicationScope,
-  handler: (context: ApiContext) => Promise<{ status?: number; body: unknown }>,
-): (request: Request) => Promise<Response> {
-  return async (request) => {
+  handler: (
+    context: ApiContext & { params: P; request: Request },
+  ) => Promise<{ status?: number; body: unknown } | Response>,
+): (request: Request, routeContext?: { params: Promise<P> }) => Promise<Response> {
+  return async (request, routeContext) => {
     const requestId = newRequestId();
 
     try {
@@ -41,7 +52,18 @@ export function readEndpoint(
       );
       assertScope(application, scope);
 
-      const result = await handler({ application, requestId, body: null });
+      const params = ((await routeContext?.params) ?? {}) as P;
+
+      const result = await handler({
+        application,
+        requestId,
+        body: null,
+        params,
+        request,
+      });
+
+      if (result instanceof Response) return result;
+
       return apiJson(result.body, { status: result.status ?? 200, requestId });
     } catch (error) {
       return apiError(error, requestId);

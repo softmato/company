@@ -12,6 +12,10 @@ import { PaymentError, isPaymentError } from '@softmato/payment-core';
  * thrown error; and every error is logged with its detail before that detail
  * is discarded. A provider error string can carry merchant identifiers, so
  * "never leak internals" has to be structural (docs/RULES.md §5).
+ *
+ * `detail` is the one narrow exception, and it does not bend either rule:
+ * `message` still comes from the table, and `detail` appears only when the
+ * throw site explicitly wrote one as safe to send. See `PaymentError`.
  */
 
 export function apiJson(
@@ -50,6 +54,9 @@ export function apiError(error: unknown, requestId: string): Response {
       error: {
         code: payment.code,
         message: payment.publicMessage,
+        ...(payment.publicDetail !== undefined
+          ? { detail: payment.publicDetail }
+          : {}),
         request_id: requestId,
       },
     },

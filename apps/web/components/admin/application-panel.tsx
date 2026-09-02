@@ -8,7 +8,7 @@ import {
   revokeApplicationAction,
   rotateSecretAction,
   updateApplicationAction,
-} from '@/app/(admin)/admin/products/actions';
+} from '@/app/(admin)/admin/applications/actions';
 import type { ApplicationSummary } from '@/lib/applications/queries';
 import { ScopeCheckboxes } from '@/components/admin/scope-checkboxes';
 import { SecretReveal } from '@/components/admin/secret-reveal';
@@ -124,8 +124,17 @@ function EditForm({
         name="webhookUrl"
         type="url"
         defaultValue={application.webhookUrl ?? ''}
+        aria-describedby={`webhook-help-${application.id}`}
         className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
       />
+      <p
+        id={`webhook-help-${application.id}`}
+        className="mt-1 text-xs text-muted-foreground"
+      >
+        Its hostname must be one of the registered domains below. This URL is
+        fetched by our own server, so an address we have not been told to trust
+        is not one we will call.
+      </p>
       {state?.fieldErrors?.webhookUrl ? (
         <p role="alert" className="mt-1 text-xs text-destructive">
           {state.fieldErrors.webhookUrl}

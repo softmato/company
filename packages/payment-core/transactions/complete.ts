@@ -162,7 +162,7 @@ export async function completePayment(
   }
 
   await clearInvoice(tx, transaction, context.invoicePaidMinor);
-  await closeSession(tx, transaction);
+  await closeSession(tx, transaction, audit);
 
   await audit(
     {
@@ -311,10 +311,27 @@ async function clearInvoice(
  * The session follows the payment. Best-effort: a transaction can outlive its
  * session, and a session already moved on is not a reason to unwind a posted
  * payment.
+ *
+ * **It says "best-effort" and now behaves that way.** `transitionSession`
+ * throws on an illegal move, and `expired` is terminal — so a customer whose
+ * session lapsed while their payment was still in flight at the gateway would
+ * settle, post the journal, clear the invoice, and then throw here on
+ * `expired → succeeded`, rolling every bit of it back. The money would have
+ * arrived and we would have no record of it.
+ *
+ * That sequence is ordinary, not exotic: sessions are short-lived, gateway
+ * confirmation is not instant, and the `expire-stale-sessions` job exists
+ * precisely to mark lapsed ones. The failure was unreachable only because
+ * nothing had ever expired a session yet.
+ *
+ * So the transition is attempted and its failure is recorded rather than
+ * raised. The transaction is the record of the money; the session is the record
+ * of a browsing journey that has already ended.
  */
 async function closeSession(
   tx: DbTx,
   transaction: Transaction,
+  audit: AuditRecorder,
 ): Promise<void> {
   if (!transaction.sessionId) return;
 
@@ -326,7 +343,29 @@ async function closeSession(
 
   if (!session || session.status === 'succeeded') return;
 
-  await transitionSession(tx, session, 'succeeded');
+  try {
+    await transitionSession(tx, session, 'succeeded');
+  } catch (error) {
+    /*
+     * Recorded on `tx`, unlike the reconciliation flag: this path does not
+     * throw afterwards, so the entry commits with the settlement it describes.
+     */
+    await audit(
+      {
+        actorType: 'system',
+        actorId: 'settlement',
+        action: 'session.close_failed',
+        resourceType: 'payment_session',
+        resourceId: session.id,
+        beforeState: { status: session.status },
+        afterState: {
+          reason: error instanceof Error ? error.message : String(error),
+          txnNo: transaction.txnNo,
+        },
+      },
+      tx,
+    );
+  }
 }
 
 /**

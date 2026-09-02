@@ -26,7 +26,7 @@ import { allocateDocumentNo, resolveFiscalPeriod } from '@softmato/accounting';
 import type { AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import { providerAdapter } from '../providers/registry';
-import type { InitiateResult } from '../providers/types';
+import type { FormPost, InitiateResult } from '../providers/types';
 import { selectProvider } from '../sessions/select-provider';
 import { transitionSession } from '../sessions/transition';
 import { isTerminal, type TxnStatus } from './state-machine';
@@ -202,12 +202,22 @@ const TXN_STATUSES: readonly TxnStatus[] = [
   'reconciliation_required',
 ];
 
-/** The display half of an initiate result — never the whole thing. */
-function displayable(initiate: InitiateResult): Record<string, string> {
+/**
+ * The display half of an initiate result — never the whole thing.
+ *
+ * `formPost` is stored alongside the rest because a gateway entered by form
+ * POST has to be re-enterable on a refresh, and its signature covers the exact
+ * field values. Re-deriving them would mean signing again, and signing again
+ * means a second `transaction_uuid` — the precise duplicate-intent failure the
+ * comment at the top of this file exists to prevent. Nothing in it is secret:
+ * it is a signature over public values, good for this transaction only.
+ */
+function displayable(initiate: InitiateResult): Record<string, unknown> {
   return {
     ...(initiate.qrPayload ? { qrPayload: initiate.qrPayload } : {}),
     ...(initiate.redirectUrl ? { redirectUrl: initiate.redirectUrl } : {}),
     ...(initiate.deeplink ? { deeplink: initiate.deeplink } : {}),
+    ...(initiate.formPost ? { formPost: initiate.formPost } : {}),
   };
 }
 
@@ -229,14 +239,39 @@ function storedInitiate(transaction: Transaction): InitiateResult {
   const qrPayload = text('qrPayload');
   const redirectUrl = text('redirectUrl');
   const deeplink = text('deeplink');
+  const formPost = storedFormPost(stored.formPost);
 
   return {
     providerRef: transaction.providerRef ?? '',
     ...(qrPayload ? { qrPayload } : {}),
     ...(redirectUrl ? { redirectUrl } : {}),
     ...(deeplink ? { deeplink } : {}),
+    ...(formPost ? { formPost } : {}),
     ...(transaction.providerCorrelationId
       ? { correlationId: transaction.providerCorrelationId }
       : {}),
   };
+}
+
+/**
+ * Rebuilds a stored `formPost`, or returns nothing.
+ *
+ * Validated field by field rather than cast, because this is JSON that has
+ * been through the database and back: a shape assertion here would be a
+ * guess, and the thing it would be guessing about is what the browser posts to
+ * a payment gateway.
+ */
+function storedFormPost(value: unknown): FormPost | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+
+  const { url, fields } = value as Record<string, unknown>;
+
+  if (typeof url !== 'string' || !url) return undefined;
+  if (!fields || typeof fields !== 'object') return undefined;
+
+  const entries = Object.entries(fields as Record<string, unknown>).filter(
+    (entry): entry is [string, string] => typeof entry[1] === 'string',
+  );
+
+  return { url, fields: Object.fromEntries(entries) };
 }

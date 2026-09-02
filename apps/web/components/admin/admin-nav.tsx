@@ -52,6 +52,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'Platform',
     items: [
       { label: 'Products', href: '/admin/products' },
+      { label: 'Applications', href: '/admin/applications' },
       { label: 'Providers', phase: 3 },
       { label: 'Content', href: '/admin/cms' },
       { label: 'Clients', phase: 8 },

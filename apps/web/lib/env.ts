@@ -36,6 +36,24 @@ function blankAsUnset<T extends z.ZodTypeAny>(schema: T) {
   );
 }
 
+/**
+ * A provider's sandbox/live switch, tolerant of being present but blank.
+ *
+ * `blankAsUnset` cannot be used here: it returns an optional, which discards
+ * the default, and a provider environment that can be `undefined` is one every
+ * reader has to re-default for itself. Sandbox is the safe end, so blank,
+ * absent and unrecognised all have to land there — but only blank and absent
+ * do it silently. A typo still fails the boot, because `ESEWA_ENV=liv` quietly
+ * meaning sandbox is how a live deployment ends up pointed at rc-epay.
+ */
+function providerEnv() {
+  return z.preprocess(
+    (value) =>
+      typeof value === 'string' && value.trim() === '' ? undefined : value,
+    z.enum(['sandbox', 'live']).default('sandbox'),
+  );
+}
+
 const serverSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
@@ -50,7 +68,33 @@ const serverSchema = z.object({
   /** AES-256-GCM key for TOTP secrets at rest. */
   ENCRYPTION_KEY: hex32,
 
-  PAYMENT_MODE: z.enum(['sandbox', 'live']).default('sandbox'),
+  /**
+   * Which adapters the composition root registers (`lib/payments/providers.ts`).
+   *
+   * `mock` is new, and it exists so that faking a payment has to be *asked
+   * for*. Every adapter used to fake one implicitly — a missing secret key
+   * produced a successful result for the exact expected amount, which settled
+   * to the ledger. A deployment that wants that behaviour now says so here.
+   */
+  PAYMENT_MODE: z.enum(['mock', 'sandbox', 'live']).default('sandbox'),
+
+  /*
+   * Provider credentials. Optional individually, because a provider with no
+   * credentials is simply not offered; the composition root decides that, and
+   * refuses to boot when it leaves nobody able to take a payment.
+   *
+   * `*_ENV` is separate from `PAYMENT_MODE` on purpose: `PAYMENT_MODE` says
+   * which adapters exist, `*_ENV` says which of a provider's two hosts an
+   * adapter talks to.
+   */
+  ESEWA_MERCHANT_CODE: z.string().optional(),
+  ESEWA_SECRET_KEY: z.string().optional(),
+  ESEWA_BASE_URL: blankAsUnset(z.string().url()),
+  ESEWA_ENV: providerEnv(),
+
+  KHALTI_SECRET_KEY: z.string().optional(),
+  KHALTI_BASE_URL: blankAsUnset(z.string().url()),
+  KHALTI_ENV: providerEnv(),
 
   COMPANY_NAME: z.string().default('Softmato Technology Pvt Ltd'),
 
@@ -174,6 +218,41 @@ if (env.APP_ENV === 'preview' && env.PAYMENT_MODE === 'live') {
 }
 
 /**
+ * eSewa is all-or-nothing, for the same reason R2 is below.
+ *
+ * A merchant code without a secret key is not a degraded eSewa; it is an
+ * adapter that throws the moment somebody tries to pay. Catching it here turns
+ * a failed checkout into a failed deploy.
+ */
+const ESEWA_KEYS = ['ESEWA_MERCHANT_CODE', 'ESEWA_SECRET_KEY'] as const;
+
+const esewaSet = ESEWA_KEYS.filter((key) => env[key]);
+
+if (esewaSet.length > 0 && esewaSet.length < ESEWA_KEYS.length) {
+  const missing = ESEWA_KEYS.filter((key) => !env[key]);
+  throw new Error(
+    `eSewa is partially configured. Missing: ${missing.join(', ')}. ` +
+      'Set both or neither — a half-configured provider fails at checkout.',
+  );
+}
+
+/**
+ * A provider pointed at its live host while the deployment is not live.
+ *
+ * The reverse of the preview check above, and the more dangerous direction:
+ * `PAYMENT_MODE=sandbox` with `ESEWA_ENV=live` reads as safe in a review and
+ * takes real money from real people.
+ */
+for (const key of ['ESEWA_ENV', 'KHALTI_ENV'] as const) {
+  if (env[key] === 'live' && env.PAYMENT_MODE !== 'live') {
+    throw new Error(
+      `${key}=live requires PAYMENT_MODE=live. A provider must not be pointed ` +
+        `at its live host while PAYMENT_MODE is ${env.PAYMENT_MODE}.`,
+    );
+  }
+}
+
+/**
  * R2 is all-or-nothing.
  *
  * A partially configured bucket would pass boot and then fail on the first
@@ -199,3 +278,42 @@ if (r2Set.length > 0 && r2Set.length < R2_KEYS.length) {
 
 /** True when uploads are available. */
 export const r2Configured = r2Set.length === R2_KEYS.length;
+
+/**
+ * The private bucket is configured on its own, and deliberately so.
+ *
+ * It shares the account and the credentials with the public bucket but not the
+ * `R2_PUBLIC_BASE_URL` — a private bucket has no public base URL, and
+ * requiring one before invoice PDFs could be stored would be requiring the
+ * wrong thing for the wrong reason. A deployment may also have one bucket and
+ * not the other: the CMS shipped before documents did.
+ *
+ * Same all-or-nothing rule, though. Naming a private bucket with no
+ * credentials behind it is a configuration that boots and then fails on the
+ * first invoice.
+ */
+const PRIVATE_R2_KEYS = [
+  'R2_ACCOUNT_ID',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_PRIVATE_BUCKET',
+] as const;
+
+const privateR2Set = PRIVATE_R2_KEYS.filter((key) => env[key]);
+
+if (env.R2_PRIVATE_BUCKET && privateR2Set.length < PRIVATE_R2_KEYS.length) {
+  const missing = PRIVATE_R2_KEYS.filter((key) => !env[key]);
+  throw new Error(
+    `R2_PRIVATE_BUCKET is set but the bucket is unreachable. Missing: ` +
+      `${missing.join(', ')}.`,
+  );
+}
+
+/**
+ * True when a document PDF can be stored and read back.
+ *
+ * False is a supported state, not a broken one: documents are then rendered on
+ * every request exactly as they were before this existed.
+ */
+export const privateStorageConfigured =
+  privateR2Set.length === PRIVATE_R2_KEYS.length;

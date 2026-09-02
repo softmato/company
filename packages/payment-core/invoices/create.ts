@@ -34,6 +34,11 @@ import type { AuditRecorder } from '../audit';
 import type { AuthenticatedApplication } from '../applications/authenticate';
 import { PaymentError } from '../errors';
 import { assertRevenueAccounts, defaultRevenueAccount } from './accounts';
+import {
+  buildSnapshots,
+  invoiceMetadata,
+  type PartySnapshot,
+} from './snapshot';
 
 export interface CustomerInput {
   externalRef?: string | null;
@@ -64,6 +69,37 @@ export interface CreateInvoiceInput {
   serviceStartsAt?: Date | null;
   serviceEndsAt?: Date | null;
   dueAt?: Date | null;
+  /**
+   * Softmato's own details, as they stand right now, frozen onto the invoice.
+   *
+   * **Passed in rather than read here.** They live in `platform_settings`,
+   * behind the app's typed settings registry — which knows the key names, the
+   * defaults, and that a blank contact email falls back to support. This
+   * package may not import app code (docs/FOLDER_STRUCTURE.md), and
+   * re-deriving that knowledge against raw rows would be a second, quieter
+   * copy of it.
+   *
+   * **Required, and explicitly nullable.** `null` means "no seller snapshot",
+   * which is a supportable answer — the document then renders from live
+   * company details and says so. It is spelled out at the call site rather
+   * than omitted, so a new caller has to decide instead of inheriting a
+   * silent default.
+   */
+  seller: PartySnapshot | null;
+  /**
+   * Presentation only — what the SaaS is selling, in its own words, for the
+   * checkout page and the invoice document.
+   *
+   * **It can never change what is owed.** The total comes from `lines`; this
+   * is text rendered beside it. The shape and its rules live in
+   * `apps/web/lib/documents/presentation.ts`, validated at the API boundary —
+   * this package stores what it is handed and takes no view on the words.
+   *
+   * Typed loosely on purpose: `payment-core` has no business importing a zod
+   * schema from the app, and a stricter type here would be a second definition
+   * of the same contract, free to drift from the one that is enforced.
+   */
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface CreatedInvoice {
@@ -142,9 +178,18 @@ export async function createInvoice(
       lines.map((line) => line.revenueAccount),
     );
 
-    const customerId = await upsertCustomer(tx, product.id, input.customer);
+    const customer = await upsertCustomer(tx, product.id, input.customer);
+    const customerId = customer.id;
 
     const total = lines.reduce((sum, line) => sum + line.amountMinor, 0n);
+
+    /*
+     * Both parties as they stand at this instant (spec §2.1). The customer is
+     * taken from the row *after* the upsert above, which is what the invoice
+     * is actually being issued to; the seller is whatever the caller read out
+     * of settings a moment ago.
+     */
+    const snapshots = buildSnapshots(input.seller, customer);
 
     // The journal decides the fiscal year, and the invoice number has to agree
     // with it — an invoice numbered into one year and posted into another is
@@ -186,6 +231,18 @@ export async function createInvoice(
         serviceEndsAt: input.serviceEndsAt ?? null,
         issuedAt,
         dueAt: input.dueAt ?? null,
+        /*
+         * The snapshot is written in the same statement that allocates the
+         * number and sets `issued_at`. Those three are what make this an
+         * issued document rather than a draft, and a later `UPDATE` to add the
+         * parties would leave a window in which an invoice existed without
+         * them — which is exactly the state the read path has to guess about.
+         *
+         * Spread last, so it wins. `metadata` is a free-form field a caller
+         * supplies, and a caller must not be able to hand us the record of who
+         * this invoice was issued to.
+         */
+        metadata: invoiceMetadata(input.metadata, snapshots),
       })
       .returning();
 
@@ -243,7 +300,7 @@ async function upsertCustomer(
   tx: DbTx,
   productId: string,
   input: CustomerInput,
-): Promise<number> {
+): Promise<CustomerRow> {
   if (input.externalRef) {
     const [existing] = await tx
       .select({ id: customers.id })
@@ -257,7 +314,7 @@ async function upsertCustomer(
       .limit(1);
 
     if (existing) {
-      await tx
+      const [updated] = await tx
         .update(customers)
         .set({
           name: input.name,
@@ -265,9 +322,16 @@ async function upsertCustomer(
           phone: input.phone ?? null,
           ...(input.pan !== undefined ? { pan: input.pan } : {}),
         })
-        .where(eq(customers.id, existing.id));
+        .where(eq(customers.id, existing.id))
+        .returning(CUSTOMER_COLUMNS);
 
-      return existing.id;
+      if (!updated) {
+        throw new PaymentError('INTERNAL', 'Customer update returned no row', {
+          customerId: existing.id,
+        });
+      }
+
+      return updated;
     }
   }
 
@@ -281,7 +345,7 @@ async function upsertCustomer(
       phone: input.phone ?? null,
       pan: input.pan ?? null,
     })
-    .returning({ id: customers.id });
+    .returning(CUSTOMER_COLUMNS);
 
   if (!created) {
     throw new PaymentError('INTERNAL', 'Customer insert returned no row', {
@@ -289,7 +353,38 @@ async function upsertCustomer(
     });
   }
 
-  return created.id;
+  return created;
+}
+
+/**
+ * The row, not just its id.
+ *
+ * The invoice needs the customer as it stands *after* this upsert, to freeze
+ * onto the document. Reading it back with a second `SELECT` would work and
+ * would also be a second chance for it to have changed; `RETURNING` gives the
+ * row the write itself produced.
+ *
+ * `address` is here and is never written above: the API has no field for it,
+ * so it is whatever the admin panel put there — and dropping it out of the
+ * snapshot because this function does not set it would leave the address off
+ * the invoice of every customer who has one.
+ */
+const CUSTOMER_COLUMNS = {
+  id: customers.id,
+  name: customers.name,
+  address: customers.address,
+  pan: customers.pan,
+  email: customers.email,
+  phone: customers.phone,
+} as const;
+
+interface CustomerRow {
+  id: number;
+  name: string;
+  address: string | null;
+  pan: string | null;
+  email: string | null;
+  phone: string | null;
 }
 
 async function findByExternalRef(

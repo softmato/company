@@ -15,7 +15,13 @@ if (existsSync(envPath)) {
 
 export default defineConfig({
   test: {
-    include: ['tests/**/*.test.ts'],
+    /*
+     * `.tsx` as well, so the invoice and receipt layouts are testable. They
+     * are React components rendered to a string — the one part of a money
+     * document a unit test can actually assert about, and the part where a
+     * regression (a dropped total, a missing PAN line) reaches a customer.
+     */
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
   },
   resolve: {
     alias: {

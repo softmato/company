@@ -181,6 +181,34 @@ Secrets stored as argon2id hashes with `secret_last4` for display. Scopes as a
 `TEXT[]` with a `CHECK` restricting them to the known set — an unknown scope
 cannot be persisted.
 
+`webhook_secret` is the exception to "never plaintext": it signs outbound
+deliveries and the consumer has to verify against the same bytes, so it cannot
+be a hash. It is never selected by any list query — reading it is a separate,
+audited act.
+
+### `application_domains`
+
+The hostnames an application may send customers to and receive webhooks on.
+
+```
+application_id  → applications(id) ON DELETE CASCADE
+hostname        text, unique per application
+note            text — why it is on the list
+created_by      text — the admin who added it
+```
+
+The shape rules are a `CHECK`, not a convention: lowercase, no `/`, `:`, `*` or
+whitespace, dot-separated LDH labels, 4–253 characters, and **no all-numeric
+final label** — that last one is what refuses `169.254.169.254`, which is four
+perfectly legal labels and the cloud metadata address. They are in the database
+rather than only in the form because a row written by a script or a `psql`
+session is the one that will not have been normalised.
+
+**No wildcards, and matching is exact equality.** A wildcard is how an allowlist
+becomes an allow-anything the day a subdomain is lost, and `endsWith` on
+`questioncall.com` matches `evilquestioncall.com`. `assertRegisteredHost` is the
+only reader.
+
 ### `admin_users`
 
 `totp_secret` is encrypted at rest with `ENCRYPTION_KEY` before insert. The

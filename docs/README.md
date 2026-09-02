@@ -10,6 +10,7 @@
 | 4   | [`PHASES.md`](./PHASES.md)                     | Build order and acceptance criteria            |
 | 5   | [`DATABASE.md`](./DATABASE.md)                 | Schema design and the guarantees it enforces   |
 | 6   | [`API.md`](./API.md)                           | Payment API + provider integration specs       |
+| 6a  | [`INTEGRATION.md`](./INTEGRATION.md)           | What a SaaS team reads to integrate us         |
 | 7   | [`DESIGN.md`](./DESIGN.md)                     | Visual system, tokens, NPR/BS formatting       |
 | 8   | [`FOLDER_STRUCTURE.md`](./FOLDER_STRUCTURE.md) | Where code goes                                |
 | 9   | [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) | Conventions, especially money handling         |

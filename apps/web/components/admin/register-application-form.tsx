@@ -1,14 +1,23 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 
 import type { ApplicationScope } from '@softmato/db';
 
-import { registerApplicationAction } from '@/app/(admin)/admin/products/actions';
+import { registerApplicationAction } from '@/app/(admin)/admin/applications/actions';
+import { CredentialHandover } from '@/components/admin/credential-handover';
+import { ReauthFields } from '@/components/admin/reauth-fields';
 import { ScopeCheckboxes } from '@/components/admin/scope-checkboxes';
-import { SecretReveal } from '@/components/admin/secret-reveal';
 import { SubmitButton } from '@/components/admin/submit-button';
 
+/**
+ * One form, one act: the application, its scopes, its webhook address and its
+ * domain allowlist are all decided here and committed together.
+ *
+ * The domains are not a second screen. An application that exists without an
+ * allowlist is one that can be pointed anywhere for as long as the gap lasts,
+ * and gaps like that are exactly when a half-finished setup gets used.
+ */
 export function RegisterApplicationForm({
   products,
   scopes,
@@ -17,9 +26,21 @@ export function RegisterApplicationForm({
   scopes: readonly ApplicationScope[];
 }) {
   const [state, action] = useActionState(registerApplicationAction, undefined);
+  const [isLive, setIsLive] = useState(false);
+
+  if (state?.ok && state.secret) {
+    return (
+      <CredentialHandover
+        secret={state.secret}
+        clientId={state.clientId}
+        webhookSecret={state.webhookSecret}
+        applicationId={state.applicationId}
+      />
+    );
+  }
 
   return (
-    <form action={action} className="mt-4 max-w-lg">
+    <form action={action} className="mt-6">
       <label className="block text-sm font-medium" htmlFor="app-product">
         Product
       </label>
@@ -44,26 +65,50 @@ export function RegisterApplicationForm({
         id="app-name"
         name="name"
         required
-        placeholder="HostelHub production"
+        placeholder="QuestionCall production"
         className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
       />
       <FieldError message={state?.fieldErrors?.name} />
 
-      <label className="mt-4 block text-sm font-medium" htmlFor="app-webhook">
+      <label className="mt-6 block text-sm font-medium" htmlFor="app-domains">
+        Domains
+      </label>
+      <textarea
+        id="app-domains"
+        name="domains"
+        required
+        rows={4}
+        placeholder={
+          'questioncall.com\napp.questioncall.com\napi.questioncall.com'
+        }
+        aria-describedby="app-domains-help"
+        className="mt-1 w-full rounded-md border border-input px-3 py-2 font-mono text-sm"
+      />
+      <p id="app-domains-help" className="mt-1 text-xs text-muted-foreground">
+        One per line. Bare hostnames — no{' '}
+        <code className="font-mono">https://</code>, no port, no path.{' '}
+        <strong>No wildcards:</strong> a subdomain is a different host and needs
+        its own line. Over-list rather than be locked out on launch day;
+        removing one later takes a second.
+      </p>
+      <FieldError message={state?.fieldErrors?.domains} />
+
+      <label className="mt-6 block text-sm font-medium" htmlFor="app-webhook">
         Webhook URL <span className="font-normal">(optional)</span>
       </label>
       <input
         id="app-webhook"
         name="webhookUrl"
         type="url"
-        placeholder="https://hostelhub.com/webhooks/softmato"
+        placeholder="https://api.questioncall.com/webhooks/softmato"
         aria-describedby="app-webhook-help"
         className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
       />
       <p id="app-webhook-help" className="mt-1 text-xs text-muted-foreground">
-        Signed payment events are posted here. A signing secret is generated
-        with the application and never shown — the consumer reads it from the
-        credential handover, not from this panel.
+        Signed payment events are posted here. Its hostname must be one of the
+        domains above — this URL is fetched by our server, so an address we have
+        not been told to trust is not one we will call. A signing secret is
+        generated with the application and shown once, on the next screen.
       </p>
       <FieldError message={state?.fieldErrors?.webhookUrl} />
 
@@ -74,11 +119,13 @@ export function RegisterApplicationForm({
        * box sends nothing, and "nothing" must not read as "live".
        */}
       <input type="hidden" name="isLive" value="false" />
-      <label className="mt-4 flex items-center gap-2 text-sm font-medium">
+      <label className="mt-6 flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"
           name="isLive"
           value="true"
+          checked={isLive}
+          onChange={(event) => setIsLive(event.target.checked)}
           className="size-4 rounded-sm border-input"
         />
         Live credential
@@ -87,7 +134,26 @@ export function RegisterApplicationForm({
         </span>
       </label>
 
-      <div className="mt-6 flex items-center gap-3">
+      {/*
+       * Only for a live credential. A sandbox one touches no real money and is
+       * deliberately cheap to make; minting one that can move money is in the
+       * same class as changing an admin password.
+       */}
+      {isLive ? (
+        <div className="mt-4 rounded-md border border-border p-4">
+          <p className="text-sm font-medium">Confirm it is you</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            This credential can collect real payments. A session alone is not
+            enough to mint one.
+          </p>
+          <ReauthFields
+            idPrefix="register"
+            error={state?.fieldErrors?.password}
+          />
+        </div>
+      ) : null}
+
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <SubmitButton>Register application</SubmitButton>
 
         {state?.message ? (
@@ -99,10 +165,6 @@ export function RegisterApplicationForm({
           </p>
         ) : null}
       </div>
-
-      {state?.ok && state.secret ? (
-        <SecretReveal secret={state.secret} clientId={state.clientId} />
-      ) : null}
     </form>
   );
 }

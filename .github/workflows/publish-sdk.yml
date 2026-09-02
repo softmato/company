@@ -1,0 +1,65 @@
+name: Publish SDK
+
+# Tag-triggered, never on a push to main. Publishing is a release, and a
+# release should be a thing somebody decided to do rather than a side effect of
+# merging. Tag as `sdk-v0.1.0`, matching the version in
+# `packages/sdk/package.json` — the job below refuses to publish if they
+# disagree, because a tag that says one version and a tarball that says another
+# is a package nobody can trace back to a commit.
+on:
+  push:
+    tags: ['sdk-v*']
+  # Manual runs for a re-publish after a failed job. Same checks apply.
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Publishing to GitHub Packages authenticates with the job's own
+      # GITHUB_TOKEN. No long-lived npm token has to exist anywhere.
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: '@softmato'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Tag must match the package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tagged="${GITHUB_REF_NAME#sdk-v}"
+          declared=$(node -p "require('./packages/sdk/package.json').version")
+          if [ "$tagged" != "$declared" ]; then
+            echo "::error::Tag says $tagged, package.json says $declared."
+            exit 1
+          fi
+          echo "Publishing @softmato/sdk@$declared"
+
+      # The SDK is the one package that leaves the monorepo, so it is the one
+      # package whose tests must pass before it does.
+      - name: Typecheck and test
+        run: |
+          pnpm --filter @softmato/sdk run typecheck
+          pnpm --filter @softmato/sdk run test
+
+      - name: Publish
+        # `prepack` builds, and `publishConfig` rewrites main/types/exports to
+        # point at dist/ in the tarball only — the workspace keeps importing
+        # TypeScript source. `--no-git-checks` because the tag is the gate.
+        run: pnpm --filter @softmato/sdk publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

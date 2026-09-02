@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "doc:preview": "tsx ./scripts/document-preview.mts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1110.0",
@@ -23,6 +24,7 @@
     "@softmato/payment-core": "workspace:*",
     "@softmato/sdk": "workspace:*",
     "@softmato/ui": "workspace:*",
+    "@sparticuz/chromium": "^149.0.0",
     "drizzle-orm": "^0.38.3",
     "gsap": "^3.15.0",
     "lenis": "^1.3.26",
@@ -31,6 +33,7 @@
     "next": "16.3.0",
     "next-auth": "5.0.0-beta.32",
     "otpauth": "^9.5.1",
+    "puppeteer-core": "^25.9.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",

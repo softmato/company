@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /*
+     * The shared base sets `noEmit`, because every other package in this
+     * repository is consumed as TypeScript source by a bundler that compiles
+     * it. This one is different: it is the only package that leaves the
+     * monorepo, and a consumer in another repository cannot import `.ts`.
+     */
+    "noEmit": false,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  /*
+   * Source files only. Tests and the vitest config are not part of what a
+   * consumer installs, and emitting them would put `dist/tests/` in the
+   * published tarball.
+   */
+  "include": [
+    "index.ts",
+    "client.ts",
+    "errors.ts",
+    "events.ts",
+    "types.ts",
+    "webhooks.ts"
+  ],
+  "exclude": ["node_modules", "dist", "tests", "vitest.config.ts"]
+}

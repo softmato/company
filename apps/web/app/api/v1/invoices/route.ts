@@ -15,6 +15,12 @@ import { createInvoice } from '@softmato/payment-core';
 import { recordAudit } from '@/lib/audit';
 import { mutatingEndpoint } from '@/lib/api/route';
 import { serializeInvoice } from '@/lib/api/serialize';
+import {
+  presentationSchema,
+  toStoredPresentation,
+} from '@/lib/documents/presentation';
+import { prerenderInvoicePdf } from '@/lib/documents/prerender';
+import { sellerParty } from '@/lib/documents/seller-query';
 
 /** Amounts are integers in paisa. Never a float, never a string with a dot. */
 const minorAmount = z
@@ -46,6 +52,17 @@ const schema = z.object({
   service_starts_at: z.string().datetime().optional(),
   service_ends_at: z.string().datetime().optional(),
   due_at: z.string().datetime().optional(),
+  /**
+   * What you are selling, in your words — the plan name, its bullets, and up
+   * to three highlights. Rendered on the checkout page beside the amount and
+   * on the invoice under the line items.
+   *
+   * Optional, and omitting it renders nothing: no placeholder plan name is
+   * invented on your behalf. The rules (plain text, list lengths, and the
+   * refusal to accept a price in a feature line) are in
+   * `lib/documents/presentation.ts` and are stated in docs/API.md §3.
+   */
+  presentation: presentationSchema.optional(),
 });
 
 export const POST = mutatingEndpoint(
@@ -58,6 +75,16 @@ export const POST = mutatingEndpoint(
       tx,
       application,
       {
+        /*
+         * Frozen onto the invoice at issue (spec §2.1). Read here rather than
+         * inside `createInvoice`, which may not import app code and so cannot
+         * reach the settings registry these keys live behind.
+         *
+         * It runs on the pool while the idempotency transaction is open, which
+         * is the established shape here (see `packages/db/client.ts`) and is
+         * one small read of a tiny table, taken before any lock is held.
+         */
+        seller: await sellerParty(),
         externalRef: input.external_ref ?? null,
         customer: {
           externalRef: input.customer.external_ref ?? null,
@@ -81,9 +108,27 @@ export const POST = mutatingEndpoint(
           ? new Date(input.service_ends_at)
           : null,
         dueAt: input.due_at ? new Date(input.due_at) : null,
+        /*
+         * Stamped with a version on the way in, so an invoice raised today
+         * still renders the way it renders today after the shape changes.
+         */
+        ...(input.presentation
+          ? { metadata: { presentation: toStoredPresentation(input.presentation) } }
+          : {}),
       },
       recordAudit,
     );
+
+    /*
+     * The document goes into the private bucket after this response has been
+     * sent, so the first customer to download it is not the one who waits for
+     * a browser to start. Only for a newly created invoice — a repeat lookup
+     * has already been through here once.
+     *
+     * Scheduled, never awaited, and unable to fail the request: see
+     * `lib/documents/prerender.ts`.
+     */
+    if (created) prerenderInvoicePdf(invoice.invoiceNo);
 
     return {
       // 201 only when something was actually created; a repeat of an

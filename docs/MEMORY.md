@@ -14,7 +14,37 @@ is lost — fill in the rest as you build.
 and a founder publishing the content). **Phase 3 in progress** — the
 `payment-core` foundation is built and enforced; no payment path is open yet.
 **Softmato AI Company Assistant System Core Built & Verified.**
-**Last session:** 2026-08-31 (session 11)
+**Last session:** 2026-09-02 (session 13 — security hardening of `/api/v1`)
+
+**⚠ Two things are written but not applied to any database.** Migration
+`0006_application_domains` has not been run, and the `partner-terms` legal seed
+has not been seeded. Both were deliberately left: the only reachable database
+from the last session was a Neon instance whose branch could not be confirmed
+as the development one, and item 0 of
+`docs/handoff/SECURITY_HARDENING_PLAN.md` — scoping `DATABASE_URL` so previews
+cannot write to production — is still open. Do item 0 first, then run
+`pnpm db:migrate` and `pnpm legal:refresh` against the dev branch.
+
+**⚠ Two Vercel dashboard tasks are outstanding**, both from that same plan: the
+`DATABASE_URL` scoping above (item 0), and the one edge rate-limit rule on
+`/api/v1` (item 1). `docs/API.md` §7 already describes the rule as though it
+exists. Also outstanding: the DNS record and Vercel domain for
+`developer.softmato.com` — until then `/developers` is the only way to reach the
+integration docs, which is fine and is the canonical URL anyway.
+
+**⚠ `@softmato/sdk` is ready to publish but has never been published.** It now
+builds and publishes privately to GitHub Packages on an `sdk-v*` tag
+(`.github/workflows/publish-sdk.yml`), and `docs/INTEGRATION.md` documents the
+install — but no tag exists, so the registry has nothing in it and those
+instructions describe something absent. `git tag sdk-v0.1.0 && git push origin
+sdk-v0.1.0` when ready. QuestionCall then needs a GitHub PAT with
+`read:packages` as `GITHUB_TOKEN` in its CI and on its Vercel project.
+
+**Needed from the founder:** QuestionCall's production hostnames — every host a
+return URL can land on (apex, `www`, any `app`/`api` subdomain) and the host the
+webhook endpoint sits on. `D:\Jiwan-Mijhar` commits none; its `.env.example`
+carries only `localhost`. They go in through `/admin/applications` when the
+application is registered. Over-list rather than be locked out on launch day.
 
 **Public services, as of 2026-08-29:** product engineering, web applications and
 **mobile apps** (new) are published. **Payment integration is back to draft** on
@@ -213,7 +243,7 @@ Three things changed on the founder's instruction, and the order matters:
 2. **The database was serving stale bodies.** The session 11 rewrite moved the
    seeds to `{{company.*}}` tokens, but the six rows in `legal_documents` were
    `published`, so the seeder — which touches a legal body only where it is
-   still placeholder text *and* still draft — correctly left the August text in
+   still placeholder text _and_ still draft — correctly left the August text in
    place. The public pages rendered 34 `[confirm: …]` markers while the disk
    seeds were clean. **This is the failure mode to remember: a correct seed
    guard means a rewrite never reaches an already-published row.**
@@ -223,7 +253,7 @@ Three things changed on the founder's instruction, and the order matters:
    `packages/db/seed/legal/shared.ts`. ⚠ **The documents have still not been
    read by a Nepali lawyer.** The banner was the thing saying so on the page
    itself, and it is gone; the review is now tracked nowhere but here. The
-   *check* it fed survives — `legalReadiness()` still de-indexes any document
+   _check_ it fed survives — `legalReadiness()` still de-indexes any document
    containing that phrase — so writing it back into one pulls the page out of
    the sitemap again.
 
@@ -683,6 +713,7 @@ Newest first. Keep entries short.
 ### Session 11 — 2026-08-31
 
 **Softmato AI Company Assistant Implementation Complete & Verified**
+
 - Implemented static Markdown Knowledge Base (`knowledge/company.md`, `services.md`, `pricing.md`, `portfolio.md`, `policies.md`, `faq.md`).
 - Built modular AI system architecture in `apps/web/lib/ai/` (`types.ts`, `retrieve-context.ts`, `system-prompt.ts`, `tools.ts`, `provider.ts`).
 - Server-side tool execution created for `get_available_meeting_slots`, `book_meeting`, `create_lead`, `contact_human_team` with Zod schema validation.
@@ -693,7 +724,6 @@ Newest first. Keep entries short.
 - Added `data-lenis-prevent` and `onWheel` event isolation to allow natural mouse wheel scrolling over the chat feed without triggering page scroll.
 - Extracted AI environment variables into `.env.example` and `.env.local`.
 - 161/161 unit tests passing.
-
 
 ### Session 7 — 2026-08-16
 

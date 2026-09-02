@@ -1,14 +1,26 @@
 import 'server-only';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 
-import { applications, db, products, type Application } from '@softmato/db';
+import {
+  applicationDomains,
+  applications,
+  db,
+  products,
+  type Application,
+  type ApplicationDomain,
+} from '@softmato/db';
 
 /**
  * Admin-side reads for registered SaaS applications.
  *
- * `secret_hash` never leaves the database through here. The list shows
- * `secret_last4` because an admin comparing a credential in a support thread
- * needs to identify it, and four characters identify without authenticating.
+ * `secret_hash` never leaves the database through here, and neither does
+ * `webhook_secret` — the list reports only whether one exists. Reading the
+ * signing secret is a separate, audited act (`revealWebhookSecret`), because
+ * a read that hands over a live key is an event rather than a lookup.
+ *
+ * The list shows `secret_last4` because an admin comparing a credential in a
+ * support thread needs to identify it, and four characters identify without
+ * authenticating.
  */
 
 export interface ApplicationSummary {
@@ -16,12 +28,14 @@ export interface ApplicationSummary {
   name: string;
   clientId: string;
   productId: string;
+  productName: string;
   scopes: Application['scopes'];
   secretLast4: string;
   previousSecretLast4: string | null;
   previousSecretExpiresAt: Date | null;
   webhookUrl: string | null;
   hasWebhookSecret: boolean;
+  domainCount: number;
   isLive: boolean;
   isActive: boolean;
   rotatedAt: Date | null;
@@ -29,54 +43,76 @@ export interface ApplicationSummary {
   createdAt: Date;
 }
 
-export interface ProductWithApplications {
-  id: string;
-  name: string;
-  kind: string;
-  isActive: boolean;
-  applications: ApplicationSummary[];
+export interface ApplicationDetail extends ApplicationSummary {
+  domains: ApplicationDomain[];
 }
 
-export async function listProductsWithApplications(): Promise<
-  ProductWithApplications[]
-> {
-  const [productRows, applicationRows] = await Promise.all([
-    db.select().from(products).orderBy(asc(products.name)),
-    db
-      .select({
-        id: applications.id,
-        name: applications.name,
-        clientId: applications.clientId,
-        productId: applications.productId,
-        scopes: applications.scopes,
-        secretLast4: applications.secretLast4,
-        previousSecretLast4: applications.previousSecretLast4,
-        previousSecretExpiresAt: applications.previousSecretExpiresAt,
-        webhookUrl: applications.webhookUrl,
-        webhookSecret: applications.webhookSecret,
-        isLive: applications.isLive,
-        isActive: applications.isActive,
-        rotatedAt: applications.rotatedAt,
-        revokedAt: applications.revokedAt,
-        createdAt: applications.createdAt,
-      })
-      .from(applications)
-      .orderBy(asc(applications.name)),
-  ]);
+/** The columns that are safe to select. `secretHash` and `webhookSecret` are
+ * absent by construction rather than stripped afterwards — a `select()` with
+ * no argument would start leaking them the day a column is added. */
+const summaryColumns = {
+  id: applications.id,
+  name: applications.name,
+  clientId: applications.clientId,
+  productId: applications.productId,
+  productName: products.name,
+  scopes: applications.scopes,
+  secretLast4: applications.secretLast4,
+  previousSecretLast4: applications.previousSecretLast4,
+  previousSecretExpiresAt: applications.previousSecretExpiresAt,
+  webhookUrl: applications.webhookUrl,
+  hasWebhookSecret: sql<boolean>`${applications.webhookSecret} IS NOT NULL`,
+  domainCount: sql<number>`(
+    SELECT count(*)::int FROM ${applicationDomains}
+    WHERE ${applicationDomains.applicationId} = ${applications.id}
+  )`,
+  isLive: applications.isLive,
+  isActive: applications.isActive,
+  rotatedAt: applications.rotatedAt,
+  revokedAt: applications.revokedAt,
+  createdAt: applications.createdAt,
+} as const;
 
-  return productRows.map((product) => ({
-    id: product.id,
-    name: product.name,
-    kind: product.kind,
-    isActive: product.isActive,
-    applications: applicationRows
-      .filter((row) => row.productId === product.id)
-      .map(({ webhookSecret, ...row }) => ({
-        ...row,
-        // Whether one exists, never the value itself.
-        hasWebhookSecret: webhookSecret !== null,
-      })),
-  }));
+export async function listApplications(): Promise<ApplicationSummary[]> {
+  return db
+    .select(summaryColumns)
+    .from(applications)
+    .innerJoin(products, eq(products.id, applications.productId))
+    .orderBy(asc(products.name), asc(applications.name));
+}
+
+export async function getApplicationDetail(
+  id: number,
+): Promise<ApplicationDetail | undefined> {
+  const [row] = await db
+    .select(summaryColumns)
+    .from(applications)
+    .innerJoin(products, eq(products.id, applications.productId))
+    .where(eq(applications.id, id))
+    .limit(1);
+
+  if (!row) return undefined;
+
+  const domains = await db
+    .select()
+    .from(applicationDomains)
+    .where(eq(applicationDomains.applicationId, id))
+    .orderBy(asc(applicationDomains.hostname));
+
+  return { ...row, domains };
+}
+
+export interface ProductOption {
+  id: string;
+  name: string;
+}
+
+export async function listProductOptions(): Promise<ProductOption[]> {
+  return db
+    .select({ id: products.id, name: products.name })
+    .from(products)
+    .where(eq(products.isActive, true))
+    .orderBy(asc(products.name));
 }
 
 export async function findApplication(
@@ -89,4 +125,41 @@ export async function findApplication(
     .limit(1);
 
   return row;
+}
+
+export interface ProductWithApplicationCount extends ProductOption {
+  kind: string;
+  isActive: boolean;
+  applicationCount: number;
+  liveApplicationCount: number;
+}
+
+/**
+ * For the products screen, which lists the ledger dimension and says how many
+ * credentials hang off each one. The credentials themselves live at
+ * `/admin/applications` — there is one screen that mints and revokes them, so
+ * there is one place to look when asking what a credential may do.
+ */
+export async function listProductsWithApplicationCounts(): Promise<
+  ProductWithApplicationCount[]
+> {
+  return db
+    .select({
+      id: products.id,
+      name: products.name,
+      kind: products.kind,
+      isActive: products.isActive,
+      applicationCount: sql<number>`(
+        SELECT count(*)::int FROM ${applications}
+        WHERE ${applications.productId} = ${products.id}
+      )`,
+      liveApplicationCount: sql<number>`(
+        SELECT count(*)::int FROM ${applications}
+        WHERE ${applications.productId} = ${products.id}
+          AND ${applications.isLive}
+          AND ${applications.revokedAt} IS NULL
+      )`,
+    })
+    .from(products)
+    .orderBy(asc(products.name));
 }

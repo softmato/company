@@ -2,6 +2,8 @@ import 'server-only';
 
 import type { Receipt } from '@softmato/payment-core';
 
+import { receiptAttachment } from '@/lib/documents/attachment';
+import { buildReceiptDocument } from '@/lib/documents/receipt-document';
 import { sendEmail } from '@/lib/email/send';
 import { paymentReceiptEmail } from '@/lib/email/templates/payment-receipt';
 
@@ -30,9 +32,31 @@ export async function sendPaymentReceipt(receipt: Receipt): Promise<void> {
     return;
   }
 
+  /*
+   * The PDF is the document; the email body is a covering note. Both are sent,
+   * because a customer forwarding "my receipt" to their accountant should be
+   * forwarding a file rather than a web page — and because the email body is
+   * the only copy that survives if the attachment is stripped by a mail
+   * gateway.
+   *
+   * A missing attachment never stops the send. `receiptAttachment` returns
+   * null instead of throwing for exactly this reason: by the time this runs
+   * the journal is posted, and a PDF engine having a bad minute must not turn
+   * a delivery problem into an accounting one.
+   */
+  const document = await buildReceiptDocument(receipt.receiptNo);
+  const attachment = document ? await receiptAttachment(document) : null;
+
+  if (!attachment) {
+    console.warn(
+      `[receipt] ${receipt.receiptNo}: sending without a PDF attachment`,
+    );
+  }
+
   const result = await sendEmail({
     to: receipt.payerEmail,
     template: paymentReceiptEmail(receipt),
+    ...(attachment ? { attachments: [attachment] } : {}),
   });
 
   if (!result.sent) {
