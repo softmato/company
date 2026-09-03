@@ -7,7 +7,7 @@ integrations this platform implements.
 
 ## 1. Conventions
 
-- Base: `https://api.payment.softmato.com/v1` (routed to `/api/v1/*`)
+- Base: `https://softmato.com/api/v1`
 - All requests and responses are JSON
 - **Amounts are integers in paisa.** `500000` is NPR 5,000
 - Timestamps are ISO 8601 UTC
@@ -213,7 +213,7 @@ would understate what they are owed on a refund.
 
 A payment that has not succeeded has no receipt and answers
 `RESOURCE_NOT_FOUND`. Read the payment's state from the webhook or
-`GET /v1/transactions/:id`; do not infer it from which 404 you got.
+`GET /v1/transactions/{txn_no}`; do not infer it from which 404 you got.
 
 #### `format=pdf` can answer with HTML
 
@@ -265,16 +265,108 @@ Server steps, in order: authenticate → check scope → validate → **check
 recompute amount → compute `allowed_providers` by amount → create session
 (32+ bytes CSPRNG, 30-minute expiry).
 
-### `GET /v1/transactions/:id` — scope `payment:read`
+### `GET /v1/transactions/{txn_no}` — scope `payment:read`
 
-Returns status, amounts, fee, provider, timestamps. Scoped to the caller's own
-application. This is the endpoint a SaaS uses to answer "is TXN-123 paid?"
-rather than deciding for itself.
+The endpoint a SaaS uses to answer "is TXN-123 paid?" rather than deciding for
+itself from a return URL's query parameters, which are a claim by whoever's
+browser made the request.
+
+Addressed by `txn_no`, the same handle the webhook's `transaction_id` carries.
+A transaction number contains a slash (`TXN-2083/84-00000008`), and it is sent
+as **path segments** rather than percent-encoded — a `%2F` in a path is decoded
+inconsistently by proxies:
+
+```
+GET /v1/transactions/TXN-2083/84-00000008
+```
+
+```json
+{
+  "transaction_id": "TXN-2083/84-00000008",
+  "invoice_id": "INV-2083/84-000010",
+  "status": "SUCCEEDED",
+  "provider": "esewa",
+  "currency": "NPR",
+  "amount_minor": 500000,
+  "provider_fee_minor": 10000,
+  "net_amount_minor": 490000,
+  "refunded_amount_minor": 0,
+  "created_at": "2026-09-03T10:57:37.047Z",
+  "succeeded_at": "2026-09-03T10:58:02.113Z"
+}
+```
+
+**`status` is uppercase, and it is the same word the webhook sends** (§4), so
+one `switch` serves both paths. The full set: `CREATED`, `PENDING`,
+`SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `PARTIALLY_REFUNDED`,
+`REFUNDED`, `REVERSED`, `RECONCILIATION_REQUIRED`.
+
+The last two never arrive as a webhook and can only be seen here.
+`RECONCILIATION_REQUIRED` means we and the provider disagree about this payment
+and a person is looking at it — treat it as "not answered yet", not as a
+failure. `REVERSED` is an accounting correction.
+
+`amount_minor` is the gross, `provider_fee_minor` is what the provider reported
+and never a computed percentage, and `net_amount_minor` is the difference.
+`refunded_amount_minor` stays `0` until a refund has actually been paid back —
+filing a refund request does not move it.
+
+Scoped to your application, like the document endpoints. Another integrator's
+payment answers `RESOURCE_NOT_FOUND`, byte for byte the same response as a
+payment that does not exist.
 
 ### `POST /v1/refunds` — scope `refund:request`
 
-Creates a request only. A SaaS can never approve a refund; approval happens in
-the admin panel.
+**This files a request. It does not refund anything.** No provider is
+contacted, no journal posts, and nothing is returned to your customer until a
+Softmato admin approves it. Do not tell a customer their money is coming
+because this returned `201`.
+
+The scope is **off by default** (`DEFAULT_APPLICATION_SCOPES`) — most
+integrations never call this. Ask an admin to tick it.
+
+```json
+{
+  "transaction_id": "TXN-2083/84-00000008",
+  "amount_minor": 250000,
+  "reason": "Customer cancelled within the cooling-off window"
+}
+```
+
+`amount_minor` is optional; omitting it requests the whole balance still
+refundable, which is the **gross** the customer paid — the provider's fee is
+our cost, not a deduction from what they are owed. `reason` is required,
+because the person deciding whether to approve this reads it, possibly months
+later, and "refund" is not an answer to "why".
+
+```json
+{
+  "refund_id": "RFD-2083/84-000001",
+  "transaction_id": "TXN-2083/84-00000008",
+  "amount_minor": 250000,
+  "currency": "NPR",
+  "reason": "Customer cancelled within the cooling-off window",
+  "status": "requested",
+  "created_at": "2026-09-03T11:11:06.660Z",
+  "note": "This is a request, not a refund. No money has been returned. A Softmato admin must approve it before anything reaches the customer."
+}
+```
+
+`status` is always `requested` here and cannot be anything else: the
+`refund_needs_second_person` CHECK constraint forbids `approved`, `pending` and
+`succeeded` unless an approver is recorded who is not the requester.
+
+Refusals:
+
+| Case | Status | Detail |
+| --- | --- | --- |
+| Another integrator's payment, or one that does not exist | `404` | identical for both |
+| A payment that never succeeded | `422` | names the status it is actually in |
+| More than the refundable balance | `422` | names the balance |
+
+`refund_id` is gapless within the fiscal year, like `INV-` and `TXN-`, and the
+year is the one the **request** is filed in — not the year of the payment it
+refunds.
 
 ---
 

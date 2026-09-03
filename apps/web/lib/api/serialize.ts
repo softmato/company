@@ -1,5 +1,6 @@
 import 'server-only';
-import type { Invoice, PaymentSession, Transaction } from '@softmato/db';
+import type { Invoice, PaymentSession } from '@softmato/db';
+import type { FiledRefund, TransactionView } from '@softmato/payment-core';
 
 /**
  * Database rows → API bodies (docs/API.md §1).
@@ -47,10 +48,24 @@ export function serializeSession(session: PaymentSession, checkoutUrl: string) {
   };
 }
 
-export function serializeTransaction(txn: Transaction) {
+/**
+ * The body of `GET /v1/transactions/{id}`.
+ *
+ * **`status` is uppercased, matching the webhook payload.** `buildPayload` in
+ * `packages/payment-core/webhooks/events.ts` sends `SUCCEEDED`, so this sends
+ * `SUCCEEDED` too — a consumer branching on a webhook and a consumer polling
+ * this endpoint branch on the same words. Two vocabularies for one set of
+ * states is a bug waiting for whoever writes the second `switch`.
+ *
+ * `invoice_id` is the invoice *number*, which is what the webhook's
+ * `invoice_id` carries and what `POST /v1/invoices` handed back. It is not the
+ * row id and there is no row id in this body.
+ */
+export function serializeTransactionView(txn: TransactionView) {
   return {
     transaction_id: txn.txnNo,
-    status: txn.status,
+    invoice_id: txn.invoiceNo,
+    status: txn.status.toUpperCase(),
     provider: txn.providerId,
     currency: txn.currency,
     amount_minor: paisa(txn.grossAmountMinor),
@@ -59,7 +74,29 @@ export function serializeTransaction(txn: Transaction) {
     provider_fee_minor: paisa(txn.providerFeeMinor),
     net_amount_minor: paisa(txn.netAmountMinor),
     refunded_amount_minor: paisa(txn.refundedAmountMinor),
-    initiated_at: txn.initiatedAt.toISOString(),
+    created_at: txn.createdAt.toISOString(),
     succeeded_at: txn.succeededAt?.toISOString() ?? null,
+  };
+}
+
+/**
+ * The body of `POST /v1/refunds`.
+ *
+ * **`note` is not decoration and must not be dropped.** An integrator who
+ * reads `"status": "requested"` and tells their customer the money is coming
+ * has been misled by us, and the one place we can be sure they see the
+ * correction is in the response they are already parsing. It says the same
+ * thing `docs/API.md` §3 says, in the same words.
+ */
+export function serializeRefund(refund: FiledRefund) {
+  return {
+    refund_id: refund.refundNo,
+    transaction_id: refund.txnNo,
+    amount_minor: paisa(refund.amountMinor),
+    currency: refund.currency,
+    reason: refund.reason,
+    status: refund.status,
+    created_at: refund.requestedAt.toISOString(),
+    note: 'This is a request, not a refund. No money has been returned. A Softmato admin must approve it before anything reaches the customer.',
   };
 }

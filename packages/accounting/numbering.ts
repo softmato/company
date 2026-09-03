@@ -1,5 +1,5 @@
 /**
- * Gapless sequences: `JE-2082/83-000001`, `INV-…`, `TXN-…`.
+ * Gapless sequences: `JE-2082/83-000001`, `INV-…`, `TXN-…`, `RFD-…`.
  *
  * Gapless matters for audit — a missing number looks like a deleted entry. A
  * Postgres sequence cannot deliver this: sequences skip on rollback by design.
@@ -13,24 +13,27 @@
 import { sql } from 'drizzle-orm';
 import type { DbTx } from '@softmato/db';
 
-export type SequenceKind = 'JE' | 'INV' | 'TXN';
+export type SequenceKind = 'JE' | 'INV' | 'TXN' | 'RFD';
 
 const WIDTH: Record<SequenceKind, number> = {
   JE: 6,
   INV: 6,
   TXN: 8,
+  RFD: 6,
 };
 
 const TABLE: Record<SequenceKind, string> = {
   JE: 'journal_entries',
   INV: 'invoices',
   TXN: 'transactions',
+  RFD: 'refunds',
 };
 
 const COLUMN: Record<SequenceKind, string> = {
   JE: 'journal_no',
   INV: 'invoice_no',
   TXN: 'txn_no',
+  RFD: 'refund_no',
 };
 
 export function formatDocumentNo(
