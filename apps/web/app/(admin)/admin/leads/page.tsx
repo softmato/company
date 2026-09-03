@@ -12,8 +12,12 @@ export default function AdminLeadsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<LeadEntry | null>(null);
 
-  const fetchLeads = async () => {
-    setLoading(true);
+  /**
+   * The fetch itself. It deliberately never sets `loading` to true: `loading`
+   * already starts true, so the mount effect below needs no synchronous
+   * setState — which is the cascading render the lint rule is there to stop.
+   */
+  const loadLeads = async () => {
     try {
       const res = await fetch('/api/admin/leads');
       const data = await res.json();
@@ -27,8 +31,40 @@ export default function AdminLeadsPage() {
     }
   };
 
+  /** The Refresh button. An event handler, so the spinner belongs here. */
+  const fetchLeads = async () => {
+    setLoading(true);
+    await loadLeads();
+  };
+
+  /*
+   * The fetch is inlined here rather than calling `loadLeads`, because the
+   * lint rule follows the call and cannot tell that every setState inside it
+   * happens after an await. Written out, they are plainly asynchronous.
+   *
+   * `cancelled` stops a response that lands after the page has gone from
+   * setting state on an unmounted component.
+   */
   useEffect(() => {
-    fetchLeads();
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const res = await fetch('/api/admin/leads');
+        const data = await res.json();
+        if (!cancelled && data.success && Array.isArray(data.leads)) {
+          setLeads(data.leads);
+        }
+      } catch (err) {
+        console.error('Failed to fetch leads:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
