@@ -6,7 +6,7 @@
  * credential that is briefly allowed to send customers anywhere is a
  * credential that will be used in exactly that window.
  */
-import { APPLICATION_SCOPES } from '@softmato/db';
+import { APPLICATION_SCOPES, DEFAULT_APPLICATION_SCOPES } from '@softmato/db';
 
 import { listProductOptions } from '@/lib/applications/queries';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
@@ -35,6 +35,7 @@ export default async function NewApplicationPage() {
       <RegisterApplicationForm
         products={products}
         scopes={APPLICATION_SCOPES}
+        defaultScopes={DEFAULT_APPLICATION_SCOPES}
       />
     </div>
   );
