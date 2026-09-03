@@ -21,9 +21,16 @@ import { SubmitButton } from '@/components/admin/submit-button';
 export function RegisterApplicationForm({
   products,
   scopes,
+  defaultScopes,
 }: {
   products: { id: string; name: string }[];
   scopes: readonly ApplicationScope[];
+  /**
+   * Ticked on first render. Uncontrolled, so an admin's edits survive a failed
+   * submit the same way the name and domain fields do — this seeds the boxes,
+   * it does not keep resetting them.
+   */
+  defaultScopes: readonly ApplicationScope[];
 }) {
   const [state, action] = useActionState(registerApplicationAction, undefined);
   const [isLive, setIsLive] = useState(false);
@@ -112,7 +119,11 @@ export function RegisterApplicationForm({
       </p>
       <FieldError message={state?.fieldErrors?.webhookUrl} />
 
-      <ScopeCheckboxes available={scopes} error={state?.fieldErrors?.scopes} />
+      <ScopeCheckboxes
+        available={scopes}
+        selected={defaultScopes}
+        error={state?.fieldErrors?.scopes}
+      />
 
       {/*
        * Hidden 'false' first, same reason as the settings form: an unchecked

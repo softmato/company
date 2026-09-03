@@ -29,6 +29,31 @@ export const APPLICATION_SCOPES = [
 
 export type ApplicationScope = (typeof APPLICATION_SCOPES)[number];
 
+/**
+ * What the register form ticks before an admin touches it.
+ *
+ * These four are exactly the scopes an endpoint enforces today — the four
+ * calls of the documented happy path (docs/INTEGRATION.md §2): raise an
+ * invoice, open a checkout, then read back the invoice and the receipt to show
+ * the customer their records. An integration that cannot do all four cannot
+ * complete the flow, so leaving them unticked only produces a credential that
+ * 403s on its first real call.
+ *
+ * `refund:request` and `customer:read` are deliberately **not** here. No route
+ * reads either one yet, so granting them by default would hand out permissions
+ * whose blast radius is decided by code that has not been written. They are
+ * one tick away when there is something behind them.
+ *
+ * This is a default, not a policy: the form is free to untick any of them, and
+ * `registerApplication` still refuses an empty set.
+ */
+export const DEFAULT_APPLICATION_SCOPES = [
+  'payment:create',
+  'payment:read',
+  'invoice:create',
+  'invoice:read',
+] as const satisfies readonly ApplicationScope[];
+
 export const applications = pgTable(
   'applications',
   {
