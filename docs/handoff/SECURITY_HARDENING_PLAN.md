@@ -149,12 +149,34 @@ is what forces a preview to exist.
 
 ---
 
-## ☐ 1. The one rate-limit rule
+## ☑ 1. The one rate-limit rule
 
-> **Not done — cannot be done from here.** Vercel dashboard, no code. The
-> documentation in `docs/API.md` §7 has been corrected to describe this rule as
-> the built layer and per-application limits as deferred, so the docs now
-> describe the intended end state; the rule itself still has to be created.
+> **Done 2026-09-03.** The rule exists and is enforcing, named
+> `api-v1-ip-rate-limit`: Request Path starts with `/api/v1`, Fixed Window, 60
+> seconds, 600 requests, keyed by IP Address, action **Too Many Requests
+> (429)** — not Deny (403), because 429 is what a well-behaved client knows to
+> retry on. Vercel applies firewall changes without a redeployment.
+>
+> **The 24-hour Log period below was deliberately skipped**, and the reasoning
+> should survive: warn-first exists here because the limit is a guess and
+> traffic is real — but `/api/v1` has no live integrators yet, so a day of Log
+> would have watched an empty road. That is the same argument item 2 makes for
+> enforcing from day one, "a migration path from nothing to nothing". Keep the
+> paragraph as written: the next time a limit is introduced against traffic
+> that does exist, warn-first is the right call again.
+>
+> Verified to the standard below. 700 requests in one minute from one IP
+> returned exactly 600 × 405 and 100 × 429 — 405 rather than 401 because the
+> endpoint is POST-only, which is beside the point: the firewall counts
+> requests before the application runs, so what the allowed ones would have
+> returned never mattered.
+>
+> Hobby allows exactly one rate-limit rule, which is all this needs. The other
+> quotas — 3 custom rules, 10 IP blocks — are unused, and should stay that way
+> until there is somebody to block.
+>
+> `docs/API.md` §7 already described this rule as the built layer with
+> per-application limits deferred, so it needed no change.
 
 **Vercel dashboard, no code.**
 
