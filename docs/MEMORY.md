@@ -11,34 +11,92 @@ is lost — fill in the rest as you build.
 ## Current status
 
 **Phase:** 1 accepted. **Phase 2 in progress** (needs a verified email sender
-and a founder publishing the content). **Phase 3 in progress** — the
-`payment-core` foundation is built and enforced; no payment path is open yet.
+and a founder publishing the content). **Phase 3 accepted 2026-09-02** — all
+ten acceptance criteria met, two real sandbox payments settled end to end
+(`todo.md` §9.6). No **live** payment path is open: that is §7 of `todo.md` and
+it waits on the founder's merchant credentials.
 **Softmato AI Company Assistant System Core Built & Verified.**
-**Last session:** 2026-09-02 (session 13 — security hardening of `/api/v1`)
+**Last session:** 2026-09-03 (session 14 — closed the security hardening plan)
 
-**⚠ Two things are written but not applied to any database.** Migration
-`0006_application_domains` has not been run, and the `partner-terms` legal seed
-has not been seeded. Both were deliberately left: the only reachable database
-from the last session was a Neon instance whose branch could not be confirmed
-as the development one, and item 0 of
-`docs/handoff/SECURITY_HARDENING_PLAN.md` — scoping `DATABASE_URL` so previews
-cannot write to production — is still open. Do item 0 first, then run
-`pnpm db:migrate` and `pnpm legal:refresh` against the dev branch.
+**The security hardening plan is finished.** All nine items of
+`docs/handoff/SECURITY_HARDENING_PLAN.md` are `☑` as of 2026-09-03. Previews
+can no longer reach the production ledger, and `/api/v1` is rate limited at the
+edge. Read that file's item 0 and item 1 notes before touching Vercel
+configuration — they record which environment variables are split, which are
+deliberately still shared, and how each was verified.
 
-**⚠ Two Vercel dashboard tasks are outstanding**, both from that same plan: the
-`DATABASE_URL` scoping above (item 0), and the one edge rate-limit rule on
-`/api/v1` (item 1). `docs/API.md` §7 already describes the rule as though it
-exists. Also outstanding: the DNS record and Vercel domain for
-`developer.softmato.com` — until then `/developers` is the only way to reach the
-integration docs, which is fine and is the canonical URL anyway.
+**`developer.softmato.com` is live** (confirmed 2026-09-03: `GET /` → 200,
+titled "Integrating with Softmato Payments"). The founder added the DNS record
+and Vercel domain. `/developers` stays canonical.
 
-**⚠ `@softmato/sdk` is ready to publish but has never been published.** It now
-builds and publishes privately to GitHub Packages on an `sdk-v*` tag
-(`.github/workflows/publish-sdk.yml`), and `docs/INTEGRATION.md` documents the
-install — but no tag exists, so the registry has nothing in it and those
-instructions describe something absent. `git tag sdk-v0.1.0 && git push origin
-sdk-v0.1.0` when ready. QuestionCall then needs a GitHub PAT with
-`read:packages` as `GITHUB_TOKEN` in its CI and on its Vercel project.
+**The next session's work order is
+`docs/handoff/INTEGRATION_SURFACE_PLAN.md`** (written 2026-09-03). Eleven
+items: build the two missing routes, correct the base URL, move the
+re-authentication gate to where it does something, split every application into
+a Sandbox and a Production credential, rebuild the credential screens, and
+publish `0.1.1`. Read its "The one thing that is not what it looks like"
+section before touching anything — `is_live` isolates nothing today.
+
+**⚠ `@softmato/sdk@0.1.0` is published and cannot work as shipped.** Three
+defects, all found 2026-09-03 by reading the package rather than the tests, and
+none of them visible to a green suite:
+
+1. **Its default base URL is unreachable.** `DEFAULT_BASE_URL` in
+   `packages/sdk/client.ts:52` is `https://api.payment.softmato.com/v1`, which
+   `docs/API.md:10` and `docs/handoff/BILLING_BRIEF.md:69` also document. That
+   host resolves (`216.198.79.65`) but has **no TLS certificate** — curl fails
+   with `schannel: failed to receive handshake`. It is not in `proxy.ts`'s
+   subdomain list and no Vercel domain was added for it. The API genuinely
+   answers on the apex: `POST https://softmato.com/api/v1/invoices` → 401, the
+   correct refusal. So every integrator must pass `baseUrl` or get nothing.
+2. **`getTransaction()` calls `GET /v1/transactions/{id}` — that route does not
+   exist.** The only routes under `apps/web/app/api/v1` are `checkout`,
+   `invoices` (POST and GET), and `receipts/{txnNo}`.
+3. **`requestRefund()` calls `POST /v1/refunds` — that route does not exist
+   either.** Consistent with `/admin/refunds` being read-only and no adapter
+   implementing `refund()`, but the SDK offers the method regardless.
+
+Same class as the extensionless-import bug session 13 caught: the package is
+type-correct and every test in this repository passes, because nothing in this
+repository calls the SDK against a real deployment. **Decide before an
+integrator installs it:** either build the two routes and add the domain, or
+publish `0.1.1` with the methods removed and the base URL corrected to
+`https://softmato.com/api/v1`.
+
+**Two API scopes are declared but dead.** `refund:request` and `customer:read`
+are in `APPLICATION_SCOPES` and the `scopes_known` CHECK constraint, and the
+register form offers them, but no route reads either. They are excluded from
+`DEFAULT_APPLICATION_SCOPES` for that reason.
+
+**Correction to the security plan.** Item 0 says `ENCRYPTION_KEY` was kept
+shared because the dev branch holds "3 admin TOTP secrets and an application
+webhook secret encrypted with it". The webhook secret is **not** encrypted —
+`applications.webhook_secret` is a plain `text` column and
+`revealWebhookSecret` reads it back directly, deliberately, because a consumer
+needs the same bytes we sign with. `ENCRYPTION_KEY` protects TOTP secrets only
+(`lib/crypto.core.ts`, `lib/totp.core.ts`, `lib/enrolment/secret.ts`). The
+decision to keep the key shared still stands on the TOTP half.
+
+**`partner-terms` is seeded on `softmato-dev` only** (2026-09-03), as `draft`,
+`v1`, no effective date, carrying its 2 `[confirm:]` markers — notice period,
+and the commercial block (liability cap, indemnity, term, governing law).
+`legal:refresh` refused to publish it: "blocked — 2 unfilled". That is the
+guard working.
+
+**It is not on production.** Do not reach for `pnpm legal:refresh` there:
+that script **overwrites the current version in place** for every document,
+and production is serving seven published legal pages. Its own header says to
+stop using it once the site is live. Production needs `partner-terms` inserted
+as a new draft without touching the seven — `pnpm seed` (`onConflictDoNothing`)
+or the admin panel.
+
+**`@softmato/sdk@0.1.0` is published.** Confirmed 2026-09-03 by reading the
+`Publish SDK` run for tag `sdk-v0.1.0` (run `33669117257`, success, 41s):
+`npm notice name: @softmato/sdk`, `version: 0.1.0`, 26 files, then
+`+ @softmato/sdk@0.1.0`. `gh` is now installed on this machine, so the Actions
+tab is readable from a session. QuestionCall still needs a GitHub PAT with
+`read:packages` as `GITHUB_TOKEN` in its CI and on its Vercel project, plus the
+two-line `.npmrc` from `docs/INTEGRATION.md` §Installing the SDK.
 
 **Needed from the founder:** QuestionCall's production hostnames — every host a
 return URL can land on (apex, `www`, any `app`/`api` subdomain) and the host the
@@ -709,6 +767,86 @@ divergence between docs and code is how a project loses its plan.
 ## Session log
 
 Newest first. Keep entries short.
+
+**Sessions 12 and 13 have no entry here.** 12 wrote the `todo.md` tracker
+(2026-09-01) and 13 implemented items 2–8 of the security plan (2026-09-02);
+both recorded themselves in those files instead. `todo.md` §9–§10 and the
+plan's "Session record — 2026-09-02" are the log for that work.
+
+### Session 14 — 2026-09-03
+
+**Phase:** 3 accepted. Closed the security hardening plan.
+
+**Completed:** items 0 and 1 of `docs/handoff/SECURITY_HARDENING_PLAN.md` — the
+two that were Vercel dashboard configuration and could not be done from a code
+session. All nine items in that plan are now `☑`.
+
+- **Item 0 — a preview deployment can no longer write to the production
+  ledger.** `DATABASE_URL` was scoped `Production and Preview`, as was every
+  other variable. Production now points at Neon `production`
+  (`ep-flat-wildflower-azfujbu5`), Preview at `softmato-dev`
+  (`ep-spring-brook-azbbif7k`). No preview had ever been built — the repo had
+  only ever had a `main` branch — so it was a loaded gun rather than a fired
+  one. **`APP_ENV` was split in the same pass and mattered as much:** Preview
+  had been receiving `production`, which silently disabled all three guards
+  keyed on it — `robots.ts`, the `seo/site.ts` Organization markup, and the
+  `env.ts` refusal to boot a preview with `PAYMENT_MODE=live`.
+- **Item 1 — the one edge rate-limit rule exists and is enforcing**, named
+  `api-v1-ip-rate-limit`: path starts with `/api/v1`, fixed 60s window, 600
+  requests, keyed by IP, action **Too Many Requests (429)** — not Deny (403),
+  because 429 is what a well-behaved client knows to retry on. Vercel applies
+  firewall changes without a redeployment.
+
+**Corrections to what this file said.** Two of its warnings were stale and are
+now rewritten: migration `0006_application_domains` **has** been applied — to
+`softmato-dev` first, where it was the proof that Preview reads the dev branch,
+then to production — and `sdk-v0.1.0` **is** tagged and pushed. `partner-terms`
+is still unseeded and its warning stands.
+
+**Verified:** item 0 by three checks, each proving one thing — an
+unauthenticated `curl` of the preview redirected to `vercel.com/login`;
+preview's `/robots.txt` returned `Disallow: /` while production's returned the
+full allow-list; and `/admin/applications/1` rendered its Registered domains
+section on the preview, which it cannot do where `application_domains` is
+absent. Item 1 by 700 requests in one minute from one IP: exactly 600 × 405
+then 100 × 429. (405 rather than 401 because the endpoint is POST-only, which
+is beside the point — the firewall counts requests before the application runs.)
+
+**Then, same day:** installed `gh` (2.99.0, winget) and confirmed the SDK
+publish; seeded `partner-terms` on the dev branch; and default-ticked four
+scopes on the register form (`DEFAULT_APPLICATION_SCOPES` in
+`packages/db/schema/applications.ts`) — the four an endpoint actually enforces.
+`refund:request` and `customer:read` are declared in the schema and offered by
+the form, but **no route reads either one**, so they are left unticked rather
+than granted by default.
+
+**In progress:** nothing. `MEMORY.md` and the scope default are uncommitted.
+
+**Learned:**
+
+- **A branch push whose commit is identical to `main` builds nothing.** Vercel
+  deduplicates by commit SHA and reuses the existing deployment. An empty
+  commit is what forces a preview to exist.
+- **Preview deployments have no subdomains.** `*.vercel.app` covers one label,
+  so `admin.<deployment>.vercel.app` fails TLS before reaching the app. Use the
+  paths — `/login`, then `/admin/...` — which `proxy.ts` lets through
+  unrewritten on the public surface.
+- **The two `DATABASE_URL` values are identical until the host**, because both
+  Neon branches share one role password. The Vercel list view cannot tell them
+  apart; they must be revealed to be checked.
+- **The 24-hour Log-only period in item 1 was skipped on purpose.** Warn-first
+  exists to stop a guessed limit meeting real traffic, and `/api/v1` has no
+  live integrators yet — a day of Log would have watched an empty road. The
+  instruction is left in the plan because the reasoning holds the next time a
+  limit meets traffic that does exist.
+
+**Blocked on:** the founder for everything material that is left — merchant
+credentials for `todo.md` §7 go-live, QuestionCall's production hostnames, and
+the eleven facts the legal documents are missing.
+
+**Next:** merge `docs/security-plan-item-1` into `main`, then either seed
+`partner-terms` (`pnpm legal:refresh`, then `pnpm legal:check`) or start
+Phase 4/5 acceptance against the live gateways when credentials arrive.
 
 ### Session 11 — 2026-08-31
 
