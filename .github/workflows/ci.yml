@@ -84,6 +84,15 @@ jobs:
       - name: Migrate check — schema and migrations must not have drifted
         run: pnpm --filter @softmato/db exec drizzle-kit check
 
+      # Migrations build the tables; the seed puts the reference rows in them.
+      # packages/db's tests insert records pointing at a product (hostelhub)
+      # and a payment provider (fonepay), and a foreign key rejects the insert
+      # when those rows are absent. A developer's database was seeded long ago,
+      # so the gap is invisible locally and only ever appears on a fresh CI
+      # database.
+      - name: Seed reference data
+        run: pnpm db:seed
+
       - name: Test
         run: pnpm run test
 
