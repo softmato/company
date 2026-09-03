@@ -102,6 +102,38 @@ export async function getApplicationDetail(
   return { ...row, domains };
 }
 
+/**
+ * The two facts an action needs before it decides how hard to make itself.
+ *
+ * Deliberately its own query rather than a field plucked off
+ * `getApplicationDetail`. Whether a credential is Production decides whether a
+ * password and a TOTP code are demanded, so it must be read from the database
+ * on the request that enforces it — never taken from a hidden form field, and
+ * never carried over from a page render that happened before the row changed.
+ * A one-row, two-column read is cheap enough that there is no argument for
+ * reusing a bigger one.
+ *
+ * `name` comes back with it because the other guard on the destructive path —
+ * typing the application's name to confirm a revocation — has to compare
+ * against the stored name for the same reason.
+ */
+export interface CredentialGate {
+  name: string;
+  isLive: boolean;
+}
+
+export async function credentialGate(
+  id: number,
+): Promise<CredentialGate | undefined> {
+  const [row] = await db
+    .select({ name: applications.name, isLive: applications.isLive })
+    .from(applications)
+    .where(eq(applications.id, id))
+    .limit(1);
+
+  return row;
+}
+
 export interface ProductOption {
   id: string;
   name: string;

@@ -89,6 +89,7 @@ export default async function ApplicationDetailPage({
           <WebhookSecretPanel
             applicationId={application.id}
             hasWebhookSecret={application.hasWebhookSecret}
+            isLive={application.isLive}
           />
         </section>
       )}

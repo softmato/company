@@ -334,7 +334,69 @@ same `Idempotency-Key` (one row, same response).
 
 ---
 
-## ☐ 4. Move the re-authentication gate to where it does something
+## ☑ 4. Move the re-authentication gate to where it does something
+
+> **Done 2026-09-03.** The map is now the one this item asks for. The gate is
+> `confirmIfProduction` in `applications/actions.ts`, and it reads the mode
+> from the row via a new `credentialGate` query in `lib/applications/queries.ts`
+> — **never from the form**. Every action here is reachable by anyone who can
+> post to it, so a hidden `isLive` field would let a caller declare their own
+> credential a sandbox one and skip the check.
+>
+> | Action | Sandbox | Production |
+> | --- | --- | --- |
+> | Rotate client secret | no prompt | password + TOTP |
+> | Revoke | typed name | typed name + password + TOTP |
+> | Change scopes / webhook URL | no prompt | password + TOTP |
+> | Reveal webhook secret | no prompt | password + TOTP |
+> | Rotate webhook secret | no prompt | password + TOTP |
+> | Register a live credential | — | password + TOTP (unchanged) |
+>
+> **The typed confirmation applies to both modes.** It replaces the `confirm()`
+> dialog, which asked a yes/no question about an application it could not name,
+> on a screen that can show several. It is not a second factor and does not
+> stand in for one: it guards the right person revoking the wrong row, which is
+> a different failure from the wrong person revoking anything. "Sandbox is not
+> gated" is about re-authentication, and this is not that.
+>
+> **Two gaps found while writing the test, both fixed.**
+>
+> 1. **A refusal with empty fields wrote no audit row.** `confirmIdentity`
+>    returned early when the password or code was blank, and only audited the
+>    *wrong password* path. That is backwards — an empty submission against a
+>    Production credential is the shape a script makes; a wrong password is the
+>    shape a person makes, and the one worth seeing in the log was the one not
+>    being written. Both are now recorded under
+>    `application.reauth_failed`, told apart by `reason`
+>    (`reauth_missing` / `reauth_failed`).
+> 2. **The audit row did not say which application.** `resourceId` was never
+>    set. It is now, everywhere except registration, which has no row yet.
+>
+> **Verified by `apps/web/tests/application-gate.test.ts`** — 14 cases against
+> real Postgres, every action twice. The assertions are on the **database**,
+> not on the returned message: each Production refusal reads the row back and
+> checks the secret, the signing secret or the scope list did not move. A
+> refusal that returns `ok: false` after already rotating is precisely the bug
+> the file exists to catch.
+>
+> Three modules are mocked and only three — `requireAdmin` (the session),
+> `reauthenticate` (so a correct code can be simulated without a real admin's
+> TOTP secret), and `revalidatePath`. **The mode is not mocked**, because that
+> is the thing under test.
+>
+> **What was not verified: the screen itself.** `/admin/applications` answers
+> `404` to an unauthenticated request — it does not exist to a signed-out
+> visitor — so the founder's password and TOTP are needed to look at it. The
+> server actions are covered above; what is unverified is which fields are
+> *drawn*, which is a rendering decision the server re-makes anyway. Item 7
+> rebuilds this page and its verify step already requires a real admin session.
+>
+> **`scripts/app-secret.mts` is deliberately unchanged.** It is break-glass and
+> already stricter than the UI was — `--yes-live` for a live rotation. It is
+> now no stricter than the panel, which was the point.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 564 tests.
 
 Today's map, confirmed by reading
 `apps/web/app/(admin)/admin/applications/actions.ts`:
