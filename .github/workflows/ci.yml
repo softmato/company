@@ -53,6 +53,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Next 16 typed routes annotate pages as `PageProps<'/route'>`. Those
+      # globals — PageProps, LayoutProps, RouteContext — are declared in
+      # generated files, and *every* source of them is gitignored:
+      # `next-env.d.ts`, `.next/types` and `.next/dev/types`. A clean checkout
+      # therefore has none of them and all 25 annotated files fail TS2304.
+      #
+      # It passes locally only because `next dev` writes `.next/dev/types`,
+      # which `apps/web/tsconfig.json` includes. Delete that directory and the
+      # local typecheck reproduces CI exactly — verified 2026-09-03.
+      #
+      # `next typegen` emits the declarations without paying for a full build,
+      # which the "no secret may reach a client bundle" step below still does
+      # on its own.
+      - name: Generate Next route types
+        run: pnpm --filter @softmato/web exec next typegen
+
       - name: Typecheck
         run: pnpm run typecheck
 
