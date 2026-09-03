@@ -71,13 +71,40 @@ from `admin.softmato.com` by a signed-in admin. `pnpm app:secret` and
 
 ---
 
-## ☐ 0. Preview deployments must stop writing to the production ledger
+## ☑ 0. Preview deployments must stop writing to the production ledger
 
-> **Not done — cannot be done from here.** This is Vercel dashboard
-> configuration with no code component. It is still the first thing to do, and
-> nothing below was verified against a live database _because_ of it: applying
-> a migration or seeding a document while a preview may still be pointed at
-> production is the exact risk this item exists to remove.
+> **Done 2026-09-03.** The suspicion was correct: `DATABASE_URL` was scoped
+> `Production and Preview`, as was every other variable. No preview had ever
+> been built — the repo had only ever had a `main` branch — so it was a loaded
+> gun rather than a fired one.
+>
+> The Neon branches, now pinned down: `production` is
+> `ep-flat-wildflower-azfujbu5`, `softmato-dev` is `ep-spring-brook-azbbif7k`,
+> and the `ep-small-cloud-…` endpoint from the 2026-08-29 outage belongs to
+> neither and is gone from the project. Both branches share one role password,
+> so the two `DATABASE_URL` values are identical until the host — the Vercel
+> list view cannot tell them apart, and they must be revealed to be checked.
+>
+> `APP_ENV` was split in the same pass and mattered as much: Preview was
+> receiving `production`, which disabled all three guards keyed on it —
+> `robots.ts` (previews indexable by Google), `seo/site.ts` (Organization
+> markup pointing at a vercel.app host), and the `env.ts` refusal to boot a
+> preview with `PAYMENT_MODE=live`.
+>
+> Deliberately left shared, with reasons: `ENCRYPTION_KEY`, because the dev
+> branch holds 3 admin TOTP secrets and an application webhook secret
+> encrypted with it, and a separate key makes them unreadable rather than
+> merely separate. `AUTH_SECRET` and `CRON_SECRET` can be split at any time and
+> should be. `RESEND_API_KEY` is worth removing from Preview entirely, since
+> email degrades quietly and a preview then cannot mail a real customer.
+>
+> Known and not fixed: `AUTH_URL`, `NEXT_PUBLIC_APP_URL` and
+> `NEXT_PUBLIC_CHECKOUT_URL` are required, static, and point at softmato.com on
+> both, so signing in on a preview redirects to production. Navigate back by
+> hand. Preview deployments also have no subdomains — `*.vercel.app` covers one
+> label, so `admin.<deployment>.vercel.app` fails TLS before reaching the app.
+> Use the paths: `/login`, then `/admin/...`, which `proxy.ts` lets through
+> unrewritten on the public surface.
 
 **Vercel dashboard, no code. Do this first — it is the only item here that can
 silently corrupt the accounts.**
@@ -101,6 +128,24 @@ journal entry.
 challenged by Vercel Authentication, and once past it, must be talking to the
 dev branch. Confirm by creating a row in dev and reading it back through the
 preview URL.
+
+**How it was verified, 2026-09-03.** Three checks, each proving one thing:
+
+1. _Protection._ An unauthenticated `curl` of the preview redirected to
+   `vercel.com/login?next=/sso-api…`; even `/robots.txt` was gated. It renders
+   in the founder's browser only because a signed-in team member passes
+   transparently — so this must be checked from outside that session.
+2. _`APP_ENV`._ The preview's `/robots.txt` returned `User-Agent: *` /
+   `Disallow: /`; production's returned the full allow-list with
+   `Host: https://softmato.com`.
+3. _`DATABASE_URL`._ Migration `0006` was applied to the dev branch only, then
+   `/admin/applications/1` was opened on the preview: the Registered domains
+   section rendered, which it cannot do where `application_domains` is absent.
+   The same screen on production failed until `0006` was applied there too.
+
+A branch push whose commit is identical to `main` builds nothing — Vercel
+deduplicates by commit SHA and reuses the existing deployment. An empty commit
+is what forces a preview to exist.
 
 ---
 

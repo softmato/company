@@ -53,6 +53,22 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Next 16 typed routes annotate pages as `PageProps<'/route'>`. Those
+      # globals — PageProps, LayoutProps, RouteContext — are declared in
+      # generated files, and *every* source of them is gitignored:
+      # `next-env.d.ts`, `.next/types` and `.next/dev/types`. A clean checkout
+      # therefore has none of them and all 25 annotated files fail TS2304.
+      #
+      # It passes locally only because `next dev` writes `.next/dev/types`,
+      # which `apps/web/tsconfig.json` includes. Delete that directory and the
+      # local typecheck reproduces CI exactly — verified 2026-09-03.
+      #
+      # `next typegen` emits the declarations without paying for a full build,
+      # which the "no secret may reach a client bundle" step below still does
+      # on its own.
+      - name: Generate Next route types
+        run: pnpm --filter @softmato/web exec next typegen
+
       - name: Typecheck
         run: pnpm run typecheck
 
@@ -67,6 +83,15 @@ jobs:
 
       - name: Migrate check — schema and migrations must not have drifted
         run: pnpm --filter @softmato/db exec drizzle-kit check
+
+      # Migrations build the tables; the seed puts the reference rows in them.
+      # packages/db's tests insert records pointing at a product (hostelhub)
+      # and a payment provider (fonepay), and a foreign key rejects the insert
+      # when those rows are absent. A developer's database was seeded long ago,
+      # so the gap is invisible locally and only ever appears on a fresh CI
+      # database.
+      - name: Seed reference data
+        run: pnpm db:seed
 
       - name: Test
         run: pnpm run test

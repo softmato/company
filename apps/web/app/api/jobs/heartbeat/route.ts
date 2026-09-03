@@ -16,7 +16,7 @@
  * rather than only on silence — a job that runs every minute and settles
  * nothing is as broken as one that never runs.
  */
-import { and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import { db, transactions } from '@softmato/db';
 
