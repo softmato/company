@@ -1,42 +1,52 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".env"],
-  "globalEnv": ["NODE_ENV", "APP_ENV", "DATABASE_URL", "PAYMENT_MODE"],
+  // Turborepo 2.x defaults to envMode "strict": a variable absent from this
+  // list is deleted from the task's environment, even when Vercel or a CI
+  // workflow has it set. `apps/web/lib/env.ts` parses `process.env` at import
+  // time and throws on a missing required key, so everything it reads must be
+  // declared here or the task dies with "Invalid environment configuration".
+  //
+  // This is global rather than per-task on purpose. It began on `build` alone,
+  // which left `test` stripped: vitest imports the same modules and hits the
+  // same validation, and CI failed with AUTH_SECRET/CRON_SECRET/ENCRYPTION_KEY
+  // "Required" while every one of them was set in the workflow. Two lists that
+  // must stay identical are a list that will drift, so there is now one.
+  //
+  // Locally the failure is masked twice over: `next.config.ts` and
+  // `apps/web/vitest.config.ts` both load `../../.env.local` off disk, which
+  // strict mode cannot filter. Neither Vercel nor a CI runner has that file,
+  // so a missing entry here only ever shows up there. To reproduce it, move
+  // `.env.local` aside and run the task with the variables exported.
+  "globalEnv": [
+    "NODE_ENV",
+    "APP_ENV",
+    "DATABASE_URL",
+    "PAYMENT_MODE",
+    "AUTH_SECRET",
+    "AUTH_URL",
+    "CRON_SECRET",
+    "ENCRYPTION_KEY",
+    "COMPANY_NAME",
+    "COMPANY_EMAIL",
+    "NEXT_PUBLIC_APP_URL",
+    "NEXT_PUBLIC_CHECKOUT_URL",
+    "RESEND_API_KEY",
+    "EMAIL_DOMAIN",
+    "EMAIL_REPLY_TO",
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_PUBLIC_BUCKET",
+    "R2_PUBLIC_BASE_URL",
+    "R2_ENDPOINT",
+    "R2_PRIVATE_BUCKET",
+    "SENTRY_DSN"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      // Turborepo 2.x defaults to envMode "strict": a variable absent from
-      // this list is deleted from the build process's environment, even when
-      // Vercel has it set on the project. `apps/web/lib/env.ts` parses
-      // `process.env` at import time and throws on a missing required key, so
-      // everything it reads must be declared here or the build dies with
-      // "Invalid environment configuration".
-      //
-      // Locally the failure is masked: `next.config.ts` loads
-      // `../../.env.local` off disk, which strict mode cannot filter. Vercel
-      // has no such file, so the build is the first place it shows up.
-      "env": [
-        "AUTH_SECRET",
-        "AUTH_URL",
-        "CRON_SECRET",
-        "ENCRYPTION_KEY",
-        "COMPANY_NAME",
-        "COMPANY_EMAIL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_CHECKOUT_URL",
-        "RESEND_API_KEY",
-        "EMAIL_DOMAIN",
-        "EMAIL_REPLY_TO",
-        "R2_ACCOUNT_ID",
-        "R2_ACCESS_KEY_ID",
-        "R2_SECRET_ACCESS_KEY",
-        "R2_PUBLIC_BUCKET",
-        "R2_PUBLIC_BASE_URL",
-        "R2_ENDPOINT",
-        "R2_PRIVATE_BUCKET",
-        "SENTRY_DSN"
-      ]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
       "cache": false,
