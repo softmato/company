@@ -254,8 +254,8 @@ function RevokeForm({ application }: { application: ApplicationSummary }) {
         Revoke this application
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Immediate, and it cannot be undone. Every secret stops working at once
-        — there is no overlap — and bringing the integration back means a new
+        Immediate, and it cannot be undone. Every secret stops working at once —
+        there is no overlap — and bringing the integration back means a new
         registration with a new client id.
       </p>
 

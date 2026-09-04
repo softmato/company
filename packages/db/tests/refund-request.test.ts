@@ -101,10 +101,7 @@ beforeAll(async () => {
 
   const rows = await db
     .insert(applications)
-    .values([
-      row(`app_test_${marker}_ours`),
-      row(`app_test_${marker}_theirs`),
-    ])
+    .values([row(`app_test_${marker}_ours`), row(`app_test_${marker}_theirs`)])
     .returning({ id: applications.id, clientId: applications.clientId });
 
   ours = authenticated(rows.find((r) => r.clientId.endsWith('_ours'))!);

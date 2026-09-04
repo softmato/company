@@ -358,11 +358,11 @@ later, and "refund" is not an answer to "why".
 
 Refusals:
 
-| Case | Status | Detail |
-| --- | --- | --- |
-| Another integrator's payment, or one that does not exist | `404` | identical for both |
-| A payment that never succeeded | `422` | names the status it is actually in |
-| More than the refundable balance | `422` | names the balance |
+| Case                                                     | Status | Detail                             |
+| -------------------------------------------------------- | ------ | ---------------------------------- |
+| Another integrator's payment, or one that does not exist | `404`  | identical for both                 |
+| A payment that never succeeded                           | `422`  | names the status it is actually in |
+| More than the refundable balance                         | `422`  | names the balance                  |
 
 `refund_id` is gapless within the fiscal year, like `INV-` and `TXN-`, and the
 year is the one the **request** is filed in — not the year of the payment it

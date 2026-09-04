@@ -107,7 +107,7 @@ reads uses the other pair, with no exceptions.
 > `SoftmatoOptions` is untouched.
 >
 > The other two occurrences of the old host — `docs/MEMORY.md:45` and this
-> plan's own "What was already decided" section — are prose *about* the defect
+> plan's own "What was already decided" section — are prose _about_ the defect
 > and were deliberately left alone.
 >
 > **Verified as the plan asks, from outside the repository.** `pnpm pack` in
@@ -264,7 +264,7 @@ identical apart from the request id.
 > this. Worth knowing for whoever builds approval: with `requested_by` null,
 > `refund_needs_second_person` is satisfiable by a single admin approving an
 > API-filed request, because `approved_by IS DISTINCT FROM NULL` is true. That
-> is arguably correct — the integrator *is* the second person — but it is a
+> is arguably correct — the integrator _is_ the second person — but it is a
 > consequence nobody chose, so it is written down here rather than discovered.
 >
 > **Verified over real HTTP** against the dev branch, with a throwaway
@@ -343,14 +343,14 @@ same `Idempotency-Key` (one row, same response).
 > post to it, so a hidden `isLive` field would let a caller declare their own
 > credential a sandbox one and skip the check.
 >
-> | Action | Sandbox | Production |
-> | --- | --- | --- |
-> | Rotate client secret | no prompt | password + TOTP |
-> | Revoke | typed name | typed name + password + TOTP |
-> | Change scopes / webhook URL | no prompt | password + TOTP |
-> | Reveal webhook secret | no prompt | password + TOTP |
-> | Rotate webhook secret | no prompt | password + TOTP |
-> | Register a live credential | — | password + TOTP (unchanged) |
+> | Action                      | Sandbox    | Production                   |
+> | --------------------------- | ---------- | ---------------------------- |
+> | Rotate client secret        | no prompt  | password + TOTP              |
+> | Revoke                      | typed name | typed name + password + TOTP |
+> | Change scopes / webhook URL | no prompt  | password + TOTP              |
+> | Reveal webhook secret       | no prompt  | password + TOTP              |
+> | Rotate webhook secret       | no prompt  | password + TOTP              |
+> | Register a live credential  | —          | password + TOTP (unchanged)  |
 >
 > **The typed confirmation applies to both modes.** It replaces the `confirm()`
 > dialog, which asked a yes/no question about an application it could not name,
@@ -363,7 +363,7 @@ same `Idempotency-Key` (one row, same response).
 >
 > 1. **A refusal with empty fields wrote no audit row.** `confirmIdentity`
 >    returned early when the password or code was blank, and only audited the
->    *wrong password* path. That is backwards — an empty submission against a
+>    _wrong password_ path. That is backwards — an empty submission against a
 >    Production credential is the shape a script makes; a wrong password is the
 >    shape a person makes, and the one worth seeing in the log was the one not
 >    being written. Both are now recorded under
@@ -385,10 +385,12 @@ same `Idempotency-Key` (one row, same response).
 > is the thing under test.
 >
 > **What was not verified: the screen itself.** `/admin/applications` answers
-> `404` to an unauthenticated request — it does not exist to a signed-out
-> visitor — so the founder's password and TOTP are needed to look at it. The
+> `307` to `/login` for a signed-out request, so the founder's password and
+> TOTP are needed to look at it. (An earlier revision of this note said `404`;
+> that was a reading taken while the dev server was still compiling its
+> middleware, and it was wrong.) The
 > server actions are covered above; what is unverified is which fields are
-> *drawn*, which is a rendering decision the server re-makes anyway. Item 7
+> _drawn_, which is a rendering decision the server re-makes anyway. Item 7
 > rebuilds this page and its verify step already requires a real admin session.
 >
 > **`scripts/app-secret.mts` is deliberately unchanged.** It is break-glass and
@@ -401,14 +403,14 @@ same `Idempotency-Key` (one row, same response).
 Today's map, confirmed by reading
 `apps/web/app/(admin)/admin/applications/actions.ts`:
 
-| Action | What it does | Re-auth today |
-| --- | --- | --- |
-| Register a live credential | mints a live key | password + TOTP |
-| Reveal webhook secret — **even Sandbox** | shows a signing key | password + TOTP |
-| Rotate webhook secret — **even Sandbox** | breaks deliveries until redeploy | password + TOTP |
-| **Rotate client secret** | **kills a live integration in 24h** | **nothing** |
-| **Revoke application** | **kills a live integration instantly, permanently** | **nothing** |
-| **Change scopes / webhook URL** | can narrow or redirect silently | **nothing** |
+| Action                                   | What it does                                        | Re-auth today   |
+| ---------------------------------------- | --------------------------------------------------- | --------------- |
+| Register a live credential               | mints a live key                                    | password + TOTP |
+| Reveal webhook secret — **even Sandbox** | shows a signing key                                 | password + TOTP |
+| Rotate webhook secret — **even Sandbox** | breaks deliveries until redeploy                    | password + TOTP |
+| **Rotate client secret**                 | **kills a live integration in 24h**                 | **nothing**     |
+| **Revoke application**                   | **kills a live integration instantly, permanently** | **nothing**     |
+| **Change scopes / webhook URL**          | can narrow or redirect silently                     | **nothing**     |
 
 The two most destructive acts are ungated, and the CLI is stricter than the UI:
 `scripts/app-secret.mts` refuses to rotate a live application without an
@@ -557,8 +559,8 @@ Rebuild as two clearly separated credential panels — **Sandbox** and
 **Production** — inside one page, each panel containing:
 
 1. **Identity** — client id, `Secret ends …cC94`, created and last-rotated
-   dates. Plus one plain sentence that does not exist anywhere today: *the
-   client secret cannot be shown again; if it is lost, rotate it.*
+   dates. Plus one plain sentence that does not exist anywhere today: _the
+   client secret cannot be shown again; if it is lost, rotate it._
 2. **Delivery** — webhook URL and the signing secret (reveal / rotate).
 3. **Domains** — this credential's list, with add and remove.
 4. **Danger** — rotate the client secret, revoke this credential. Visually

@@ -187,10 +187,7 @@ export {
 
 export { latestAttempt } from './transactions/latest';
 
-export {
-  findTransactionView,
-  type TransactionView,
-} from './transactions/view';
+export { findTransactionView, type TransactionView } from './transactions/view';
 
 export {
   FIRST_DELAY_MS,

@@ -30,7 +30,15 @@
  * `credentialGate`, which is the whole point: a gate whose condition comes
  * from the form is not a gate.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { desc, eq, inArray, like } from 'drizzle-orm';
 
 import { applications, auditLogs, db } from '@softmato/db';
