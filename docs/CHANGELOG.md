@@ -14,6 +14,68 @@ this file tracks what was delivered.
 
 ### Added
 
+- **The two endpoints the SDK was already calling now exist.**
+  `GET /v1/transactions/{txn_no}` answers "is this payment settled?" without a
+  consumer having to trust a return URL's query parameters, and
+  `POST /v1/refunds` files a refund request. Both are scoped to the calling
+  application: another integrator's payment answers `RESOURCE_NOT_FOUND`, byte
+  for byte the same response as one that does not exist. The transaction
+  endpoint reports the **same uppercase status words the webhook sends**, so a
+  consumer branching on a webhook and one polling the endpoint branch on the
+  same vocabulary. Deployed to production 2026-09-04.
+
+  **`POST /v1/refunds` does not refund anything**, and says so in the response
+  body as well as the documentation. It writes a row at status `requested` and
+  stops: no provider is contacted, no journal posts, and nothing reaches the
+  customer until an admin approves it. That is not a limitation to be fixed
+  later — no provider adapter implements `refund()`, and the
+  `refund_needs_second_person` constraint forbids anything past `requested`
+  without a second person. An integrator who reads "refund created" and tells
+  their customer the money is coming has been misled by us, so the `note`
+  field exists to prevent exactly that. Refund numbers join the gapless
+  sequence as `RFD-2083/84-000001`, in the fiscal year the request is filed
+  in rather than the year of the payment it refunds.
+
+- **A `TransactionStatus` union in `@softmato/sdk`**, listing all ten states
+  including the two that never arrive as a webhook: `RECONCILIATION_REQUIRED`
+  (we and the provider disagree and a person is looking at it — not a failure)
+  and `REVERSED`.
+
+### Changed
+
+- **`@softmato/sdk`'s default base URL is `https://softmato.com/api/v1`.** The
+  host it named before, `api.payment.softmato.com`, resolves but has no TLS
+  certificate, so every integrator had to pass `baseUrl` or get a handshake
+  error. Not yet published — `0.1.1` ships once the tag is pushed.
+
+- **The admin re-authentication gate follows the credential's mode, not the
+  verb.** Revealing a Sandbox signing secret used to cost a password and a TOTP
+  code, while rotating a client secret — which kills a live integration in 24
+  hours — and revoking an application — which kills one instantly and
+  permanently — cost nothing at all. The CLI was stricter than the panel.
+  Now nothing prompts on a Sandbox credential and everything prompts on a
+  Production one, with the mode read from the database on the request that
+  enforces it rather than from the form. Revocation additionally requires the
+  application's name typed by hand, in both modes: that guards the right person
+  revoking the wrong row, which is a different failure from the wrong person
+  revoking anything.
+
+### Fixed
+
+- **Every failed re-authentication on the applications screen is now audited.**
+  A submission with an empty password and code returned early and wrote no
+  audit row; only the wrong-password path was recorded. An empty submission is
+  the shape a script makes, so the one worth seeing in the log was the one
+  going unwritten. Both are recorded, told apart by `reason`, and the row now
+  names which application it was.
+
+- **The settlement suite's balance check no longer times out.** It selected the
+  journals in the shared 1975 fixture year and then fetched each one's lines in
+  its own round trip. Those rows are deliberately never deleted, so the loop
+  grew with every run of the suite; two new suites settling payments there
+  pushed it past the 30-second limit. One aggregate query now, asserting the
+  same thing.
+
 - **The integration surface is now allowlisted.** A new `application_domains`
   table records the hostnames each application may send customers to and
   receive webhooks on, written by an admin in advance and never taken from a

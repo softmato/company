@@ -10,6 +10,26 @@ is lost — fill in the rest as you build.
 
 ## Current status
 
+**Session 15 (2026-09-04) shipped items 1-4 of
+`docs/handoff/INTEGRATION_SURFACE_PLAN.md` to production.** Merged to `main`
+(`de1c5ad`) and deployed. `GET /v1/transactions/{txn_no}` and
+`POST /v1/refunds` now exist — verified against the live host, where a route
+that has never existed still answers 404 and both of these answer 401. The SDK
+base URL is corrected. The admin re-auth gate follows the credential's mode.
+**No schema change shipped**; `application_credentials` is item 5 and has not
+been written. Items 5-11 remain `☐`, each with a Done note above it explaining
+what was already decided.
+
+**CI on `main` had been red since 2026-09-03** and nobody had noticed. One
+file — `docs/handoff/INTEGRATION_SURFACE_PLAN.md` itself — was committed
+unformatted and failed `prettier --check .`. Fixed in `fdc712a`; run
+`33878296584` is the first green run on `main` in two days. **`prettier --check`
+is unusable locally on Windows**: `core.autocrlf=true` gives the working copy
+CRLF, prettier's `endOfLine: "lf"` flags every such file, and 29 files fail
+whether or not they were touched. Check the committed bytes instead —
+`git show HEAD:<path> | pnpm exec prettier --check --stdin-filepath <path>` —
+which is what CI checks out.
+
 **Phase:** 1 accepted. **Phase 2 in progress** (needs a verified email sender
 and a founder publishing the content). **Phase 3 accepted 2026-09-02** — all
 ten acceptance criteria met, two real sandbox payments settled end to end
@@ -29,17 +49,22 @@ deliberately still shared, and how each was verified.
 titled "Integrating with Softmato Payments"). The founder added the DNS record
 and Vercel domain. `/developers` stays canonical.
 
-**The next session's work order is
-`docs/handoff/INTEGRATION_SURFACE_PLAN.md`** (written 2026-09-03). Eleven
-items: build the two missing routes, correct the base URL, move the
-re-authentication gate to where it does something, split every application into
-a Sandbox and a Production credential, rebuild the credential screens, and
-publish `0.1.1`. Read its "The one thing that is not what it looks like"
-section before touching anything — `is_live` isolates nothing today.
+**The work order is `docs/handoff/INTEGRATION_SURFACE_PLAN.md`** (written
+2026-09-03). Eleven items; **1-4 are done and deployed**, 5-11 are not. What
+remains: split every application into a Sandbox and a Production credential
+(item 5, the schema change, its own commit), the vocabulary pass (6), the
+rebuilt detail page (7), registration minting Sandbox (8), the SDK-optional
+guide (9), publishing `0.1.1` (10, now unblocked — items 1-3 are live), and
+surfacing the rotation overlap (11). Read its "The one thing that is not what
+it looks like" section before touching anything — `is_live` isolates nothing
+today.
 
-**⚠ `@softmato/sdk@0.1.0` is published and cannot work as shipped.** Three
-defects, all found 2026-09-03 by reading the package rather than the tests, and
-none of them visible to a green suite:
+**⚠ `@softmato/sdk@0.1.0` is published and cannot work as shipped.** All three
+defects below are **fixed in `main` and deployed as of 2026-09-04**, but the
+published `0.1.0` tarball still carries the wrong base URL — nothing reaches an
+integrator until `sdk-v0.1.1` is tagged (item 10). Kept here as the record of
+what was wrong, found 2026-09-03 by reading the package rather than the tests,
+and none of it visible to a green suite:
 
 1. **Its default base URL is unreachable.** `DEFAULT_BASE_URL` in
    `packages/sdk/client.ts:52` is `https://api.payment.softmato.com/v1`, which
