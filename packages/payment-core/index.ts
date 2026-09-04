@@ -187,6 +187,8 @@ export {
 
 export { latestAttempt } from './transactions/latest';
 
+export { findTransactionView, type TransactionView } from './transactions/view';
+
 export {
   FIRST_DELAY_MS,
   MAX_DELAY_MS,
@@ -238,3 +240,9 @@ export {
   type ReceiptInput,
   type ReceiptSender,
 } from './receipts/receipt';
+
+export {
+  requestRefund,
+  type FiledRefund,
+  type RequestRefundInput,
+} from './refunds/request';

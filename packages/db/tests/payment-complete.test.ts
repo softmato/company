@@ -13,7 +13,7 @@
  * fails the run even if every assertion below passes.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { and, eq, like } from 'drizzle-orm';
+import { and, eq, like, sql } from 'drizzle-orm';
 
 import { db } from '../client';
 import { accounts } from '../schema/accounts';
@@ -431,22 +431,30 @@ describe('completePayment', () => {
 
 describe('the books after settlement', () => {
   it('leaves every journal this suite posted balanced', async () => {
-    const posted = await db
-      .select({ id: journalEntries.id })
-      .from(journalEntries)
-      .where(like(journalEntries.journalNo, `JE-${FY}-%`));
+    /*
+     * One aggregate query, not one per journal.
+     *
+     * This used to select the journals and then fetch each one's lines in a
+     * loop. The isolated 1975 year is shared by every payment suite and its
+     * rows are deliberately never deleted — a settled payment carries a posted
+     * journal, and deleting one out from under the other is the thing global
+     * teardown exists to catch — so the loop's round trip count grows with
+     * every run of the suite until it passes the 30s timeout. It got there.
+     *
+     * The assertion is unchanged: every journal in this fiscal year has debits
+     * equal to credits. Postgres is simply asked for the ones that do not,
+     * which is also what `v_unbalanced_journals` does.
+     */
+    const unbalanced = await db.execute<{ journal_no: string }>(sql`
+      SELECT j.journal_no
+      FROM journal_entries j
+      LEFT JOIN ledger_entries l ON l.journal_id = j.id
+      WHERE j.journal_no LIKE ${`JE-${FY}-%`}
+      GROUP BY j.journal_no
+      HAVING COALESCE(SUM(CASE WHEN l.direction = 'debit'  THEN l.amount_minor END), 0)
+          <> COALESCE(SUM(CASE WHEN l.direction = 'credit' THEN l.amount_minor END), 0)
+    `);
 
-    for (const journal of posted) {
-      const lines = await linesOf(journal.id);
-
-      const signed = lines.reduce(
-        (sum, line) =>
-          sum +
-          (line.direction === 'debit' ? line.amountMinor : -line.amountMinor),
-        0n,
-      );
-
-      expect(signed).toBe(0n);
-    }
+    expect(unbalanced.rows.map((row) => row.journal_no)).toEqual([]);
   });
 });

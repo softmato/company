@@ -78,5 +78,6 @@ export type {
   Presentation,
   ReceiptDetail,
   RefundRequest,
+  TransactionStatus,
   TransactionView,
 } from './types.js';

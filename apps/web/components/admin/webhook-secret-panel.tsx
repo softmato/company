@@ -14,16 +14,23 @@ import { SubmitButton } from '@/components/admin/submit-button';
  *
  * Unlike the client secret, this one *can* be read back — the consumer needs
  * the same bytes we sign with, so it is stored in plaintext. That makes it the
- * one credential on this screen that a reveal can leak, which is why reading
- * it costs a password and a code, and why the read is written to the audit log
- * exactly like the rotation is.
+ * one credential on this screen that a reveal can leak.
+ *
+ * **On a Production credential that costs a password and a code. On a Sandbox
+ * one it does not.** Both reads are written to the audit log either way — the
+ * record of who looked is worth keeping regardless, and it costs the reader
+ * nothing. What changed is the prompt: demanding a TOTP code to reveal a test
+ * key is theatre, and theatre is how people learn to type their code without
+ * reading the screen above it.
  */
 export function WebhookSecretPanel({
   applicationId,
   hasWebhookSecret,
+  isLive,
 }: {
   applicationId: number;
   hasWebhookSecret: boolean;
+  isLive: boolean;
 }) {
   if (!hasWebhookSecret) {
     return (
@@ -41,13 +48,19 @@ export function WebhookSecretPanel({
         and does not authenticate anything to us.
       </p>
 
-      <RevealForm applicationId={applicationId} />
-      <RotateForm applicationId={applicationId} />
+      <RevealForm applicationId={applicationId} isLive={isLive} />
+      <RotateForm applicationId={applicationId} isLive={isLive} />
     </div>
   );
 }
 
-function RevealForm({ applicationId }: { applicationId: number }) {
+function RevealForm({
+  applicationId,
+  isLive,
+}: {
+  applicationId: number;
+  isLive: boolean;
+}) {
   const [state, action] = useActionState(revealWebhookSecretAction, undefined);
 
   return (
@@ -59,10 +72,12 @@ function RevealForm({ applicationId }: { applicationId: number }) {
         Reading it is recorded against your account.
       </p>
 
-      <ReauthFields
-        idPrefix={`reveal-${applicationId}`}
-        error={state?.fieldErrors?.password}
-      />
+      {isLive ? (
+        <ReauthFields
+          idPrefix={`reveal-${applicationId}`}
+          error={state?.fieldErrors?.password}
+        />
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <SubmitButton variant="secondary">Reveal</SubmitButton>
@@ -89,7 +104,13 @@ function RevealForm({ applicationId }: { applicationId: number }) {
   );
 }
 
-function RotateForm({ applicationId }: { applicationId: number }) {
+function RotateForm({
+  applicationId,
+  isLive,
+}: {
+  applicationId: number;
+  isLive: boolean;
+}) {
   const [state, action] = useActionState(rotateWebhookSecretAction, undefined);
 
   return (
@@ -119,10 +140,12 @@ function RotateForm({ applicationId }: { applicationId: number }) {
         No overlap period. Deploy the new value before traffic resumes.
       </p>
 
-      <ReauthFields
-        idPrefix={`rotate-webhook-${applicationId}`}
-        error={state?.fieldErrors?.password}
-      />
+      {isLive ? (
+        <ReauthFields
+          idPrefix={`rotate-webhook-${applicationId}`}
+          error={state?.fieldErrors?.password}
+        />
+      ) : null}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <SubmitButton variant="secondary">Rotate</SubmitButton>

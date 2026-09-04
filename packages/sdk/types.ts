@@ -104,15 +104,42 @@ export interface CheckoutSession {
   allowed_providers: string[];
 }
 
+/** Every status `GET /v1/transactions/{id}` can report. */
+export type TransactionStatus =
+  | 'CREATED'
+  | 'PENDING'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'PARTIALLY_REFUNDED'
+  | 'REFUNDED'
+  | 'REVERSED'
+  | 'RECONCILIATION_REQUIRED';
+
 export interface TransactionView {
   transaction_id: string;
+  /** The invoice *number*, the same handle the webhook's `invoice_id` carries. */
   invoice_id: string;
-  status: string;
-  /** Paisa. */
+  /**
+   * **The same words the webhook sends**, so one `switch` serves both paths.
+   *
+   * Two of these never arrive as a webhook and can only be seen here.
+   * `RECONCILIATION_REQUIRED` means we and the provider disagree about this
+   * payment and a human is looking at it — treat it as "not yet answered", not
+   * as a failure. `REVERSED` is an accounting correction.
+   */
+  status: TransactionStatus;
+  /** Paisa. What the customer paid. */
   amount_minor: number;
   /** Paisa, as reported by the provider. Never a computed percentage. */
   provider_fee_minor: number;
+  /** Paisa. `amount_minor` less the provider's fee — what reaches us. */
+  net_amount_minor: number;
+  /** Paisa. `0` until a refund has actually been paid back. */
+  refunded_amount_minor: number;
   currency: string;
+  /** `esewa`, `khalti`, … — the id, not a display name. */
   provider: string;
   created_at: string;
   succeeded_at: string | null;
@@ -130,6 +157,9 @@ export interface RefundRequest {
   transaction_id: string;
   /** Paisa. */
   amount_minor: number;
+  currency: string;
+  /** The reason you sent, kept for whoever decides whether to approve it. */
+  reason: string;
   /**
    * Always `requested` on creation. **A SaaS can never approve a refund**
    * (docs/API.md §3) — approval happens in the Softmato admin panel, and this
@@ -137,6 +167,15 @@ export interface RefundRequest {
    */
   status: string;
   created_at: string;
+  /**
+   * A sentence saying that no money has moved.
+   *
+   * It is in the response body rather than only in the documentation because
+   * the mistake this prevents is made by a person reading a field name: an
+   * integrator who takes `status: "requested"` for "refund created" and tells
+   * their customer the money is coming. Show it, or at least read it once.
+   */
+  note: string;
 }
 
 /** A party as printed on a document. Any field but `name` may be absent. */

@@ -99,7 +99,40 @@ reads uses the other pair, with no exceptions.
 
 ---
 
-## ☐ 1. Correct the base URL
+## ☑ 1. Correct the base URL
+
+> **Done 2026-09-03.** All three files now say `https://softmato.com/api/v1`.
+> `docs/API.md:10` also loses its "(routed to `/api/v1/*`)" parenthesis, which
+> only made sense while the base URL was a different host. `baseUrl` on
+> `SoftmatoOptions` is untouched.
+>
+> The other two occurrences of the old host — `docs/MEMORY.md:45` and this
+> plan's own "What was already decided" section — are prose _about_ the defect
+> and were deliberately left alone.
+>
+> **Verified as the plan asks, from outside the repository.** `pnpm pack` in
+> `packages/sdk`, tarball installed into an empty npm project in the
+> scratchpad, then a client built with **no `baseUrl`** and a deliberately bad
+> secret:
+>
+>     name       : SoftmatoApiError
+>     status     : 401
+>     code       : UNAUTHENTICATED
+>     message    : Authentication failed
+>     request_id : req_01M1KE5NYNCRQXV7748CA19HDX
+>
+> A `401` carrying a server-issued request id — not a connection error, not a
+> TLS failure — proves the host, the certificate and the route are all real.
+> `curl` against the same URL agrees: `status=401 ssl_verify_result=0`.
+>
+> **Use `pnpm pack`, not `npm pack`, if you repeat this.** The `main`, `types`
+> and `exports` rewrites live in `publishConfig`, and that override is a pnpm
+> feature — `npm pack` leaves the manifest pointing at `./index.ts`, which is
+> not in the tarball, so the import fails with `ERR_MODULE_NOT_FOUND`. That is
+> an artefact of the wrong packer, **not** a defect in the published package:
+> `.github/workflows/publish-sdk.yml` publishes with
+> `pnpm --filter @softmato/sdk publish`, so `0.1.0` on GitHub Packages resolves
+> to `dist/index.js` correctly.
 
 **Three files say the same wrong thing.**
 
@@ -120,7 +153,57 @@ route are all real. A connection error means the URL is still wrong.
 
 ---
 
-## ☐ 2. Build `GET /v1/transactions/{id}`
+## ☑ 2. Build `GET /v1/transactions/{id}`
+
+> **Done 2026-09-03.** Four files:
+>
+> - `packages/payment-core/transactions/view.ts` — `findTransactionView`, the
+>   read. `ownerApplicationId` is a **required** parameter, not the optional
+>   one its document siblings take: those are also rendered by the admin panel,
+>   where there is no owner to enforce, and this is not. A read with no owner
+>   would be a read of every integrator's payments, so it is made impossible to
+>   express rather than left to be remembered.
+> - `apps/web/app/api/v1/transactions/[...txnId]/route.ts` — catch-all, same
+>   `joinReference` as its receipt sibling, no `?format=`: a transaction is a
+>   state, not a document.
+> - `apps/web/lib/api/serialize.ts` — `serializeTransaction` was **dead code**,
+>   declared and never called anywhere, evidently written in anticipation of
+>   this endpoint. Repointed as `serializeTransactionView` rather than left to
+>   drift beside a second one.
+> - `packages/db/tests/transaction-view.test.ts` — four cases, real Postgres.
+>
+> **The status vocabulary matches the webhook**, as the plan requires:
+> `.toUpperCase()` on the enum value, exactly what `buildPayload` does, so no
+> third vocabulary was invented. `docs/API.md` §3 now lists all ten, including
+> the two — `REVERSED` and `RECONCILIATION_REQUIRED` — that never arrive as a
+> webhook and can only be seen here.
+>
+> **The SDK type gained two fields and lost none.** `TransactionView` in
+> `packages/sdk/types.ts` now also declares `net_amount_minor` and
+> `refunded_amount_minor`, because the row carries both and an integrator
+> reconciling a payout needs the net. `status` narrowed from `string` to a new
+> exported `TransactionStatus` union. Nothing moved or was renamed.
+>
+> **Verified over real HTTP, not just at the query.** Two throwaway sandbox
+> applications were registered on the `softmato-dev` branch, each with one
+> settled payment, and the running dev server answered:
+>
+>     own transaction              200
+>     another application's        404
+>     no such transaction          404
+>
+> The two 404s are **107 bytes each and identical** once the request id is
+> blanked, and their headers are identical too — checked with `diff`, not by
+> eye. The route has no way to tell the two cases apart, rather than a rule
+> saying it must not: `findTransactionView` returns `undefined` for both.
+>
+> The throwaway applications and their domains were deleted afterwards; their
+> settled transactions were left in place with `application_id` nulled, because
+> deleting a payment out from under a posted journal is the thing global
+> teardown exists to catch.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 101 database tests.
 
 The SDK's `getTransaction()` calls it and it does not exist. Scope:
 `payment:read`.
@@ -150,7 +233,72 @@ identical apart from the request id.
 
 ---
 
-## ☐ 3. Build `POST /v1/refunds`
+## ☑ 3. Build `POST /v1/refunds`
+
+> **Done 2026-09-03.** It files a request and nothing more, as specified.
+>
+> - `packages/payment-core/refunds/request.ts` — `requestRefund`. Takes the
+>   open transaction, for the same two reasons `startPayment` does.
+> - `apps/web/app/api/v1/refunds/route.ts` — `mutatingEndpoint`, so the
+>   `Idempotency-Key` requirement and the transaction come from the shared
+>   layer rather than from here.
+> - `packages/accounting/numbering.ts` — a fourth `SequenceKind`, `RFD`, width
+>   6 over `refunds.refund_no`. **The fiscal year is the one the request is
+>   filed in, not the year of the payment it refunds**, which showed up
+>   immediately in the HTTP check: a probe against a payment in the fake 1975
+>   year produced `RFD-2083/84-000001`. That is right, and it is now stated in
+>   `docs/API.md`.
+> - `packages/db/tests/refund-request.test.ts` — nine cases.
+>
+> **`refund:request` stays out of `DEFAULT_APPLICATION_SCOPES`**, as the plan
+> recommends. The SDK method's doc comment now says so, so an integrator whose
+> call 403s knows to ask rather than to file a bug.
+>
+> **The response carries a `note` field** saying in a sentence that no money
+> has moved and an admin must approve it. It is in the body rather than only in
+> the docs because the mistake it prevents is made by a person reading a field
+> name — `status: "requested"` read as "refund created". `RefundRequest` in the
+> SDK declares it, plus `currency` and `reason`; nothing was removed.
+>
+> **`requested_by` is left null.** It is an admin id column and no admin filed
+> this. Worth knowing for whoever builds approval: with `requested_by` null,
+> `refund_needs_second_person` is satisfiable by a single admin approving an
+> API-filed request, because `approved_by IS DISTINCT FROM NULL` is true. That
+> is arguably correct — the integrator _is_ the second person — but it is a
+> consequence nobody chose, so it is written down here rather than discovered.
+>
+> **Verified over real HTTP** against the dev branch, with a throwaway
+> credential holding `refund:request`:
+>
+>     succeeded transaction        201, status "requested"
+>     another application's        404
+>     never succeeded              422, detail "… is PENDING. Only a payment
+>                                  that has succeeded can be refunded."
+>     same Idempotency-Key twice   201 twice, one row
+>
+> The idempotent replay is the **same JSON document** but not the same bytes:
+> the stored response is `jsonb`, and Postgres does not preserve key order. Key
+> set and every value match. That is the shared idempotency layer's behaviour
+> on every mutating endpoint, not something this route introduced, and it is
+> left alone.
+>
+> Probe fixtures were deleted afterwards — refunds, applications, domains and
+> idempotency keys. The dev branch holds no refunds and one application
+> (`HostelHub sandbox`), which is what it held before.
+>
+> **One pre-existing test had to be fixed, and it was a real defect.**
+> `payment-complete.test.ts`'s "leaves every journal this suite posted
+> balanced" selected the journals in the shared 1975 fiscal year and then
+> fetched each one's lines **in a loop** — one Neon round trip per journal. The
+> rows in that year are deliberately never deleted, so the loop grows with
+> every run of the suite, and adding two suites that settle payments there
+> pushed it past the 30-second timeout. Replaced with one aggregate query
+> asking for the unbalanced journals, which is the same assertion and is what
+> `v_unbalanced_journals` already does. It would have failed on its own before
+> long.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 550 tests across six packages.
 
 The SDK's `requestRefund()` calls it and it does not exist. Scope:
 `refund:request` — which is currently a dead scope, and this is what makes it
@@ -186,19 +334,83 @@ same `Idempotency-Key` (one row, same response).
 
 ---
 
-## ☐ 4. Move the re-authentication gate to where it does something
+## ☑ 4. Move the re-authentication gate to where it does something
+
+> **Done 2026-09-03.** The map is now the one this item asks for. The gate is
+> `confirmIfProduction` in `applications/actions.ts`, and it reads the mode
+> from the row via a new `credentialGate` query in `lib/applications/queries.ts`
+> — **never from the form**. Every action here is reachable by anyone who can
+> post to it, so a hidden `isLive` field would let a caller declare their own
+> credential a sandbox one and skip the check.
+>
+> | Action                      | Sandbox    | Production                   |
+> | --------------------------- | ---------- | ---------------------------- |
+> | Rotate client secret        | no prompt  | password + TOTP              |
+> | Revoke                      | typed name | typed name + password + TOTP |
+> | Change scopes / webhook URL | no prompt  | password + TOTP              |
+> | Reveal webhook secret       | no prompt  | password + TOTP              |
+> | Rotate webhook secret       | no prompt  | password + TOTP              |
+> | Register a live credential  | —          | password + TOTP (unchanged)  |
+>
+> **The typed confirmation applies to both modes.** It replaces the `confirm()`
+> dialog, which asked a yes/no question about an application it could not name,
+> on a screen that can show several. It is not a second factor and does not
+> stand in for one: it guards the right person revoking the wrong row, which is
+> a different failure from the wrong person revoking anything. "Sandbox is not
+> gated" is about re-authentication, and this is not that.
+>
+> **Two gaps found while writing the test, both fixed.**
+>
+> 1. **A refusal with empty fields wrote no audit row.** `confirmIdentity`
+>    returned early when the password or code was blank, and only audited the
+>    _wrong password_ path. That is backwards — an empty submission against a
+>    Production credential is the shape a script makes; a wrong password is the
+>    shape a person makes, and the one worth seeing in the log was the one not
+>    being written. Both are now recorded under
+>    `application.reauth_failed`, told apart by `reason`
+>    (`reauth_missing` / `reauth_failed`).
+> 2. **The audit row did not say which application.** `resourceId` was never
+>    set. It is now, everywhere except registration, which has no row yet.
+>
+> **Verified by `apps/web/tests/application-gate.test.ts`** — 14 cases against
+> real Postgres, every action twice. The assertions are on the **database**,
+> not on the returned message: each Production refusal reads the row back and
+> checks the secret, the signing secret or the scope list did not move. A
+> refusal that returns `ok: false` after already rotating is precisely the bug
+> the file exists to catch.
+>
+> Three modules are mocked and only three — `requireAdmin` (the session),
+> `reauthenticate` (so a correct code can be simulated without a real admin's
+> TOTP secret), and `revalidatePath`. **The mode is not mocked**, because that
+> is the thing under test.
+>
+> **What was not verified: the screen itself.** `/admin/applications` answers
+> `307` to `/login` for a signed-out request, so the founder's password and
+> TOTP are needed to look at it. (An earlier revision of this note said `404`;
+> that was a reading taken while the dev server was still compiling its
+> middleware, and it was wrong.) The
+> server actions are covered above; what is unverified is which fields are
+> _drawn_, which is a rendering decision the server re-makes anyway. Item 7
+> rebuilds this page and its verify step already requires a real admin session.
+>
+> **`scripts/app-secret.mts` is deliberately unchanged.** It is break-glass and
+> already stricter than the UI was — `--yes-live` for a live rotation. It is
+> now no stricter than the panel, which was the point.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 564 tests.
 
 Today's map, confirmed by reading
 `apps/web/app/(admin)/admin/applications/actions.ts`:
 
-| Action | What it does | Re-auth today |
-| --- | --- | --- |
-| Register a live credential | mints a live key | password + TOTP |
-| Reveal webhook secret — **even Sandbox** | shows a signing key | password + TOTP |
-| Rotate webhook secret — **even Sandbox** | breaks deliveries until redeploy | password + TOTP |
-| **Rotate client secret** | **kills a live integration in 24h** | **nothing** |
-| **Revoke application** | **kills a live integration instantly, permanently** | **nothing** |
-| **Change scopes / webhook URL** | can narrow or redirect silently | **nothing** |
+| Action                                   | What it does                                        | Re-auth today   |
+| ---------------------------------------- | --------------------------------------------------- | --------------- |
+| Register a live credential               | mints a live key                                    | password + TOTP |
+| Reveal webhook secret — **even Sandbox** | shows a signing key                                 | password + TOTP |
+| Rotate webhook secret — **even Sandbox** | breaks deliveries until redeploy                    | password + TOTP |
+| **Rotate client secret**                 | **kills a live integration in 24h**                 | **nothing**     |
+| **Revoke application**                   | **kills a live integration instantly, permanently** | **nothing**     |
+| **Change scopes / webhook URL**          | can narrow or redirect silently                     | **nothing**     |
 
 The two most destructive acts are ungated, and the CLI is stricter than the UI:
 `scripts/app-secret.mts` refuses to rotate a live application without an
@@ -347,8 +559,8 @@ Rebuild as two clearly separated credential panels — **Sandbox** and
 **Production** — inside one page, each panel containing:
 
 1. **Identity** — client id, `Secret ends …cC94`, created and last-rotated
-   dates. Plus one plain sentence that does not exist anywhere today: *the
-   client secret cannot be shown again; if it is lost, rotate it.*
+   dates. Plus one plain sentence that does not exist anywhere today: _the
+   client secret cannot be shown again; if it is lost, rotate it._
 2. **Delivery** — webhook URL and the signing secret (reveal / rotate).
 3. **Domains** — this credential's list, with add and remove.
 4. **Danger** — rotate the client secret, revoke this credential. Visually

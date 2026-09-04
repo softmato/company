@@ -49,7 +49,7 @@ export interface SoftmatoOptions {
   fetch?: typeof globalThis.fetch;
 }
 
-const DEFAULT_BASE_URL = 'https://api.payment.softmato.com/v1';
+const DEFAULT_BASE_URL = 'https://softmato.com/api/v1';
 
 interface RequestOptions {
   idempotencyKey?: string;
@@ -187,7 +187,20 @@ export class SoftmatoClient {
     return this.requestFile(`${path}?format=${format}`, options);
   }
 
-  /** Files a request. Approval happens in the Softmato admin panel. */
+  /**
+   * Files a refund request. **It does not refund anything.**
+   *
+   * A row is written at status `requested` and that is all: no provider is
+   * contacted and no money moves. A Softmato admin approves it afterwards.
+   *
+   * So do not tell your customer their money is coming because this resolved.
+   * The response carries a `note` saying the same thing, in the body you are
+   * already parsing, because this is the mistake that costs somebody a
+   * complaint rather than a stack trace.
+   *
+   * Needs the `refund:request` scope, which is **off by default** — most
+   * integrations never call this. Ask an admin to tick it.
+   */
   requestRefund(
     input: CreateRefundInput,
     options?: RequestOptions,

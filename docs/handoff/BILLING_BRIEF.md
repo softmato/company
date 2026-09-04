@@ -66,7 +66,7 @@ using `API.md` alone**, and never reads a provider's documentation.
 
 ## 3. The integration contract
 
-Base `https://api.payment.softmato.com/v1`. JSON in, JSON out.
+Base `https://softmato.com/api/v1`. JSON in, JSON out.
 **Amounts are integers in paisa** — `500000` is NPR 5,000. Timestamps ISO 8601
 UTC. Every request carries `Authorization: Bearer <client_secret>`; every
 mutating request carries an `Idempotency-Key`.
@@ -154,7 +154,7 @@ backoff; after 8 failures the delivery is `abandoned` and an admin is alerted.
 Any delivery is replayable from the admin panel — so a consumer must also be
 idempotent on `transaction_id`.
 
-If a product ever needs to ask rather than wait: `GET /v1/transactions/:id`
+If a product ever needs to ask rather than wait: `GET /v1/transactions/{txn_no}`
 (scope `payment:read`), scoped to its own application. That is the endpoint that
 answers "is TXN-123 paid?" — the product never decides for itself.
 
