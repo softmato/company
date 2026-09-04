@@ -636,7 +636,29 @@ Also add, plainly:
 
 ---
 
-## ☐ 10. Publish `sdk-v0.1.1`
+## ☑ 10. Publish `sdk-v0.1.1`
+
+> **Done 2026-09-04.** `+ @softmato/sdk@0.1.1` — run `33879148280`, success,
+> 28s, 26 files, tag `sdk-v0.1.1` on `5ba2553`. The workflow's own
+> tag-versus-manifest check printed `Publishing @softmato/sdk@0.1.1` before
+> publishing, so the tag and the tarball cannot disagree.
+>
+> The precondition held: items 1-3 were merged to `main` (`de1c5ad`) and
+> deployed before the tag was pushed, and the base URL was verified against the
+> live host from outside the repository. So unlike `0.1.0`, every method this
+> version exposes resolves against its own default base URL.
+>
+> The version bump is its own commit (`5ba2553`), not part of the tag, as this
+> item requires.
+>
+> **One thing was not verified and should be, by whoever has the PAT.** The
+> published tarball was confirmed from the workflow log, not by installing it:
+> reading from GitHub Packages needs a token with `read:packages`, which a
+> session does not have. The equivalent check on the _local_ pack was done in
+> item 1 and passed — clean directory outside the repo, no `baseUrl`, a `401`
+> with a server-issued request id. Repeating it against the published `0.1.1`
+> is one command with a PAT in `.npmrc`, and it is the check QuestionCall will
+> effectively be running on their first install anyway.
 
 Only after items 1, 2 and 3 are merged and the base URL is verified against a
 real deployment from outside this repository.
