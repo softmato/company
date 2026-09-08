@@ -40,6 +40,7 @@ import {
 import type { AuthenticatedApplication } from '../../payment-core/applications/authenticate';
 import type { AuditRecord } from '../../payment-core/audit';
 import type { Receipt } from '../../payment-core/receipts/receipt';
+import { nextSequenceNo } from './unique-sequence';
 
 const PRODUCT = 'hostelhub';
 const PROVIDER = 'fonepay';
@@ -190,7 +191,7 @@ function authenticated(c: {
 
 /** A payment owned by `applicationId`, settled unless `settle` is false. */
 async function payment(applicationId: number, settle = true) {
-  const unique = Date.now() + Math.floor(Math.random() * 100_000);
+  const unique = nextSequenceNo();
 
   const [invoice] = await db
     .insert(invoices)

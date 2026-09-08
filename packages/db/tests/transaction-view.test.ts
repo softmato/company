@@ -35,6 +35,7 @@ import {
 } from '../../payment-core/index';
 import type { AuditRecord } from '../../payment-core/audit';
 import type { Receipt } from '../../payment-core/receipts/receipt';
+import { nextSequenceNo } from './unique-sequence';
 
 const PRODUCT = 'hostelhub';
 const PROVIDER = 'fonepay';
@@ -178,7 +179,7 @@ function credential(applicationId: number, clientId: string) {
 
 /** A settled payment owned by `applicationId`, with a real posted journal. */
 async function settledPayment(applicationId: number) {
-  const unique = Date.now() + Math.floor(Math.random() * 100_000);
+  const unique = nextSequenceNo();
 
   const [invoice] = await db
     .insert(invoices)
