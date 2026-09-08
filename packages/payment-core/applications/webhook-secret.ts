@@ -16,11 +16,15 @@
  * A read that hands over a live signing key is an event, not a lookup. If this
  * key later turns up somewhere it should not be, the question asked is who
  * last had it — and only an audit row can answer that.
+ *
+ * Both functions address a **credential**, not an application. Sandbox and
+ * Production sign with different keys, and rotating one must leave the other
+ * delivering.
  */
 import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
-import { applications, db } from '@softmato/db';
+import { applicationCredentials, db } from '@softmato/db';
 
 import type { Actor, AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
@@ -37,39 +41,39 @@ function newWebhookSecret(): string {
  * whether a secret exists. Reading the value is a separate, audited act.
  */
 export async function revealWebhookSecret(
-  applicationId: number,
+  credentialId: number,
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<string> {
   return db.transaction(async (tx) => {
     const [row] = await tx
       .select({
-        webhookSecret: applications.webhookSecret,
-        revokedAt: applications.revokedAt,
+        webhookSecret: applicationCredentials.webhookSecret,
+        revokedAt: applicationCredentials.revokedAt,
       })
-      .from(applications)
-      .where(eq(applications.id, applicationId))
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.id, credentialId))
       .limit(1);
 
     if (!row) {
-      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
-        applicationId,
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+        credentialId,
       });
     }
 
     if (row.revokedAt) {
       throw new PaymentError(
         'INVALID_STATE',
-        'This application is revoked; its webhook secret signs nothing',
-        { applicationId },
+        'This credential is revoked; its webhook secret signs nothing',
+        { credentialId },
       );
     }
 
     if (!row.webhookSecret) {
       throw new PaymentError(
         'INVALID_STATE',
-        'This application has no webhook secret',
-        { applicationId },
+        'This credential has no webhook secret',
+        { credentialId },
       );
     }
 
@@ -78,8 +82,8 @@ export async function revealWebhookSecret(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.webhook_secret_reveal',
-        resourceType: 'application',
-        resourceId: String(applicationId),
+        resourceType: 'application_credential',
+        resourceId: String(credentialId),
       },
       tx,
     );
@@ -96,38 +100,38 @@ export async function revealWebhookSecret(
  * against the old one fail and are retried by the delivery job.
  */
 export async function rotateWebhookSecret(
-  applicationId: number,
+  credentialId: number,
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<string> {
   return db.transaction(async (tx) => {
     const [existing] = await tx
-      .select({ revokedAt: applications.revokedAt })
-      .from(applications)
-      .where(eq(applications.id, applicationId))
+      .select({ revokedAt: applicationCredentials.revokedAt })
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.id, credentialId))
       .for('update')
       .limit(1);
 
     if (!existing) {
-      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
-        applicationId,
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+        credentialId,
       });
     }
 
     if (existing.revokedAt) {
       throw new PaymentError(
         'INVALID_STATE',
-        'A revoked application cannot rotate its webhook secret',
-        { applicationId },
+        'A revoked credential cannot rotate its webhook secret',
+        { credentialId },
       );
     }
 
     const webhookSecret = newWebhookSecret();
 
     await tx
-      .update(applications)
+      .update(applicationCredentials)
       .set({ webhookSecret })
-      .where(eq(applications.id, applicationId));
+      .where(eq(applicationCredentials.id, credentialId));
 
     // The value never enters the audit row — only that it changed, and when.
     await audit(
@@ -135,8 +139,8 @@ export async function rotateWebhookSecret(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.webhook_secret_rotate',
-        resourceType: 'application',
-        resourceId: String(applicationId),
+        resourceType: 'application_credential',
+        resourceId: String(credentialId),
       },
       tx,
     );

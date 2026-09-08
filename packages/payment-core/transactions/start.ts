@@ -108,6 +108,9 @@ export async function startPayment(
       sessionId: session.id,
       invoiceId: session.invoiceId,
       applicationId: session.applicationId,
+      // Carried down so the settlement webhook reaches the credential that
+      // opened the session rather than whichever one we guessed at later.
+      credentialId: session.credentialId,
       productId: session.productId,
       customerId: session.customerId,
       providerId: input.providerId,

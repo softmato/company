@@ -20,6 +20,11 @@ import { failure, type CredentialResult } from './result';
  * Adding a domain is still a security-relevant change and still writes an
  * audit row; `addDomain` and `removeDomain` do that themselves, so this file
  * stays a thin form-to-argument adapter.
+ *
+ * **Domains belong to a credential, not to an application.** A Sandbox
+ * integration points at staging hosts and a Production one at real hosts, so
+ * these take a `credentialId`; `applicationId` comes along only to revalidate
+ * the page the form was submitted from.
  */
 
 export async function addDomainAction(
@@ -27,10 +32,11 @@ export async function addDomainAction(
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
+  const credentialId = Number(form.get('credentialId'));
   const applicationId = Number(form.get('applicationId'));
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
-    return { ok: false, message: 'Bad application id.' };
+  if (!Number.isInteger(credentialId) || credentialId <= 0) {
+    return { ok: false, message: 'Bad credential id.' };
   }
 
   const hostname = String(form.get('hostname') ?? '').trim();
@@ -46,7 +52,7 @@ export async function addDomainAction(
   try {
     const created = await addDomain(
       {
-        applicationId,
+        credentialId,
         hostname,
         note: String(form.get('note') ?? '').trim() || null,
       },

@@ -26,7 +26,7 @@
 import { eq } from 'drizzle-orm';
 
 import {
-  applications,
+  applicationCredentials,
   webhookDeliveries,
   type DbLike,
   type Transaction,
@@ -36,7 +36,7 @@ import { buildPayload, type WebhookEvent } from './events';
 import { sign } from './signature';
 
 export interface EnqueueResult {
-  /** False when the application has no webhook configured — not an error. */
+  /** False when the credential has no webhook configured — not an error. */
   queued: boolean;
 }
 
@@ -48,26 +48,38 @@ export async function enqueueWebhook(
   occurredAt = new Date(),
 ): Promise<EnqueueResult> {
   /*
-   * A session created through the admin panel rather than the API has no
-   * application behind it, and there is nobody to notify. Normal, not a fault.
+   * A payment raised through the admin panel rather than the API has no
+   * credential behind it, and there is nobody to notify. Normal, not a fault.
    */
-  if (transaction.applicationId === null) return { queued: false };
+  if (transaction.applicationId === null || transaction.credentialId === null) {
+    return { queued: false };
+  }
 
-  const [application] = await tx
+  /*
+   * The credential, not the application. An application can hold a Sandbox and
+   * a Production credential with different endpoints and different signing
+   * keys, and the payment was made with exactly one of them — the one recorded
+   * on the transaction.
+   */
+  const [credential] = await tx
     .select({
-      webhookUrl: applications.webhookUrl,
-      webhookSecret: applications.webhookSecret,
+      webhookUrl: applicationCredentials.webhookUrl,
+      webhookSecret: applicationCredentials.webhookSecret,
+      revokedAt: applicationCredentials.revokedAt,
     })
-    .from(applications)
-    .where(eq(applications.id, transaction.applicationId))
+    .from(applicationCredentials)
+    .where(eq(applicationCredentials.id, transaction.credentialId))
     .limit(1);
 
   // Webhooks are opt-in. Both are needed: a URL with no secret would have to
   // be sent unsigned, and an unsigned payment notification is not something to
-  // send at all.
-  if (!application?.webhookUrl || !application.webhookSecret) {
+  // send at all. A revoked credential is not notified either — its holder has
+  // been cut off, and posting to their endpoint afterwards is noise at best.
+  if (!credential?.webhookUrl || !credential.webhookSecret) {
     return { queued: false };
   }
+
+  if (credential.revokedAt) return { queued: false };
 
   const payload = buildPayload(event, transaction, invoiceNo, occurredAt);
 
@@ -78,10 +90,11 @@ export async function enqueueWebhook(
 
   await tx.insert(webhookDeliveries).values({
     applicationId: transaction.applicationId,
+    credentialId: transaction.credentialId,
     eventType: event,
     payload,
     signature: sign(
-      application.webhookSecret,
+      credential.webhookSecret,
       timestamp,
       JSON.stringify(payload),
     ),

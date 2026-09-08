@@ -1,19 +1,29 @@
 /**
- * One application: what it is, where it may send people, and the acts that
- * change it.
+ * One application: what the integration is, and its two credential sets.
+ *
+ * The shape is the schema's shape. Above: the name, the product, the scopes
+ * and the active state — edited once, shared by both credentials. Below: a
+ * Sandbox panel and a Production panel, each with its own client id, its own
+ * secrets, its own webhook address and its own domain allowlist.
+ *
+ * **A mode with no credential still gets a panel**, carrying one button. That
+ * is how the page says a second set is expected rather than missing, and it is
+ * where the Production credential is minted from.
  */
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { APPLICATION_SCOPES } from '@softmato/db';
+import { APPLICATION_SCOPES, type CredentialMode } from '@softmato/db';
 
 import { getApplicationDetail } from '@/lib/applications/queries';
+import { ApplicationHeader } from '@/components/admin/application-header';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
-import { ApplicationPanel } from '@/components/admin/application-panel';
-import { DomainList } from '@/components/admin/domain-list';
-import { WebhookSecretPanel } from '@/components/admin/webhook-secret-panel';
+import { CredentialPanel } from '@/components/admin/credential-panel';
 
 export const dynamic = 'force-dynamic';
+
+/** Sandbox first. It is the one that exists at registration. */
+const MODES: CredentialMode[] = ['test', 'live'];
 
 export default async function ApplicationDetailPage({
   params,
@@ -38,61 +48,43 @@ export default async function ApplicationDetailPage({
       <h1 className="headline mt-2 text-2xl">{application.name}</h1>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        {application.productName} ·{' '}
-        {application.isLive ? 'live credential' : 'sandbox credential'}
+        {application.productName}
       </p>
 
-      {application.domains.length === 0 && !application.revokedAt ? (
-        <p
-          role="alert"
-          className="mt-6 rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm"
-        >
-          This application has no registered domains. Until one is added it can
-          be given neither a return URL nor a webhook address, so{' '}
-          <code className="font-mono">POST /v1/checkout</code> will refuse every{' '}
-          <code className="font-mono">return_url</code> it sends.
-        </p>
-      ) : null}
-
       <section className="mt-8">
-        <ApplicationPanel
+        <ApplicationHeader
           application={application}
           scopes={APPLICATION_SCOPES}
         />
       </section>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-medium">Registered domains</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Exact hostnames, no wildcards. A subdomain is a different host and
-          needs its own entry — listing{' '}
-          <code className="font-mono">questioncall.com</code> does not allow{' '}
-          <code className="font-mono">app.questioncall.com</code>.
-        </p>
+      <div className="mt-10 space-y-8">
+        {MODES.map((mode) => {
+          const credential = application.credentials.find(
+            (c) => c.mode === mode,
+          );
 
-        <DomainList
-          applicationId={application.id}
-          domains={application.domains.map((domain) => ({
-            id: domain.id,
-            hostname: domain.hostname,
-            note: domain.note,
-            createdBy: domain.createdBy,
-            createdAt: domain.createdAt.toISOString(),
-          }))}
-          readOnly={application.revokedAt !== null}
-        />
-      </section>
-
-      {application.revokedAt ? null : (
-        <section className="mt-10">
-          <h2 className="text-lg font-medium">Webhook signing secret</h2>
-          <WebhookSecretPanel
-            applicationId={application.id}
-            hasWebhookSecret={application.hasWebhookSecret}
-            isLive={application.isLive}
-          />
-        </section>
-      )}
+          return (
+            <CredentialPanel
+              key={mode}
+              applicationId={application.id}
+              applicationName={application.name}
+              mode={mode}
+              credential={credential}
+              domains={(credential
+                ? (application.domainsByCredential[credential.id] ?? [])
+                : []
+              ).map((domain) => ({
+                id: domain.id,
+                hostname: domain.hostname,
+                note: domain.note,
+                createdBy: domain.createdBy,
+                createdAt: domain.createdAt.toISOString(),
+              }))}
+            />
+          );
+        })}
+      </div>
 
       <p className="mt-10 text-sm">
         <Link

@@ -101,7 +101,12 @@ export function normalizeHostnameInput(value: string): string | null {
 
 /**
  * Throws unless `url` is https and its hostname is registered against this
- * application.
+ * **credential**.
+ *
+ * Per credential, not per application: a Sandbox integration points at staging
+ * hosts and a Production one at real hosts, and letting a test credential send
+ * a customer to the production site is the confusion the allowlist exists to
+ * prevent.
  *
  * The message names the field and the hostname that was refused, because a
  * caller must be able to fix this without opening a support thread. It does
@@ -112,7 +117,7 @@ export function normalizeHostnameInput(value: string): string | null {
  * file, so there is one place that decides what an acceptable destination is.
  */
 export async function assertRegisteredHost(
-  applicationId: number,
+  credentialId: number,
   url: string,
   field: string,
   conn: DbLike = db,
@@ -133,7 +138,7 @@ export async function assertRegisteredHost(
     .from(applicationDomains)
     .where(
       and(
-        eq(applicationDomains.applicationId, applicationId),
+        eq(applicationDomains.credentialId, credentialId),
         // Exact equality. Never `like`, never `endsWith`.
         eq(applicationDomains.hostname, hostname),
       ),
@@ -167,14 +172,14 @@ export async function assertRegisteredHost(
  * not draw the button.
  */
 export async function isRegisteredHost(
-  applicationId: number,
+  credentialId: number,
   url: string | null,
   conn: DbLike = db,
 ): Promise<boolean> {
   if (!url) return false;
 
   try {
-    await assertRegisteredHost(applicationId, url, 'return_url', conn);
+    await assertRegisteredHost(credentialId, url, 'return_url', conn);
     return true;
   } catch {
     return false;

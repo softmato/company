@@ -44,9 +44,11 @@ export {
 } from './applications/domains-manage';
 
 export {
+  addCredential,
   registerApplication,
-  revokeApplication,
+  revokeCredential,
   rotateSecret,
+  setCredentialWebhookUrl,
   updateApplication,
   type DomainInput,
   type IssuedCredential,

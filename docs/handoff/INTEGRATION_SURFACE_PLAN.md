@@ -442,7 +442,147 @@ without a correct password and code, and the refusal writes an audit row).
 
 ---
 
-## ☐ 5. One application, two credential sets
+## ☑ 5. One application, two credential sets
+
+> **Done 2026-09-04, applied to `softmato-dev` only.** Production is
+> untouched and needs the founder — see "Before this reaches production" at the
+> end of this note.
+>
+> The shape is the one specified: `applications` keeps `id, product_id, name,
+scopes, is_active, created_at` and nothing else; `application_credentials`
+> holds everything per-mode with `UNIQUE (application_id, mode)`;
+> `application_domains.application_id` became `credential_id`. Scopes stayed on
+> the application.
+>
+> **Two migrations, not one, and the second was not in the plan.**
+>
+> `0007_application_credentials` is the split, with the data migration in the
+> same file as required. `0008_credential_on_payments` adds `credential_id` to
+> `payment_sessions`, `transactions` and `webhook_deliveries`, and it exists
+> because 0007 breaks webhook delivery on its own: `webhook_url` and
+> `webhook_secret` moved onto the credential, and an application can now hold
+> two with different endpoints and different signing keys. Nothing recorded
+> which one made a payment. Deriving it from the `cs_test_` prefix would be a
+> guess dressed as a lookup and does not work at all for a transaction with no
+> session, so the credential is recorded where the payment is. On
+> `webhook_deliveries` it is kept on the row rather than resolved at send time:
+> a rotation between enqueue and delivery must not change which key a queued
+> row was signed with.
+>
+> **0007 had to be hand-written, and the reason is a defect worth knowing
+> about.** `drizzle-kit generate` diffs against the newest snapshot in `meta/`,
+> and there is **no `0006_snapshot.json`** — migration 0006 was hand-written
+> and never recorded one. So the generator's baseline was 0005, which predates
+> `application_domains` entirely, and it emitted `CREATE TABLE
+"application_domains"` for a table that already exists. That statement fails
+> on every database that has run 0006. The generated _snapshot_ is correct
+> because it is built from the schema files rather than from the diff, so it
+> was kept and the drift heals from here — the next `generate` has a truthful
+> baseline. `drizzle-kit check` reports "Everything's fine" either way: it
+> validates the journal, not the SQL.
+>
+> **A silent pre-existing bug turned up in `lib/applications/queries.ts`, and
+> the gate test is what caught it.** Drizzle renders `${table.column}` inside a
+> `sql` template **unqualified**, so a correlated subquery written as
+>
+>     WHERE ${applicationDomains.applicationId} = ${applications.id}
+>
+> comes out as `WHERE "application_id" = "id"` — and inside the subquery both
+> names resolve against `application_domains`, comparing a row's own two
+> columns to each other. It compiles, it runs, and it answers the wrong
+> question. That has been live on the applications list since the allowlist
+> shipped, computing the domain count from
+> `application_domains.application_id = application_domains.id`. Nobody saw it
+> because the only application had no domains, so zero was right by accident.
+> The counts are now a `GROUP BY` and the `EXISTS` gates use literal qualified
+> table names.
+>
+> ### The code that followed
+>
+> - `authenticateApplication` looks up `application_credentials.client_id`,
+>   joins to `applications`, and checks **both** `credentials.revoked_at` and
+>   `applications.is_active` — neither implies the other. The fail-closed
+>   structure is unchanged: constant work for a missing credential, revocation
+>   checked only after verification, one `UNAUTHENTICATED` for every cause.
+> - `AuthenticatedApplication` gained `credentialId` and `mode` and lost
+>   `isLive`. `generateSessionId` and `generateClientId` take the mode.
+> - `addCredential(applicationId, mode)` mints the second set and refuses when
+>   that mode already exists — the `UNIQUE` would refuse it anyway; this turns
+>   a constraint violation into a sentence. **Domains start empty on purpose**:
+>   copying the Sandbox list onto Production would seed the exact confusion the
+>   per-credential allowlist exists to prevent.
+> - `rotateSecret`, `revokeCredential` (renamed from `revokeApplication`),
+>   `revealWebhookSecret`, `rotateWebhookSecret` and the new
+>   `setCredentialWebhookUrl` all take a credential id. `updateApplication` is
+>   down to name and scopes.
+> - `assertRegisteredHost` / `isRegisteredHost` / `addDomain` / `listDomains`
+>   take a credential id.
+> - `scripts/app-secret.mts` and `scripts/webhook-status.mts` follow. The CLI's
+>   `--yes-live` guard now reads `mode`, and `webhook:status` lists per
+>   credential rather than per application — one line per application would be
+>   an average of two different answers.
+> - A new `client_id_matches_mode` CHECK: `app_live_…` cannot sit on a row
+>   labelled `test`. Two places holding the same fact is two places to
+>   disagree, and that disagreement would be invisible.
+>
+> ### The screens
+>
+> `application-panel.tsx` and `webhook-secret-panel.tsx` are gone, replaced by
+> `credential-panel.tsx` (identity / delivery / domains / danger, drawn once
+> per mode, with a **Create Production credential** button where a mode has no
+> credential) and `application-header.tsx` for the shared name, scopes and
+> state. The Sandbox panel carries the honest note this plan requires. That is
+> most of item 7's structure; item 7 still owns the hierarchy pass, and item 6
+> still owns the vocabulary — the `test` / `live` badges are not all gone yet.
+>
+> **Editing scopes is gated by the application, not by a mode**, because both
+> credentials share them: narrowing a scope on an application that has a
+> Production credential breaks a live integration even though the form never
+> mentions modes.
+>
+> ### Verified
+>
+> Against `softmato-dev`, end to end, exactly the list this item asks for:
+>
+>     register → one Sandbox credential, and its secret authenticates
+>     mint Production on the same application → prefixes and handles differ
+>     a second Production credential → refused
+>     signing secrets → differ
+>     domain lists → separate (sandbox.example.com vs live.example.com)
+>     rotate Sandbox → Production still authenticates
+>     revoke Sandbox → Production still authenticates
+>
+> **The migrated row survived.** `HostelHub sandbox`
+> (`app_test_hostelhub_2d90d3bq`) moved with its `client_id`, `secret_hash`,
+> `secret_last4`, `webhook_url` and original `created_at` unchanged. It was
+> then rotated **through the CLI** and the new secret authenticated over real
+> HTTP against `GET /v1/transactions/…` — `401` for a wrong secret on the same
+> route, so the refusal is real. That proves the migrated row is found by
+> client id in the new table and its hash verifies.
+>
+> What it does _not_ prove is that an **already-issued** secret still works,
+> because the plaintext was shown once and is not stored — there is nothing to
+> test with. The migration copies `secret_hash` verbatim and never rehashes,
+> which is the mechanism the guarantee rests on.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 667 tests. `drizzle-kit check` reports no drift.
+>
+> ### Before this reaches production
+>
+> QuestionCall's `app_test_questioncall_f3kv9zgz` lives on the production
+> branch and its secret is in QuestionCall's hands, not ours. So:
+>
+> 1. Run this **pre-flight read** on production first. Every row must pass the
+>    new CHECK, or 0007 aborts on the insert:
+>
+>        SELECT client_id, is_live,
+>               client_id LIKE 'app_' || (CASE WHEN is_live THEN 'live' ELSE 'test' END) || '\_%' AS ok
+>        FROM applications;
+>
+> 2. Apply `0007` and `0008` together. They are one logical change.
+> 3. Have QuestionCall make any authenticated call. A `401` means roll back —
+>    a failed authentication after this migration is a failed migration.
 
 **This is the schema change and the largest item. Do it in its own commit.**
 

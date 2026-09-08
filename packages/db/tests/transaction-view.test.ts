@@ -22,10 +22,10 @@ import { eq, inArray, like } from 'drizzle-orm';
 
 import { db } from '../client';
 import { accounts } from '../schema/accounts';
-import { applications } from '../schema/applications';
 import { customers } from '../schema/customers';
 import { fiscalPeriods } from '../schema/fiscal';
 import { invoices } from '../schema/invoices';
+import { applicationCredentials, applications } from '../schema/applications';
 import { paymentSessions, transactions } from '../schema/payments';
 import { accountSeeds } from '../seed/accounts';
 import {
@@ -102,13 +102,26 @@ beforeAll(async () => {
   const rows = await db
     .insert(applications)
     .values([
-      application(`app_test_${marker}_ours`, 'Transaction view — ours'),
-      application(`app_test_${marker}_theirs`, 'Transaction view — theirs'),
+      application('Transaction view — ours'),
+      application('Transaction view — theirs'),
     ])
-    .returning({ id: applications.id, clientId: applications.clientId });
+    .returning({ id: applications.id, name: applications.name });
 
-  ours = rows.find((r) => r.clientId.endsWith('_ours'))!.id;
-  theirs = rows.find((r) => r.clientId.endsWith('_theirs'))!.id;
+  ours = rows.find((r) => r.name.endsWith('ours'))!.id;
+  theirs = rows.find((r) => r.name.endsWith('theirs'))!.id;
+
+  /*
+   * The credential exists because `applications` no longer carries one, and a
+   * transaction without a credential behind it is not the shape this endpoint
+   * serves. It is otherwise unused here — nothing in these cases
+   * authenticates.
+   */
+  await db
+    .insert(applicationCredentials)
+    .values([
+      credential(ours, `app_test_${marker}_ours`),
+      credential(theirs, `app_test_${marker}_theirs`),
+    ]);
 });
 
 afterAll(sweepFixtureApplications);
@@ -129,7 +142,7 @@ async function sweepFixtureApplications() {
   const stale = await db
     .select({ id: applications.id })
     .from(applications)
-    .where(like(applications.clientId, 'app_test_txnview-%'));
+    .where(like(applications.name, 'Transaction view — %'));
 
   if (stale.length === 0) return;
 
@@ -148,15 +161,18 @@ async function sweepFixtureApplications() {
   await db.delete(applications).where(inArray(applications.id, ids));
 }
 
-function application(clientId: string, name: string) {
+function application(name: string) {
+  return { productId: PRODUCT, name, scopes: ['payment:read' as const] };
+}
+
+function credential(applicationId: number, clientId: string) {
   return {
-    productId: PRODUCT,
-    name,
+    applicationId,
+    mode: 'test' as const,
     clientId,
     // Not a credential anybody can use: nothing here authenticates.
     secretHash: `$argon2id$not-a-real-hash$${clientId}`,
     secretLast4: 'zzzz',
-    scopes: ['payment:read' as const],
   };
 }
 
@@ -183,7 +199,7 @@ async function settledPayment(applicationId: number) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
-      id: generateSessionId(false),
+      id: generateSessionId('test'),
       invoiceId: invoice!.id,
       applicationId,
       productId: PRODUCT,

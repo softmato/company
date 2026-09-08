@@ -141,7 +141,7 @@ async function makeSession(allowedProviders: string[] = [PROVIDER]) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
-      id: generateSessionId(false),
+      id: generateSessionId('test'),
       invoiceId,
       productId: PRODUCT,
       customerId,
@@ -345,7 +345,7 @@ describe('startPayment', () => {
     const [session] = await db
       .insert(paymentSessions)
       .values({
-        id: generateSessionId(false),
+        id: generateSessionId('test'),
         invoiceId,
         productId: PRODUCT,
         customerId,

@@ -31,9 +31,10 @@ export default async function ApplicationsPage() {
       </div>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        One credential per product per environment. A credential alone is not
-        enough to use the API: an application may only send customers to, and
-        receive webhooks on, the domains registered against it.
+        One application per integration, holding up to two credential sets —
+        Sandbox and Production. A credential alone is not enough to use the API:
+        it may only send customers to, and receive webhooks on, the domains
+        registered against that credential.
       </p>
 
       {applications.length === 0 ? (
@@ -49,64 +50,84 @@ export default async function ApplicationsPage() {
                 className="block rounded-md border border-border p-4 transition-colors hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="font-medium">
-                    {application.name}{' '}
-                    <span
-                      className={`ml-1 rounded px-1.5 py-0.5 text-xs ${
-                        application.isLive
-                          ? 'bg-primary/10 text-primary'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {application.isLive ? 'live' : 'sandbox'}
-                    </span>
-                    {application.revokedAt ? (
-                      <span className="ml-1 rounded bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">
-                        revoked
-                      </span>
-                    ) : null}
-                  </h2>
+                  <h2 className="font-medium">{application.name}</h2>
 
-                  <code className="font-mono text-xs text-muted-foreground">
-                    {application.clientId}
-                  </code>
+                  <span className="text-xs text-muted-foreground">
+                    {application.productName} · {application.scopes.length}{' '}
+                    scopes
+                  </span>
                 </div>
 
-                <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground">
-                  <div>
-                    <dt className="inline">Product </dt>
-                    <dd className="inline">{application.productName}</dd>
-                  </div>
-                  <div>
-                    <dt className="inline">Secret ends </dt>
-                    <dd className="inline font-mono">
-                      …{application.secretLast4}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="inline">Scopes </dt>
-                    <dd className="inline">{application.scopes.length}</dd>
-                  </div>
-                  <div>
-                    {/*
-                     * Zero is called out rather than shown as a bare count: an
-                     * application with no domains cannot be given a return URL
-                     * or a webhook, so it is misconfigured, not merely empty.
-                     */}
-                    <dt className="inline">Domains </dt>
-                    <dd
-                      className={`inline ${
-                        application.domainCount === 0 && !application.revokedAt
-                          ? 'text-destructive'
-                          : ''
-                      }`}
-                    >
-                      {application.domainCount === 0
-                        ? 'none registered'
-                        : application.domainCount}
-                    </dd>
-                  </div>
-                </dl>
+                {/*
+                 * Both modes are listed, including the one with no credential.
+                 * "Production — not created" is the fact an admin most needs
+                 * off this screen, and the old list could not express it: a
+                 * missing Production credential was simply a row that was not
+                 * there.
+                 */}
+                <ul className="mt-3 space-y-1.5">
+                  {(['test', 'live'] as const).map((mode) => {
+                    const credential = application.credentials.find(
+                      (c) => c.mode === mode,
+                    );
+                    const label = mode === 'live' ? 'Production' : 'Sandbox';
+
+                    return (
+                      <li
+                        key={mode}
+                        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs"
+                      >
+                        <span
+                          className={`rounded px-1.5 py-0.5 ${
+                            mode === 'live'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {label}
+                        </span>
+
+                        {credential ? (
+                          <>
+                            <code className="font-mono text-muted-foreground">
+                              {credential.clientId}
+                            </code>
+                            <span className="text-muted-foreground">
+                              secret ends …{credential.secretLast4}
+                            </span>
+                            {/*
+                             * Zero is called out rather than shown as a bare
+                             * count: a credential with no domains cannot be
+                             * given a return URL or a webhook, so it is
+                             * misconfigured, not merely empty.
+                             */}
+                            <span
+                              className={
+                                credential.domainCount === 0 &&
+                                !credential.revokedAt
+                                  ? 'text-destructive'
+                                  : 'text-muted-foreground'
+                              }
+                            >
+                              {credential.domainCount === 0
+                                ? 'no domains registered'
+                                : `${credential.domainCount} domains`}
+                            </span>
+                            {credential.revokedAt ? (
+                              <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-destructive">
+                                revoked
+                              </span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            not created
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               </Link>
             </li>
           ))}

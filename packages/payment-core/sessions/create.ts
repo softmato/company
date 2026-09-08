@@ -81,7 +81,7 @@ export async function createSession(
   }
 
   const now = new Date();
-  const id = generateSessionId(application.isLive);
+  const id = generateSessionId(application.mode);
 
   const [session] = await tx
     .insert(paymentSessions)
@@ -89,6 +89,7 @@ export async function createSession(
       id,
       invoiceId: invoice.id,
       applicationId: application.id,
+      credentialId: application.credentialId,
       productId: invoice.productId,
       customerId: invoice.customerId,
       amountMinor,

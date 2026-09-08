@@ -131,7 +131,7 @@ async function makePayable(total = GROSS) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
-      id: generateSessionId(false),
+      id: generateSessionId('test'),
       invoiceId: invoice!.id,
       productId: PRODUCT,
       customerId,

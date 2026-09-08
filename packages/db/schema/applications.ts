@@ -1,6 +1,23 @@
 /**
  * schema.sql SECTION 3 — API clients (the SaaS products calling the payment API).
  *
+ * Three tables, and the split between them is the point:
+ *
+ *   * `applications` — what the integration *is*. Its name, its product, what
+ *     it is allowed to do. One row per integration, forever.
+ *   * `application_credentials` — how it authenticates, once per mode. An
+ *     application has at most one Sandbox credential and at most one
+ *     Production credential, and each carries its own secrets, its own webhook
+ *     address and its own signing key.
+ *   * `application_domains` — where a credential may send a customer. Per
+ *     **credential**, not per application.
+ *
+ * Before this, `is_live` was a column on `applications`, so a Sandbox
+ * credential and a Production credential were two unrelated rows with two
+ * unrelated names. Nothing linked them, the list page could not show that a
+ * Production credential was missing, and "mint Sandbox at registration, add
+ * Production later, rotate either from one page" could not be expressed.
+ *
  * `secret_hash` is argon2id. The plaintext secret is shown once, at issue, and
  * never stored. docs/API.md §2.
  */
@@ -10,9 +27,11 @@ import {
   boolean,
   check,
   index,
+  pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
@@ -39,10 +58,10 @@ export type ApplicationScope = (typeof APPLICATION_SCOPES)[number];
  * complete the flow, so leaving them unticked only produces a credential that
  * 403s on its first real call.
  *
- * `refund:request` and `customer:read` are deliberately **not** here. No route
- * reads either one yet, so granting them by default would hand out permissions
- * whose blast radius is decided by code that has not been written. They are
- * one tick away when there is something behind them.
+ * `refund:request` and `customer:read` are deliberately **not** here.
+ * `refund:request` has a route behind it now, but most integrations never
+ * file a refund and the ones that do should be a deliberate tick rather than a
+ * default. `customer:read` still has no route at all.
  *
  * This is a default, not a policy: the form is free to untick any of them, and
  * `registerApplication` still refuses an empty set.
@@ -54,6 +73,19 @@ export const DEFAULT_APPLICATION_SCOPES = [
   'invoice:read',
 ] as const satisfies readonly ApplicationScope[];
 
+/**
+ * `test` and `live` in the column, Sandbox and Production in every word a
+ * human reads.
+ *
+ * The identifiers cannot change: `app_test_…` and `cs_test_…` are already
+ * minted into issued credentials and session ids, and renaming them would
+ * invalidate every one. So the two vocabularies coexist, with a hard rule
+ * about which goes where — see docs/API.md §2.
+ */
+export const credentialMode = pgEnum('credential_mode', ['test', 'live']);
+
+export type CredentialMode = (typeof credentialMode.enumValues)[number];
+
 export const applications = pgTable(
   'applications',
   {
@@ -64,18 +96,63 @@ export const applications = pgTable(
       .notNull()
       .references(() => products.id),
     name: text('name').notNull(),
-    clientId: text('client_id').notNull().unique(), // 'app_live_hostelhub_…'
-    /** argon2id. Never the secret. */
-    secretHash: text('secret_hash').notNull(),
-    secretLast4: text('secret_last4').notNull(),
+    /**
+     * Shared by both credentials, deliberately.
+     *
+     * A scope describes what the integration *does*. It should not silently
+     * differ between the credential somebody tested with and the one they went
+     * live with — that is a class of bug that only ever appears in production,
+     * on the day it matters.
+     */
     scopes: text('scopes')
       .array()
       .$type<ApplicationScope[]>()
       .notNull()
       .default(sql`'{}'`),
-    webhookUrl: text('webhook_url'),
-    /** Signs outbound events. Never reaches a client bundle. */
-    webhookSecret: text('webhook_secret'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index('applications_product_idx').on(t.productId),
+    check(
+      'scopes_known',
+      sql`${t.scopes} <@ ARRAY['payment:create','payment:read','invoice:create','invoice:read','refund:request','customer:read']::TEXT[]`,
+    ),
+  ],
+);
+
+export type Application = typeof applications.$inferSelect;
+
+/**
+ * One application's credential for one mode.
+ *
+ * `UNIQUE (application_id, mode)` is what makes "an application has a Sandbox
+ * credential and a Production credential" a fact the database enforces rather
+ * than a convention the UI hopes for. Minting a second Production credential
+ * for the same application is a constraint violation, not a duplicate row
+ * somebody notices later.
+ *
+ * **Revocation is per credential.** `revoked_at` lives here, not on
+ * `applications`, so killing a Sandbox credential leaves Production
+ * authenticating and vice versa. `applications.is_active` still turns the
+ * whole integration off.
+ */
+export const applicationCredentials = pgTable(
+  'application_credentials',
+  {
+    id: bigint('id', { mode: 'number' })
+      .generatedAlwaysAsIdentity()
+      .primaryKey(),
+    applicationId: bigint('application_id', { mode: 'number' })
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    mode: credentialMode('mode').notNull(),
+    clientId: text('client_id').notNull().unique(), // 'app_live_hostelhub_…'
+    /** argon2id. Never the secret. */
+    secretHash: text('secret_hash').notNull(),
+    secretLast4: text('secret_last4').notNull(),
     /**
      * Rotation overlap (docs/API.md §2): the superseded secret keeps working
      * for 24 hours so a SaaS can redeploy without a window of 401s. Three
@@ -87,8 +164,9 @@ export const applications = pgTable(
     previousSecretExpiresAt: timestamp('previous_secret_expires_at', {
       withTimezone: true,
     }),
-    isLive: boolean('is_live').notNull().default(false),
-    isActive: boolean('is_active').notNull().default(true),
+    /** Signs outbound events. Never reaches a client bundle. */
+    webhookSecret: text('webhook_secret'),
+    webhookUrl: text('webhook_url'),
     rotatedAt: timestamp('rotated_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true })
@@ -96,25 +174,41 @@ export const applications = pgTable(
       .defaultNow(),
   },
   (t) => [
-    index('applications_product_idx').on(t.productId),
+    unique('application_credentials_mode_key').on(t.applicationId, t.mode),
+    index('application_credentials_application_idx').on(t.applicationId),
     check(
       'previous_secret_complete',
       sql`(${t.previousSecretHash} IS NULL AND ${t.previousSecretLast4} IS NULL AND ${t.previousSecretExpiresAt} IS NULL)
           OR (${t.previousSecretHash} IS NOT NULL AND ${t.previousSecretLast4} IS NOT NULL AND ${t.previousSecretExpiresAt} IS NOT NULL)`,
     ),
+    /*
+     * The prefix and the column must agree.
+     *
+     * `generateClientId` builds `app_<mode>_<product>_<handle>`, so the mode is
+     * already spelled inside the identifier that goes out to an integrator and
+     * into our logs. Two places holding the same fact is two places to
+     * disagree, and the disagreement would be invisible: a row labelled `test`
+     * handing out a client id that reads `app_live_…`. The database refuses it
+     * instead.
+     */
     check(
-      'scopes_known',
-      sql`${t.scopes} <@ ARRAY['payment:create','payment:read','invoice:create','invoice:read','refund:request','customer:read']::TEXT[]`,
+      'client_id_matches_mode',
+      sql`${t.clientId} LIKE 'app_' || ${t.mode}::TEXT || '\\_%'`,
     ),
   ],
 );
 
-export type Application = typeof applications.$inferSelect;
+export type ApplicationCredential = typeof applicationCredentials.$inferSelect;
 
 /**
- * The hostnames an application is allowed to send people to, and to receive
+ * The hostnames a credential is allowed to send people to, and to receive
  * webhooks on. A secret answers "who is this"; this table answers "and where
  * may they send my customer".
+ *
+ * **Per credential, not per application.** A Sandbox integration points at
+ * staging hosts and a Production one at real hosts, and letting a test
+ * credential send a customer to the production site is exactly the confusion
+ * this table exists to prevent.
  *
  * Written by an admin, signed in, in advance. Never sent by the caller and
  * never inferred from a request — a caller who can name their own return
@@ -136,9 +230,9 @@ export const applicationDomains = pgTable(
     id: bigint('id', { mode: 'number' })
       .generatedAlwaysAsIdentity()
       .primaryKey(),
-    applicationId: bigint('application_id', { mode: 'number' })
+    credentialId: bigint('credential_id', { mode: 'number' })
       .notNull()
-      .references(() => applications.id, { onDelete: 'cascade' }),
+      .references(() => applicationCredentials.id, { onDelete: 'cascade' }),
     /** `questioncall.com` — lowercase punycode, no scheme, port or path. */
     hostname: text('hostname').notNull(),
     /** Why it is on the list, for the admin reading it in a year. */
@@ -150,8 +244,8 @@ export const applicationDomains = pgTable(
     createdBy: text('created_by'),
   },
   (t) => [
-    uniqueIndex('application_domains_unique').on(t.applicationId, t.hostname),
-    index('application_domains_application_idx').on(t.applicationId),
+    uniqueIndex('application_domains_unique').on(t.credentialId, t.hostname),
+    index('application_domains_credential_idx').on(t.credentialId),
     /*
      * The shape rules live in the database, not only in the form that writes
      * them. A hostname that arrived through a script, a migration or a psql
