@@ -28,7 +28,11 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { products } from './accounts';
-import { applicationCredentials, applications } from './applications';
+import {
+  applicationCredentials,
+  applications,
+  credentialMode,
+} from './applications';
 import { customers } from './customers';
 import { invoices } from './invoices';
 import { journalEntries } from './ledger';
@@ -71,6 +75,25 @@ export const paymentSessions = pgTable(
     credentialId: bigint('credential_id', { mode: 'number' }).references(
       () => applicationCredentials.id,
     ),
+    /**
+     * Sandbox or Production — decided once, by the credential that opened this
+     * session, and never re-derived afterwards.
+     *
+     * Three of the four ways a payment is touched carry no credential to
+     * inspect: the customer's browser arrives holding a session id, the
+     * gateway's callback holds a provider reference, and the retry job holds
+     * neither. They can only read what the row records, so the decision has to
+     * be written here at creation.
+     *
+     * It is not cosmetic. It selects which of a provider's two credential sets
+     * the payment is transacted against, which is the difference between a
+     * test payment and one that moves real money.
+     *
+     * Deliberately not derived from the `cs_test_` prefix at read time. That
+     * prefix is a label on an identifier; this is the routing decision, and
+     * reading one as the other is how they drift apart.
+     */
+    mode: credentialMode('mode').notNull(),
     productId: text('product_id')
       .notNull()
       .references(() => products.id),
@@ -145,6 +168,14 @@ export const transactions = pgTable(
     credentialId: bigint('credential_id', { mode: 'number' }).references(
       () => applicationCredentials.id,
     ),
+    /**
+     * Carried down from the session, and the only thing a confirmation has to
+     * go on: `confirmTransaction` runs on a gateway callback where no
+     * credential is presented, and chooses its adapter from this column. A
+     * transaction that does not know its own mode would be verified against
+     * whichever gateway the deployment happened to prefer.
+     */
+    mode: credentialMode('mode').notNull(),
     productId: text('product_id')
       .notNull()
       .references(() => products.id),

@@ -78,6 +78,13 @@
       "when": 1788877541905,
       "tag": "0010_previous_secret_last_used",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788887200663,
+      "tag": "0011_payment_mode_on_rows",
+      "breakpoints": true
     }
   ]
 }

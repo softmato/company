@@ -50,7 +50,12 @@ export async function confirmTransaction(
     );
   }
 
-  const adapter = providerAdapter(transaction.providerId);
+  /*
+   * From the row, because there is nothing else to ask. This runs on a gateway
+   * callback and on the retry job, neither of which presents a credential, so
+   * `transaction.mode` is the only record of which gateway took this payment.
+   */
+  const adapter = providerAdapter(transaction.providerId, transaction.mode);
   const verified = await adapter.poll(transaction);
 
   /*

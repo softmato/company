@@ -172,7 +172,13 @@ async function offerable(session: PaymentSession): Promise<CheckoutProvider[]> {
 
   if (allowed.length === 0) return [];
 
-  const registered = new Set<string>(availableProviders());
+  /*
+   * The session's own mode, not the deployment's. A Sandbox session may only
+   * be offered providers whose sandbox credentials are configured, and a
+   * Production one only those with live credentials — a deployment can be
+   * missing either.
+   */
+  const registered = new Set<string>(availableProviders(session.mode));
 
   const rows = await db
     .select({

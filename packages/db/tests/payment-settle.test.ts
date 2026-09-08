@@ -132,6 +132,7 @@ async function makePayable(total = GROSS) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
+      mode: 'test',
       id: generateSessionId('test'),
       invoiceId: invoice!.id,
       productId: PRODUCT,
@@ -148,6 +149,7 @@ async function makePayable(total = GROSS) {
   const [txn] = await db
     .insert(transactions)
     .values({
+      mode: 'test',
       txnNo: `TXN-${FY}-D${String(unique).slice(-7)}`,
       sessionId: session!.id,
       invoiceId: invoice!.id,

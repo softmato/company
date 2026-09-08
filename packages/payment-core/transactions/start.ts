@@ -78,7 +78,12 @@ export async function startPayment(
     };
   }
 
-  const adapter = providerAdapter(input.providerId);
+  /*
+   * The session decides which gateway this is, not the deployment. A Sandbox
+   * session transacts against the provider's sandbox credentials and a
+   * Production one against its live credentials, on the same deployment.
+   */
+  const adapter = providerAdapter(input.providerId, session.mode);
 
   /*
    * ⚠ Ordering to revisit with the first real gateway.
@@ -111,6 +116,14 @@ export async function startPayment(
       // Carried down so the settlement webhook reaches the credential that
       // opened the session rather than whichever one we guessed at later.
       credentialId: session.credentialId,
+      /*
+       * Carried down for a different reason than `credentialId` is: the
+       * confirmation arrives from the gateway with no credential attached and
+       * picks its adapter from this column. A transaction that did not know
+       * its own mode would be polled against whichever gateway happened to be
+       * registered first.
+       */
+      mode: session.mode,
       productId: session.productId,
       customerId: session.customerId,
       providerId: input.providerId,

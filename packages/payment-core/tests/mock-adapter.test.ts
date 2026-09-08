@@ -28,11 +28,11 @@ describe('identity', () => {
     resetProviderRegistry();
 
     for (const id of ['esewa', 'khalti', 'fonepay'] as const) {
-      registerProvider(new MockProviderAdapter({ id }));
+      registerProvider(new MockProviderAdapter({ id }), 'test');
     }
 
-    expect(providerAdapter('esewa').id).toBe('esewa');
-    expect(providerAdapter('khalti').id).toBe('khalti');
+    expect(providerAdapter('esewa', 'test').id).toBe('esewa');
+    expect(providerAdapter('khalti', 'test').id).toBe('khalti');
 
     resetProviderRegistry();
   });

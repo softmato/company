@@ -90,6 +90,7 @@ async function makeSession(options: {
   const [session] = await db
     .insert(paymentSessions)
     .values({
+      mode: 'test',
       id: generateSessionId('test'),
       invoiceId,
       productId: PRODUCT,

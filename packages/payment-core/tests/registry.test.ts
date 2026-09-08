@@ -30,10 +30,10 @@ describe('provider registry', () => {
 
   it('resolves a registered adapter', () => {
     const primary = stub('fonepay');
-    registerProvider(primary);
+    registerProvider(primary, 'test');
 
-    expect(providerAdapter('fonepay')).toBe(primary);
-    expect(hasProvider('fonepay')).toBe(true);
+    expect(providerAdapter('fonepay', 'test')).toBe(primary);
+    expect(hasProvider('fonepay', 'test')).toBe(true);
   });
 
   /**
@@ -42,10 +42,10 @@ describe('provider registry', () => {
    * 502 the moment it is resolved than a customer sent into a dead flow.
    */
   it('refuses a provider that is configured but not implemented', () => {
-    expect(() => providerAdapter('khalti')).toThrow(PaymentError);
+    expect(() => providerAdapter('khalti', 'test')).toThrow(PaymentError);
 
     try {
-      providerAdapter('khalti');
+      providerAdapter('khalti', 'test');
     } catch (err) {
       expect((err as PaymentError).code).toBe('PROVIDER_UNAVAILABLE');
     }
@@ -53,7 +53,7 @@ describe('provider registry', () => {
 
   it('rejects an id that is not a provider at all', () => {
     try {
-      providerAdapter('paypal');
+      providerAdapter('paypal', 'test');
       expect.unreachable('should have thrown');
     } catch (err) {
       expect((err as PaymentError).code).toBe('VALIDATION_FAILED');
@@ -63,14 +63,70 @@ describe('provider registry', () => {
   // Two modules each believing they own a provider is a wiring bug whose only
   // other symptom is payments going to whichever one imported last.
   it('refuses a double registration rather than overwriting', () => {
-    registerProvider(stub('esewa'));
+    registerProvider(stub('esewa'), 'test');
 
-    expect(() => registerProvider(stub('esewa'))).toThrow(PaymentError);
-    expect(registeredProviders()).toEqual(['esewa']);
+    expect(() => registerProvider(stub('esewa'), 'test')).toThrow(PaymentError);
+    expect(registeredProviders('test')).toEqual(['esewa']);
   });
 
   it('reports nothing registered on a bare registry', () => {
-    expect(registeredProviders()).toEqual([]);
-    expect(hasProvider('fonepay')).toBe(false);
+    expect(registeredProviders('test')).toEqual([]);
+    expect(registeredProviders('live')).toEqual([]);
+    expect(hasProvider('fonepay', 'test')).toBe(false);
+  });
+
+  // ── The mode is part of the identity ──────────────────────────────────────
+
+  /**
+   * eSewa's sandbox and eSewa's production are two sets of credentials
+   * pointed at two hosts. Registering both is the normal arrangement on a
+   * deployment that serves Sandbox and Production integrators at once, so it
+   * must not read as the double-registration wiring bug above.
+   */
+  it('keeps the same provider separate in each mode', () => {
+    const sandbox = stub('esewa');
+    const production = stub('esewa');
+
+    registerProvider(sandbox, 'test');
+    registerProvider(production, 'live');
+
+    expect(providerAdapter('esewa', 'test')).toBe(sandbox);
+    expect(providerAdapter('esewa', 'live')).toBe(production);
+    expect(providerAdapter('esewa', 'test')).not.toBe(
+      providerAdapter('esewa', 'live'),
+    );
+  });
+
+  /**
+   * **The property this whole arrangement exists for.**
+   *
+   * A deployment holding only sandbox credentials genuinely cannot take a
+   * Production payment, and the honest answer is to refuse. Falling back to
+   * the mode that happens to be configured would send a real customer's money
+   * through eSewa's test gateway, or — in the other direction — sign a test
+   * payment with a live key.
+   */
+  it('refuses the mode it has nothing for, rather than falling back', () => {
+    registerProvider(stub('esewa'), 'test');
+
+    expect(hasProvider('esewa', 'test')).toBe(true);
+    expect(hasProvider('esewa', 'live')).toBe(false);
+
+    try {
+      providerAdapter('esewa', 'live');
+      expect.unreachable('a sandbox-only registry must not serve live');
+    } catch (err) {
+      expect((err as PaymentError).code).toBe('PROVIDER_UNAVAILABLE');
+      expect((err as PaymentError).message).toContain('live');
+    }
+  });
+
+  it('lists each mode separately', () => {
+    registerProvider(stub('esewa'), 'test');
+    registerProvider(stub('khalti'), 'test');
+    registerProvider(stub('esewa'), 'live');
+
+    expect(registeredProviders('test').sort()).toEqual(['esewa', 'khalti']);
+    expect(registeredProviders('live')).toEqual(['esewa']);
   });
 });

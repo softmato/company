@@ -96,6 +96,33 @@ const serverSchema = z.object({
   KHALTI_BASE_URL: blankAsUnset(z.string().url()),
   KHALTI_ENV: providerEnv(),
 
+  /*
+   * Per-mode gateway credentials.
+   *
+   * A deployment holds both sets at once, because which one a payment uses is
+   * decided by the credential that opened it rather than by the deployment.
+   * A Sandbox credential transacts against the `*_SANDBOX_*` values, a
+   * Production credential against the `*_LIVE_*` ones.
+   *
+   * **The unprefixed variables above are the Sandbox set.** They are not
+   * deprecated-and-ignored: every deployment already sets them, they already
+   * hold sandbox values, and renaming them would have meant editing Vercel's
+   * environment before the next deploy could boot. `*_SANDBOX_*` overrides
+   * them where both are present, so the migration can happen whenever, or
+   * never.
+   *
+   * `*_ENV` no longer selects a host — the mode does. It is kept because
+   * existing environments set it and its guard below still catches a confused
+   * configuration.
+   */
+  ESEWA_SANDBOX_MERCHANT_CODE: z.string().optional(),
+  ESEWA_SANDBOX_SECRET_KEY: z.string().optional(),
+  ESEWA_LIVE_MERCHANT_CODE: z.string().optional(),
+  ESEWA_LIVE_SECRET_KEY: z.string().optional(),
+
+  KHALTI_SANDBOX_SECRET_KEY: z.string().optional(),
+  KHALTI_LIVE_SECRET_KEY: z.string().optional(),
+
   COMPANY_NAME: z.string().default('Softmato Technology Pvt Ltd'),
 
   /*
@@ -224,16 +251,22 @@ if (env.APP_ENV === 'preview' && env.PAYMENT_MODE === 'live') {
  * adapter that throws the moment somebody tries to pay. Catching it here turns
  * a failed checkout into a failed deploy.
  */
-const ESEWA_KEYS = ['ESEWA_MERCHANT_CODE', 'ESEWA_SECRET_KEY'] as const;
+const ESEWA_PAIRS = [
+  ['ESEWA_MERCHANT_CODE', 'ESEWA_SECRET_KEY'],
+  ['ESEWA_SANDBOX_MERCHANT_CODE', 'ESEWA_SANDBOX_SECRET_KEY'],
+  ['ESEWA_LIVE_MERCHANT_CODE', 'ESEWA_LIVE_SECRET_KEY'],
+] as const;
 
-const esewaSet = ESEWA_KEYS.filter((key) => env[key]);
+for (const pair of ESEWA_PAIRS) {
+  const set = pair.filter((key) => env[key]);
 
-if (esewaSet.length > 0 && esewaSet.length < ESEWA_KEYS.length) {
-  const missing = ESEWA_KEYS.filter((key) => !env[key]);
-  throw new Error(
-    `eSewa is partially configured. Missing: ${missing.join(', ')}. ` +
-      'Set both or neither — a half-configured provider fails at checkout.',
-  );
+  if (set.length > 0 && set.length < pair.length) {
+    const missing = pair.filter((key) => !env[key]);
+    throw new Error(
+      `eSewa is partially configured. Missing: ${missing.join(', ')}. ` +
+        'Set both or neither — a half-configured provider fails at checkout.',
+    );
+  }
 }
 
 /**

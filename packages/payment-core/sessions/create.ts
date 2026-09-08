@@ -90,6 +90,13 @@ export async function createSession(
       invoiceId: invoice.id,
       applicationId: application.id,
       credentialId: application.credentialId,
+      /*
+       * The same value that shaped the id above, written down rather than left
+       * to be read back out of the prefix. Everything downstream of this
+       * insert -- the checkout page, the gateway callback, the retry job --
+       * arrives without a credential and reads this column instead.
+       */
+      mode: application.mode,
       productId: invoice.productId,
       customerId: invoice.customerId,
       amountMinor,

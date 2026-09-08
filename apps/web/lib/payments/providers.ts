@@ -44,10 +44,15 @@ import {
   type ProviderId,
 } from '@softmato/payment-core';
 
+import type { CredentialMode } from '@softmato/db';
+
 import { env } from '@/lib/env';
 
 /** Which providers a mock deployment stands in for. Never Fonepay. */
 const MOCKABLE: readonly ProviderId[] = ['esewa', 'khalti'];
+
+/** Both credential sets are registered on every deployment that has them. */
+const MODES: readonly CredentialMode[] = ['test', 'live'];
 
 /**
  * Registers an adapter unless the registry already has one for that id.
@@ -66,10 +71,10 @@ const MOCKABLE: readonly ProviderId[] = ['esewa', 'khalti'];
  * on. This function is not that case. It is the single declared owner of
  * registration asking whether it has already done its own work.
  */
-function registerIfAbsent(adapter: ProviderAdapter): void {
-  if (hasProvider(adapter.id)) return;
+function registerIfAbsent(adapter: ProviderAdapter, mode: CredentialMode): void {
+  if (hasProvider(adapter.id, mode)) return;
 
-  registerProvider(adapter);
+  registerProvider(adapter, mode);
 }
 
 /**
@@ -88,7 +93,15 @@ export function ensureProvidersRegistered(): void {
    * was already there — and treating that as "nobody can pay" would turn a
    * correctly configured deployment into a boot failure on its second request.
    */
-  if (registeredProviders().length === 0) {
+  /*
+   * Both modes, because a deployment configured for only one of them is
+   * normal and correct: production holds sandbox credentials today and will
+   * hold live ones later. Nobody can pay only when neither mode has anything.
+   */
+  if (
+    registeredProviders('test').length === 0 &&
+    registeredProviders('live').length === 0
+  ) {
     /*
      * Nobody can pay. Worth failing on rather than discovering at a checkout
      * page, because every symptom downstream of it is misleading: the session
@@ -104,9 +117,62 @@ export function ensureProvidersRegistered(): void {
 }
 
 function registerMocks(): void {
-  for (const id of MOCKABLE) {
-    registerIfAbsent(new MockProviderAdapter({ id }));
+  for (const mode of MODES) {
+    for (const id of MOCKABLE) {
+      registerIfAbsent(new MockProviderAdapter({ id }), mode);
+    }
   }
+}
+
+/**
+ * eSewa's credentials for one mode, or `null` when that mode is not configured.
+ *
+ * Sandbox reads the `*_SANDBOX_*` pair and falls back to the unprefixed one,
+ * which is where every existing deployment's sandbox values already live.
+ * Production reads only `*_LIVE_*`: there is no fallback, because the fallback
+ * would be a sandbox key signing real payments.
+ */
+function esewaConfig(mode: CredentialMode) {
+  if (mode === 'live') {
+    const merchantCode = env.ESEWA_LIVE_MERCHANT_CODE;
+    const secretKey = env.ESEWA_LIVE_SECRET_KEY;
+
+    return merchantCode && secretKey
+      ? { merchantCode, secretKey, env: 'live' as const }
+      : null;
+  }
+
+  const merchantCode =
+    env.ESEWA_SANDBOX_MERCHANT_CODE ?? env.ESEWA_MERCHANT_CODE;
+  const secretKey = env.ESEWA_SANDBOX_SECRET_KEY ?? env.ESEWA_SECRET_KEY;
+
+  return merchantCode && secretKey
+    ? {
+        merchantCode,
+        secretKey,
+        env: 'sandbox' as const,
+        ...(env.ESEWA_BASE_URL ? { baseUrl: env.ESEWA_BASE_URL } : {}),
+      }
+    : null;
+}
+
+/** Khalti's, on the same rule. */
+function khaltiConfig(mode: CredentialMode) {
+  if (mode === 'live') {
+    const secretKey = env.KHALTI_LIVE_SECRET_KEY;
+
+    return secretKey ? { secretKey, env: 'live' as const } : null;
+  }
+
+  const secretKey = env.KHALTI_SANDBOX_SECRET_KEY ?? env.KHALTI_SECRET_KEY;
+
+  return secretKey
+    ? {
+        secretKey,
+        env: 'sandbox' as const,
+        ...(env.KHALTI_BASE_URL ? { baseUrl: env.KHALTI_BASE_URL } : {}),
+      }
+    : null;
 }
 
 /**
@@ -118,17 +184,19 @@ function registerMocks(): void {
  * makes "absent" mean *not offered* instead of *offered and broken*.
  */
 function registerReal(): void {
-  // Checked as a pair; `lib/env.ts` has already refused a half-configured one.
-  if (
-    env.ESEWA_MERCHANT_CODE &&
-    env.ESEWA_SECRET_KEY &&
-    !hasProvider('esewa')
-  ) {
-    registerProvider(new EsewaProviderAdapter());
-  }
+  for (const mode of MODES) {
+    // Checked as a pair; `lib/env.ts` has already refused a half-configured one.
+    const esewa = esewaConfig(mode);
 
-  if (env.KHALTI_SECRET_KEY && !hasProvider('khalti')) {
-    registerProvider(new KhaltiProviderAdapter());
+    if (esewa && !hasProvider('esewa', mode)) {
+      registerProvider(new EsewaProviderAdapter(esewa), mode);
+    }
+
+    const khalti = khaltiConfig(mode);
+
+    if (khalti && !hasProvider('khalti', mode)) {
+      registerProvider(new KhaltiProviderAdapter(khalti), mode);
+    }
   }
 }
 
@@ -141,8 +209,8 @@ function registerReal(): void {
  * render a button that throws — so the intersection, not either list alone, is
  * what gets drawn.
  */
-export function availableProviders(): ProviderId[] {
+export function availableProviders(mode: CredentialMode): ProviderId[] {
   ensureProvidersRegistered();
 
-  return registeredProviders();
+  return registeredProviders(mode);
 }

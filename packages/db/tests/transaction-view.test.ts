@@ -200,6 +200,7 @@ async function settledPayment(applicationId: number) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
+      mode: 'test',
       id: generateSessionId('test'),
       invoiceId: invoice!.id,
       applicationId,
@@ -217,6 +218,7 @@ async function settledPayment(applicationId: number) {
   const [txn] = await db
     .insert(transactions)
     .values({
+      mode: 'test',
       txnNo: `TXN-${FY}-V${String(unique).slice(-7)}`,
       sessionId: session!.id,
       invoiceId: invoice!.id,

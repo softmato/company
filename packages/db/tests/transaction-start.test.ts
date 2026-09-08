@@ -82,7 +82,7 @@ const audit = async (entry: AuditRecord): Promise<void> => {
 
 beforeAll(async () => {
   resetProviderRegistry();
-  registerProvider(stubAdapter);
+  registerProvider(stubAdapter, 'test');
 
   /*
    * Upserted, not `onConflictDoNothing`. These fixture rows outlive a run —
@@ -141,6 +141,7 @@ async function makeSession(allowedProviders: string[] = [PROVIDER]) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
+      mode: 'test',
       id: generateSessionId('test'),
       invoiceId,
       productId: PRODUCT,
@@ -345,6 +346,7 @@ describe('startPayment', () => {
     const [session] = await db
       .insert(paymentSessions)
       .values({
+        mode: 'test',
         id: generateSessionId('test'),
         invoiceId,
         productId: PRODUCT,
