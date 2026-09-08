@@ -751,7 +751,122 @@ Production.
 
 ---
 
-## ☐ 7. Rebuild the application detail page
+## ☑ 7. Rebuild the application detail page
+
+> **Done 2026-09-08, over three passes, the first two of which failed.** The
+> founder drove the page in their own admin session and sent screenshots; this
+> item was not marked on code review.
+>
+> ### What it is now
+>
+> Each panel is **Keys, Delivery, Domains, Danger**, headed "Sandbox
+> credentials" / "Production credentials".
+>
+> **Keys** is a table and answers "what have I got" with no form on screen:
+> the count stated (`two secrets · one public id`), then client id, client
+> secret and signing secret. **Delivery** is the webhook URL. **Domains** is
+> unchanged. **Danger** holds reveal, rotate-signing, rotate-client and revoke,
+> each closed behind its own button.
+>
+> What each key is _for_ lives in `key-legend.tsx`, a sticky rail at the right
+> of the page in the `TocRail` shape the legal and `/developers` pages already
+> use — said once, in the margin, instead of once per row and therefore twice
+> per page.
+>
+> ### The first pass failed, and the founder's word for it was "confusing"
+>
+> It was the accurate word. Adding headings to a flat column does not fix a
+> flat column. With both credentials present the page rendered about ten forms
+> and — because every Production action carries its own password and
+> authenticator fields — **six "Your password / Authenticator code" pairs
+> visible at once**, which reads as six different passwords rather than one
+> asked six times. Collapsing the actions is what fixed it; nothing else came
+> close.
+>
+> **`Collapsible` never closes itself.** A rotation's one-time secret and a
+> reveal's key are rendered by the form inside, so auto-closing on success
+> would throw away the only copy an admin will ever see. Cancel is the only
+> thing that unmounts one, which doubles as the way to clear a revealed secret
+> off the screen.
+>
+> ### Two defects the screenshots caught that no gate would have
+>
+> **The browser was writing the admin's email into the form.** Both screenshots
+> had `sidd@softmato.com` sitting in the Production webhook URL field and in
+> the type-the-name-to-revoke field. Chrome ignores `autocomplete="off"` on a
+> password input, decides any form containing one is a sign-in form, and fills
+> the account email into the nearest text input above it. `ReauthFields` now
+> uses `autocomplete="new-password"`, which is the documented way to say "not
+> the credential you have saved". **Unverified in a browser** — it needs a
+> real password manager, so confirm it on the next look.
+>
+> **A `500` shipped in the previous commit and every gate was green.**
+> `credential-panel.tsx` is a client component, and importing
+> `CREDENTIAL_MODE_LABEL` by value from `@softmato/db` pulled `pg` — and so
+> `dns`, `net`, `tls`, `fs` — into the browser bundle. `tsc` was happy, ESLint
+> was happy, 667 tests were happy: the failure exists only inside the bundler,
+> and the only way to see it is to load the page, which needs a password and a
+> TOTP code. `apps/web/tests/client-boundary.test.ts` now fails on any
+> `'use client'` file that imports a db value; it was checked by reintroducing
+> the exact broken import and watching it name the file. **`pnpm build` is part
+> of the gates for UI work from here** — it is what exercises every route's
+> client graph.
+>
+> ### The Sandbox signing secret is printed, and that is a trade
+>
+> Asked for directly. A Sandbox credential is not gated, so the Reveal click
+> asked nothing and refused nothing. What it also did was keep the key out of
+> screenshots — which the founder's own screenshot then demonstrated by putting
+> the `softmato-dev` Sandbox signing secret into a chat log. Production is
+> untouched: still behind Reveal, still re-authenticated, still audited.
+>
+> The read is a second named query, `sandboxSigningSecret`, rather than a
+> widened `credentialColumns` — that object exists so a `select()` cannot start
+> leaking a secret the day a column is added — and the `mode = 'test'` check is
+> in the `WHERE` clause rather than in the caller, because a guard the caller
+> must remember is one that is eventually forgotten. **It is not audited**: a
+> page render is not an event, and auditing it would put a row in the log every
+> time the screen opens and bury the Production reads that matter.
+>
+> ### The client secret cannot be shown, and was asked for
+>
+> "We should also reveal the client secret as this is just sandbox." It cannot
+> be done in either mode. `secret_hash` is argon2id and argon2 salts every
+> hash, so there is no query, no key and no admin route that produces the
+> plaintext — Sandbox is not a special case, it is the same column. The panel
+> says so in a sentence and points at rotation, which for Sandbox asks for
+> nothing. Making it readable would mean storing it reversibly, which is a
+> change to how the payment API authenticates and belongs to the founder, not
+> to a session.
+>
+> ### Verified
+>
+> Two of the three states the plan asks for, seen in the founder's own admin
+> session on `softmato-dev`:
+>
+>     both credentials       ✔ screenshot
+>     Production revoked     ✔ screenshot
+>     Sandbox only           ✘ not captured
+>
+> The third **cannot be produced on that application any more**, and that is
+> what turned up the bug below: application 1 now carries a revoked Production
+> credential, and before migration 0009 a revoked credential held its mode's
+> slot for good.
+>
+> **Revoking Production was a dead end**, which the founder found by asking how
+> to undo it. `UNIQUE (application_id, mode)` counted revoked rows, so the
+> panel had no button and `addCredential` refused; the only routes back were a
+> new application or an `UPDATE` by hand. Migration `0009` makes the index
+> partial, the panel offers a replacement, and the dead credentials are listed
+> underneath as a footnote so an old client id in a log still resolves to
+> something on screen. `packages/db/tests/credential-slot.test.ts` covers it.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force`, `pnpm build`
+> and `pnpm legal:check` all pass. Formatting checked on the staged bytes.
+>
+> **Still worth a look when the founder is next signed in:** the rail at `lg`
+> and above, the autofill fix, and a fresh application showing the Sandbox-only
+> state.
 
 The current page puts four different kinds of thing in one flat column with
 identical visual weight — read-only facts, routine settings, secret
