@@ -94,6 +94,12 @@ export type CredentialMode = (typeof credentialMode.enumValues)[number];
  * of them left saying "live" is how a vocabulary rots. A lookup cannot be
  * half-applied — either a call site uses it or the reviewer can see that it
  * does not.
+ *
+ * **Server-side only, like everything else in this package.** `index.ts`
+ * re-exports the `pg` client, so a `'use client'` file that imports this by
+ * value drags `dns`, `net`, `tls` and `fs` into the browser bundle and the
+ * page 500s. Client components take the finished word as a prop; only
+ * `import type` crosses that line.
  */
 export const CREDENTIAL_MODE_LABEL: Record<CredentialMode, string> = {
   test: 'Sandbox',

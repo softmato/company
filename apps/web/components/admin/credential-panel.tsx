@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 
-import { CREDENTIAL_MODE_LABEL, type CredentialMode } from '@softmato/db';
+import type { CredentialMode } from '@softmato/db';
 
 import {
   addCredentialAction,
@@ -40,42 +40,54 @@ import { SubmitButton } from '@/components/admin/submit-button';
  * **The password and code fields appear only on a Production credential.** The
  * decision is made again on the server, from the row rather than from the
  * form — this is which fields to draw, not whether the check runs.
+ *
+ * **`label` arrives as a prop and is never derived here.** This file is a
+ * client component, and `CREDENTIAL_MODE_LABEL` lives in `@softmato/db`,
+ * whose entry point re-exports the `pg` client — importing the value would
+ * pull `dns`, `net`, `tls` and `fs` into the browser bundle and the page
+ * would 500 before rendering a byte. Only `import type` is safe from here.
+ * The server page does the lookup and passes the word down.
  */
 export function CredentialPanel({
   applicationId,
   applicationName,
   mode,
+  label,
   credential,
   domains,
 }: {
   applicationId: number;
   applicationName: string;
   mode: CredentialMode;
+  label: string;
   credential: CredentialSummary | undefined;
   domains: DomainRow[];
 }) {
   const isLive = mode === 'live';
-  const label = CREDENTIAL_MODE_LABEL[mode];
 
   return (
     <section
       aria-labelledby={`credential-${mode}`}
       className="rounded-md border border-border p-4"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      {/*
+       * The heading carries the state and nothing else. The client id used to
+       * sit up here, opposite it, which read as a subtitle for the panel when
+       * it is really the first fact under Identity — and it left Identity with
+       * no heading of its own while the other three blocks had one. Four
+       * labelled blocks is the point of this page: an admin should be able to
+       * see that there are exactly four kinds of thing here before reading a
+       * word of them.
+       */}
+      <div className="flex flex-wrap items-center gap-2">
         <h2 id={`credential-${mode}`} className="text-lg font-medium">
           {label}
-          {credential?.revokedAt ? (
-            <span className="ml-2 rounded bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">
-              revoked
-            </span>
-          ) : null}
         </h2>
 
-        {credential ? (
-          <code className="font-mono text-xs text-muted-foreground">
-            {credential.clientId}
-          </code>
+        {credential?.revokedAt ? (
+          <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
+            revoked
+          </span>
         ) : null}
       </div>
 
@@ -152,17 +164,19 @@ function Identity({ credential }: { credential: CredentialSummary }) {
     credential.previousSecretExpiresAt > new Date();
 
   return (
-    <div className="mt-4 border-t border-border pt-4">
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+    <div className="mt-5 border-t border-border pt-4">
+      <h3 className="text-sm font-medium">Identity</h3>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
+        <div className="col-span-2">
+          <dt className="inline">Client id </dt>
+          <dd className="inline font-mono text-foreground">
+            {credential.clientId}
+          </dd>
+        </div>
         <div>
           <dt className="inline">Secret ends </dt>
           <dd className="inline font-mono">…{credential.secretLast4}</dd>
-        </div>
-        <div>
-          <dt className="inline">Signing secret </dt>
-          <dd className="inline">
-            {credential.hasWebhookSecret ? 'set' : 'none'}
-          </dd>
         </div>
         <div>
           <dt className="inline">Created </dt>
@@ -212,8 +226,18 @@ function Delivery({
   const [state, action] = useActionState(setWebhookUrlAction, undefined);
 
   return (
-    <div className="mt-4 border-t border-border pt-4">
+    <div className="mt-5 border-t border-border pt-4">
       <h3 className="text-sm font-medium">Delivery</h3>
+      {/*
+       * Whether a signing secret exists is stated here rather than in
+       * Identity, where it also used to appear. It is a fact about delivery,
+       * and two places holding it meant two places to read a different
+       * answer from.
+       */}
+      <p className="mt-1 text-xs text-muted-foreground">
+        Where signed payment events are posted, and the key they are signed
+        with.
+      </p>
 
       <form action={action} className="mt-3">
         <input type="hidden" name="credentialId" value={credential.id} />
@@ -286,7 +310,7 @@ function Domains({
   label: string;
 }) {
   return (
-    <div className="mt-4 border-t border-border pt-4">
+    <div className="mt-5 border-t border-border pt-4">
       <h3 className="text-sm font-medium">Domains</h3>
       <p className="mt-1 text-xs text-muted-foreground">
         Exact hostnames, no wildcards. A subdomain is a different host and needs
@@ -314,7 +338,13 @@ function Danger({
   isLive: boolean;
 }) {
   return (
-    <div className="mt-4 space-y-3 border-t border-border pt-4">
+    <div className="mt-8 space-y-3 border-t-2 border-destructive/30 pt-4">
+      <h3 className="text-sm font-medium text-destructive">Danger</h3>
+      <p className="text-xs text-muted-foreground">
+        Both of these are felt by the integrator within the hour, and the second
+        cannot be undone.
+      </p>
+
       <RotateSecretForm credential={credential} isLive={isLive} />
       <RevokeForm
         applicationName={applicationName}
@@ -339,7 +369,7 @@ function CreateForm({
   const [state, action] = useActionState(addCredentialAction, undefined);
 
   return (
-    <form action={action} className="mt-4 border-t border-border pt-4">
+    <form action={action} className="mt-5 border-t border-border pt-4">
       <input type="hidden" name="applicationId" value={applicationId} />
       <input type="hidden" name="mode" value={mode} />
 

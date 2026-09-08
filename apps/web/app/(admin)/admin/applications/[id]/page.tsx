@@ -13,7 +13,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { APPLICATION_SCOPES, type CredentialMode } from '@softmato/db';
+import {
+  APPLICATION_SCOPES,
+  CREDENTIAL_MODE_LABEL,
+  type CredentialMode,
+} from '@softmato/db';
 
 import { getApplicationDetail } from '@/lib/applications/queries';
 import { ApplicationHeader } from '@/components/admin/application-header';
@@ -70,6 +74,7 @@ export default async function ApplicationDetailPage({
               applicationId={application.id}
               applicationName={application.name}
               mode={mode}
+              label={CREDENTIAL_MODE_LABEL[mode]}
               credential={credential}
               domains={(credential
                 ? (application.domainsByCredential[credential.id] ?? [])

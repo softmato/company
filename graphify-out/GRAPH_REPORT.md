@@ -1,11 +1,11 @@
 # Graph Report - company  (2026-09-08)
 
 ## Corpus Check
-- 600 files · ~566,411 words
+- 601 files · ~567,109 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3461 nodes · 6944 edges · 196 communities (187 shown, 9 thin omitted)
+- 3468 nodes · 6950 edges · 191 communities (182 shown, 9 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 98 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -182,17 +182,12 @@
 - [[_COMMUNITY_Community 164|Community 164]]
 - [[_COMMUNITY_Community 165|Community 165]]
 - [[_COMMUNITY_Community 166|Community 166]]
-- [[_COMMUNITY_Community 167|Community 167]]
 - [[_COMMUNITY_Community 168|Community 168]]
-- [[_COMMUNITY_Community 169|Community 169]]
-- [[_COMMUNITY_Community 170|Community 170]]
-- [[_COMMUNITY_Community 171|Community 171]]
-- [[_COMMUNITY_Community 173|Community 173]]
+- [[_COMMUNITY_Community 172|Community 172]]
+- [[_COMMUNITY_Community 174|Community 174]]
+- [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
 - [[_COMMUNITY_Community 179|Community 179]]
-- [[_COMMUNITY_Community 181|Community 181]]
-- [[_COMMUNITY_Community 182|Community 182]]
-- [[_COMMUNITY_Community 184|Community 184]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `[Unreleased]` - 96 edges
@@ -218,7 +213,7 @@
 - `submitContact()` --calls--> `headers`  [INFERRED]
   apps/web/app/(public)/(site)/contact/actions.ts → packages/db/tests/ledger.test.ts
 
-## Communities (196 total, 9 thin omitted)
+## Communities (191 total, 9 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.02
@@ -226,379 +221,379 @@ Nodes (92): Added, Added, Added, Added, Added, Added, Added, Added (+84 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (53): BlogPostSeed, blogPostSeeds, PageSeed, pageSeeds, ProductPageSeed, productPageSeeds, ServiceSeed, serviceSeeds (+45 more)
+Nodes (47): CallbackPage(), metadata, CheckoutFlow(), CheckoutFlowProps, fmt(), PROVIDER_META, CheckoutNotice(), CheckoutNoticeProps (+39 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.06
-Nodes (44): ApplicationHeader(), ApplicationPanel(), Breadcrumbs(), ContentTable(), DomainList(), ReauthFields(), RegisterApplicationForm(), DESCRIPTION (+36 more)
+Cohesion: 0.05
+Nodes (51): AccountingError, allocateDocumentNo(), allocateSequence(), COLUMN, formatDocumentNo(), SequenceKind, TABLE, WIDTH (+43 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.05
-Nodes (50): AccountingError, allocateDocumentNo(), allocateSequence(), COLUMN, formatDocumentNo(), SequenceKind, TABLE, WIDTH (+42 more)
+Nodes (53): BlogPostSeed, blogPostSeeds, PageSeed, pageSeeds, ProductPageSeed, productPageSeeds, ServiceSeed, serviceSeeds (+45 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.05
-Nodes (49): Account, accountClass, normalBalance, Product, productKind, products, Application, APPLICATION_SCOPES (+41 more)
-
-### Community 5 - "Community 5"
-Cohesion: 0.05
 Nodes (40): call(), endpoint(), loaded, msg, [name, urlPath = '/', scrollArg = '0', width = '1440', height = '900'], pending, PORT, send() (+32 more)
 
+### Community 5 - "Community 5"
+Cohesion: 0.07
+Nodes (37): ApplicationHeader(), ApplicationPanel(), Breadcrumbs(), ContentTable(), ReauthFields(), RegisterApplicationForm(), DESCRIPTION, ScopeCheckboxes() (+29 more)
+
 ### Community 6 - "Community 6"
+Cohesion: 0.05
+Nodes (41): Application, APPLICATION_SCOPES, ApplicationCredential, applicationCredentials, ApplicationDomain, applicationDomains, applications, ApplicationScope (+33 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.09
+Nodes (33): AdminRoster(), listAdmins(), RosterEntry, TotpSetup(), TotpSetupProps, confirmEnrolment(), metadata, enrolmentUrl() (+25 more)
+
+### Community 8 - "Community 8"
 Cohesion: 0.06
 Nodes (49): 1. Conventions, 2. Authentication, 3. Endpoints, 4. Outbound webhooks, 5.1 `manual_qr`, 5.1 `manual_qr` — **removed 2026-08-16**, 5.2 Khalti (KPG v2), 5.3 eSewa (+41 more)
 
-### Community 7 - "Community 7"
-Cohesion: 0.1
-Nodes (37): dmSans, inter, metadata, outfit, plexMono, robots(), sitemap(), isIndexableLegalDocument() (+29 more)
-
-### Community 8 - "Community 8"
-Cohesion: 0.08
-Nodes (40): confirmSessionPayment(), isPaymentError(), asJson(), eventIdFor(), ProviderEventInput, ProviderEventType, recordProviderEvent(), buildReceipt() (+32 more)
-
 ### Community 9 - "Community 9"
-Cohesion: 0.09
-Nodes (26): AdminRoster(), ContentForm(), InviteAdminForm(), PendingAdminActions(), PublicationPanel(), PublishConfirm(), PublishPending(), listAdmins() (+18 more)
+Cohesion: 0.08
+Nodes (39): identityContext(), retrieveContext(), chunkMarkdown(), KnowledgeChunk, getIndex(), KNOWLEDGE_FILES, knowledgeDir(), loadChunks() (+31 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.08
-Nodes (42): EnrolPage(), openPendingSecret(), seal(), sealPendingSecret(), authorize(), decryptSecret(), deriveFromKey(), encryptSecret() (+34 more)
+Cohesion: 0.06
+Nodes (33): Account, accountClass, normalBalance, Product, productKind, products, FiscalPeriod, fiscalPeriods (+25 more)
 
 ### Community 11 - "Community 11"
+Cohesion: 0.07
+Nodes (25): callbackUrl(), decodeResponse(), EsewaConfig, EsewaProviderAdapter, HOSTS, missing(), STATUS, transactionUuidFor() (+17 more)
+
+### Community 12 - "Community 12"
 Cohesion: 0.04
 Nodes (46): 0. How to use this brief, 1. What this product is, 2. Palette — soil ⚠ SUPERSEDED, 3.1 Public site — `softmato.com`, 3.2 Admin panel — `admin.softmato.com`, 3.3 Checkout — `payment.softmato.com`, 3.4 Client portal — `agency.softmato.com`, 3. Page inventory (+38 more)
 
-### Community 12 - "Community 12"
-Cohesion: 0.12
-Nodes (34): publishContent(), unpublishContent(), saveContent(), ActionResult, databaseMessage(), parseId(), requireAdmin(), requireKind() (+26 more)
-
 ### Community 13 - "Community 13"
-Cohesion: 0.09
-Nodes (36): identityContext(), retrieveContext(), chunkMarkdown(), KnowledgeChunk, getIndex(), KNOWLEDGE_FILES, knowledgeDir(), loadChunks() (+28 more)
+Cohesion: 0.1
+Nodes (26): EnrolmentHandoff(), InviteAdminForm(), PendingAdminActions(), PublishConfirm(), PublishPending(), RotateTotpForm(), RotateTotpFormProps, SubmitButton() (+18 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.09
-Nodes (34): expireOne(), ExpireSessionsResult, expireStaleSessions(), OPEN, PAYMENT_ERROR_STATUS, PaymentErrorCode, PUBLIC_MESSAGE, FormPost (+26 more)
-
-### Community 15 - "Community 15"
-Cohesion: 0.17
-Nodes (26): AboutPage(), generateMetadata(), CareersPage(), generateMetadata(), metadataFor(), getPage, listPublishedProducts(), listPublishedServices() (+18 more)
-
-### Community 16 - "Community 16"
-Cohesion: 0.08
-Nodes (30): callbackUrl(), decodeResponse(), EsewaConfig, EsewaProviderAdapter, HOSTS, missing(), STATUS, transactionUuidFor() (+22 more)
-
-### Community 17 - "Community 17"
 Cohesion: 0.05
 Nodes (42): Added, Added, Added, Added, Added, Added, Added, Added (+34 more)
 
-### Community 18 - "Community 18"
+### Community 15 - "Community 15"
+Cohesion: 0.11
+Nodes (24): extractHeadings(), Heading, headingId(), getLegalDocument, listPublishedLegalDocuments(), INTEGRATION_PATH, integrationDoc(), stripRepoLinks() (+16 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.08
+Nodes (37): EnrolPage(), authorize(), decryptSecret(), deriveFromKey(), encryptSecret(), key(), checkTotp(), createTotpEnrolment() (+29 more)
+
+### Community 17 - "Community 17"
 Cohesion: 0.05
 Nodes (40): 10. Reconciliation targets, 11. Open items for the accountant, 1. Account numbering, 2. Assets, 3. Liabilities, 4. Equity, 5. Revenue, 6. Direct costs (+32 more)
 
+### Community 18 - "Community 18"
+Cohesion: 0.19
+Nodes (24): AboutPage(), generateMetadata(), BlogIndexPage(), generateMetadata(), CareersPage(), generateMetadata(), metadataFor(), getPage (+16 more)
+
 ### Community 19 - "Community 19"
+Cohesion: 0.13
+Nodes (30): buildInvoiceDocument(), customerParty(), documentStatus(), documentIssues(), findInvoice(), findPayment(), InvoiceLineRecord, invoiceLinesFor() (+22 more)
+
+### Community 20 - "Community 20"
 Cohesion: 0.05
 Nodes (39): 1. What each side owns, 2.1 Raise an invoice, 2.2 Send the customer to pay, 2.3 Learn that they paid, 2.4 Show the customer their records, 2. The happy path, in four calls, 3. Sending your plan details, 4. Things that will bite you (+31 more)
 
-### Community 20 - "Community 20"
-Cohesion: 0.1
-Nodes (22): EsewaConfig, FonepayConfig, callbackUrl(), HOSTS, isLookupAnswer(), KhaltiConfig, KhaltiProviderAdapter, parseJson() (+14 more)
-
 ### Community 21 - "Community 21"
-Cohesion: 0.2
-Nodes (23): NotFound(), getLegalDocument, getPost, getProductPage, getService, listPublishedLegalDocuments(), published(), publishedSlugs() (+15 more)
+Cohesion: 0.11
+Nodes (31): buildReceipt(), everything, clearInvoice(), closeSession(), CompletedPayment, completePayment(), flagForReconciliation(), journalNoOf() (+23 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.2
-Nodes (21): NUMERIC_FIELDS, DashboardSnapshot, FILTERS, cn(), Badge(), BadgeTone, STATUS_TONES, toneForStatus() (+13 more)
-
-### Community 23 - "Community 23"
-Cohesion: 0.07
-Nodes (18): AiProvider, defaultAiProvider, GeminiAiProvider, GroqAiProvider, OpenAiProvider, OpenRouterAiProvider, ResilientAiProvider, AiProviderChatParams (+10 more)
-
-### Community 24 - "Community 24"
-Cohesion: 0.09
-Nodes (23): CallbackPage(), metadata, CheckoutFlow(), CheckoutFlowProps, fmt(), PROVIDER_META, CheckoutNotice(), CheckoutNoticeProps (+15 more)
-
-### Community 25 - "Community 25"
-Cohesion: 0.1
-Nodes (29): BookingFailure, BookingOutcome, BookingRecord, getAllLeads(), getAvailableSlots(), LeadEntry, LeadRecord, leadsStore (+21 more)
-
-### Community 26 - "Community 26"
 Cohesion: 0.11
 Nodes (23): SettingsForm(), TRUSTED_IMAGE_HOSTNAMES, saveSettings(), SettingsResult, SETTING_DEFINITIONS, SETTING_GROUPS, SETTING_KEYS, SettingDefinition (+15 more)
 
-### Community 27 - "Community 27"
+### Community 23 - "Community 23"
+Cohesion: 0.1
+Nodes (29): BookingFailure, BookingOutcome, BookingRecord, getAllLeads(), getAvailableSlots(), LeadEntry, LeadRecord, leadsStore (+21 more)
+
+### Community 24 - "Community 24"
 Cohesion: 0.16
 Nodes (22): optionalText, requiredText, SEO_FIELDS, seoSchema, slugSchema, SORT_ORDER_FIELD, sortOrderSchema, tagsSchema (+14 more)
 
-### Community 28 - "Community 28"
+### Community 25 - "Community 25"
+Cohesion: 0.11
+Nodes (21): EsewaConfig, FonepayConfig, callbackBase(), MockConfig, MockProviderAdapter, hasProvider(), providerAdapter(), registerProvider() (+13 more)
+
+### Community 26 - "Community 26"
 Cohesion: 0.06
 Nodes (31): 1. Principles, 2.1 A journal cannot commit unbalanced, 2.2 Ledger rows are immutable, 2.3 Closed periods reject postings, 2.4 An admin cannot exist without 2FA, 2. The four guarantees, 3. Ledger structure, 4. Tables that carry the most weight (+23 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.14
+Nodes (17): ClosingCta(), CraftConstellation(), CRAFT_DISCS, CraftDisc, covering, DarkNavZone(), PRODUCTS_HEADING, TextTag (+9 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.16
+Nodes (24): dmSans, inter, metadata, outfit, plexMono, robots(), siteUrl(), absoluteImage() (+16 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.08
 Nodes (32): 10. Quality floor, 11. Before adding anything visual, 1. Direction: the ledger, 1. Direction: warm paper, quiet emerald, 1. Direction: white, black and emerald, 2. Palette, 3. Typography, 4. The signature: greenbar tables (+24 more)
 
 ### Community 30 - "Community 30"
-Cohesion: 0.11
-Nodes (19): BuildTiers(), ClosingCta(), covering, DarkNavZone(), DeviceScreen(), PRODUCTS_HEADING, ServiceStep(), TierRow() (+11 more)
+Cohesion: 0.08
+Nodes (25): __resetStore(), AiProvider, defaultAiProvider, SmartFallbackProvider, AiProviderChatParams, AiProviderResponse, BookMeetingParams, ChatMessage (+17 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.15
-Nodes (26): buildInvoiceDocument(), customerParty(), documentStatus(), documentIssues(), SheetWarning(), findInvoice(), findPayment(), InvoiceLineRecord (+18 more)
+Nodes (21): publishContent(), unpublishContent(), saveContent(), ActionResult, databaseMessage(), parseId(), requireKind(), ContentForm() (+13 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.12
-Nodes (24): CheckoutView, offerable(), summarise(), Summary, readPresentation(), availableProviders(), ensureProvidersRegistered(), MOCKABLE (+16 more)
+Cohesion: 0.19
+Nodes (25): requireAdmin(), DomainList(), DomainRow, addCredentialAction(), confirmIdentity(), confirmIfProduction(), confirmName(), readDomains() (+17 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.07
-Nodes (28): 10. Comments, 11. Commits, 12. Formatting, 1. TypeScript, 2. Money in code, 3. Validation, 4. Database access, 5. API routes (+20 more)
+Cohesion: 0.13
+Nodes (20): documentFile(), DocumentFormat, joinReference(), safeFilename(), encodeRandom(), encodeTime(), newRequestId(), apiError() (+12 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.18
-Nodes (23): DomainRow, addCredentialAction(), confirmIdentity(), confirmIfProduction(), confirmName(), readDomains(), readId(), readScopes() (+15 more)
+Cohesion: 0.14
+Nodes (21): amountInWords(), numberInWords(), ONES, SCALES, TENS, underHundred(), underThousand(), InvoiceSheet() (+13 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.12
-Nodes (25): ImageMime, BOUNDS, clamped, frame, image, images, min, offset (+17 more)
+Nodes (22): AddDomainInput, removeDomain(), nextPollAt(), pollDelayMs(), pollExhausted(), giveUp(), LIVE, PollPendingResult (+14 more)
 
 ### Community 36 - "Community 36"
-Cohesion: 0.11
-Nodes (23): SignResponse, uploadImage(), UploadResult, ACCEPT_ATTRIBUTE, ACCEPTED, describeRejection(), describeSourceRejection(), formatBytes() (+15 more)
+Cohesion: 0.07
+Nodes (28): 10. Comments, 11. Commits, 12. Formatting, 1. TypeScript, 2. Money in code, 3. Validation, 4. Database access, 5. API routes (+20 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.13
-Nodes (17): extractHeadings(), Heading, headingId(), INTEGRATION_PATH, integrationDoc(), stripRepoLinks(), DevelopersPage(), metadata (+9 more)
+Cohesion: 0.23
+Nodes (19): NotFound(), getPost, getProductPage, getService, published(), publishedSlugs(), DeviceScreen(), CmsImage() (+11 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.1
-Nodes (18): entryDirection, journalEntries, JournalEntry, journalSource, ledgerEntries, LedgerEntry, NewJournalEntry, NewLedgerEntry (+10 more)
+Cohesion: 0.26
+Nodes (14): NUMERIC_FIELDS, FILTERS, formatBsNumeric(), BsDate(), Card(), CardBody(), CardHeader(), CardTitle() (+6 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.12
-Nodes (20): Glyph(), IconBell(), IconCamera(), IconDownload(), IconFingerprint(), IconHome(), IconOffline(), IconPin() (+12 more)
+Nodes (25): ImageMime, BOUNDS, clamped, frame, image, images, min, offset (+17 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.13
-Nodes (20): assertRegisteredHost(), isRegisteredHost(), addDomain(), AddDomainInput, removeDomain(), normalizeHostname(), normalizeHostnameInput(), addCredential() (+12 more)
+Cohesion: 0.1
+Nodes (22): hasEverRun(), HeldPayment, heldPayments(), openRunItems(), RunItem, listRefunds(), RefundRow, StatusBadge() (+14 more)
 
 ### Community 41 - "Community 41"
+Cohesion: 0.11
+Nodes (23): SignResponse, uploadImage(), UploadResult, ACCEPT_ATTRIBUTE, ACCEPTED, describeRejection(), describeSourceRejection(), formatBytes() (+15 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.1
+Nodes (19): DisciplineCluster(), Discipline, DISCIPLINES, Satellite, PLACE_COORDINATES, PLACE_PHOTO, PlaceSection(), SERVICES_HEADING (+11 more)
+
+### Community 43 - "Community 43"
+Cohesion: 0.12
+Nodes (20): Glyph(), IconBell(), IconCamera(), IconDownload(), IconFingerprint(), IconHome(), IconOffline(), IconPin() (+12 more)
+
+### Community 44 - "Community 44"
+Cohesion: 0.09
+Nodes (17): closeDb(), db, DbLike, DbTx, isNeon, AuditRecord, teardown(), result (+9 more)
+
+### Community 45 - "Community 45"
 Cohesion: 0.16
 Nodes (22): extractDate(), extractEmail(), extractName(), extractPhone(), extractTime(), MONTHS, NOT_A_NAME, parseBooking() (+14 more)
 
-### Community 42 - "Community 42"
-Cohesion: 0.16
-Nodes (15): documentFile(), DocumentFormat, joinReference(), safeFilename(), encodeRandom(), encodeTime(), newRequestId(), apiError() (+7 more)
-
-### Community 43 - "Community 43"
+### Community 46 - "Community 46"
 Cohesion: 0.08
 Nodes (24): 1. The five settings that are the same for every job, 2. The four jobs, 3. Setting one up, start to finish, 4. Order of setup, 5. Save responses in job history, 6. The failure that matters, 7. Not set up yet, 8. Reference (+16 more)
 
-### Community 44 - "Community 44"
+### Community 47 - "Community 47"
 Cohesion: 0.12
 Nodes (20): WEBHOOK_EVENTS, WebhookEvent, WebhookPayload, equalInConstantTime(), isEvent(), SHARED_VECTOR, sign(), signingBase() (+12 more)
 
-### Community 45 - "Community 45"
+### Community 48 - "Community 48"
 Cohesion: 0.1
 Nodes (23): 1. Local setup, 2. Variables, 3. File storage, 4. Environments, 5. Deployment, 6. Cron, 7. Cost, 8. Secrets (+15 more)
 
-### Community 46 - "Community 46"
+### Community 49 - "Community 49"
 Cohesion: 0.09
 Nodes (23): Blocked on external parties, Blocked on the founder, code:bash (pnpm install && pnpm dev      # localhost:3000, admin.localh), code:markdown (### Session N — YYYY-MM-DD), Current status, Decisions made, Deviations from the docs, Memory (+15 more)
 
-### Community 47 - "Community 47"
-Cohesion: 0.12
-Nodes (18): DashboardActivity(), DashboardInvoices(), DASHBOARD_TABS, DashboardInvoice, DashboardMethod, DashboardMonth, DashboardPayment, DashboardPaymentFilter (+10 more)
-
-### Community 48 - "Community 48"
-Cohesion: 0.13
-Nodes (15): PrinciplesSection(), CLOSING_HEADING, PRINCIPLES_HEADING, SERVICES_HEADING, STATEMENT, TIERS_HEADING, ServiceStepData, Statement() (+7 more)
-
-### Community 49 - "Community 49"
-Cohesion: 0.13
-Nodes (15): authenticateApplication(), AuthenticatedApplication, bearerToken(), matchSecret(), unauthenticated(), PaymentError, FiledRefund, REFUNDABLE (+7 more)
-
 ### Community 50 - "Community 50"
-Cohesion: 0.16
-Nodes (17): nextPollAt(), pollDelayMs(), pollExhausted(), giveUp(), LIVE, PollPendingResult, pollPendingTransactions(), reschedule() (+9 more)
+Cohesion: 0.13
+Nodes (11): Chip(), PostList(), PostSummary, cn(), PageContainer(), Money(), Skeleton(), SkeletonRows() (+3 more)
 
 ### Community 51 - "Community 51"
+Cohesion: 0.19
+Nodes (18): attach(), invoiceAttachment(), receiptAttachment(), safe(), documentPdf(), DocumentPdfResult, documentKeyFor(), StorableDocument (+10 more)
+
+### Community 52 - "Community 52"
+Cohesion: 0.15
+Nodes (16): CreatedSession, createSession(), CreateSessionInput, ownedInvoice(), providersForAmount(), isPastExpiry(), generateSessionId(), isSessionIdShape() (+8 more)
+
+### Community 53 - "Community 53"
+Cohesion: 0.13
+Nodes (19): assertSignature(), baseString(), equalInConstantTime(), REQUEST_SIGNED_FIELDS, sign(), callbackPayload(), decoded, fetchMock (+11 more)
+
+### Community 54 - "Community 54"
+Cohesion: 0.15
+Nodes (9): metadata, SmoothScroll(), ChatWidget(), NAV_LINKS, SiteFooter(), LINKS, SiteHeader(), useScrolled() (+1 more)
+
+### Community 55 - "Community 55"
+Cohesion: 0.14
+Nodes (19): assertRegisteredHost(), isRegisteredHost(), addDomain(), normalizeHostname(), normalizeHostnameInput(), addCredential(), DomainInput, IssuedCredential (+11 more)
+
+### Community 56 - "Community 56"
 Cohesion: 0.09
 Nodes (21): 10. Reading order if more depth is needed, 1. The company shape (this drives every decision), 2. Why a product talks to the parent platform at all, 3. The integration contract, 4. Why the callback exists, and why a redirect is not it, 5. What happens to the money on our side, 6. The guarantees the database enforces, 7. Finance operations around the billing flow (+13 more)
 
-### Community 52 - "Community 52"
+### Community 57 - "Community 57"
 Cohesion: 0.09
 Nodes (21): ☑ 10. Publish `sdk-v0.1.1`, ☐ 11. Signal the rotation overlap, ☑ 1. Correct the base URL, ☑ 2. Build `GET /v1/transactions/{id}`, ☑ 3. Build `POST /v1/refunds`, ☑ 4. Move the re-authentication gate to where it does something, ☑ 5. One application, two credential sets, ☑ 6. Sandbox and Production, everywhere a person reads (+13 more)
 
-### Community 53 - "Community 53"
-Cohesion: 0.15
-Nodes (8): metadata, SmoothScroll(), ChatWidget(), NAV_LINKS, LINKS, SiteHeader(), useScrolled(), Wordmark()
-
-### Community 54 - "Community 54"
-Cohesion: 0.19
-Nodes (12): Eclipse(), Orb(), FORM_COLORS, KATHMANDU, PointGlobe(), Showcase(), useIdleSpin(), SURFACES (+4 more)
-
-### Community 55 - "Community 55"
-Cohesion: 0.21
-Nodes (16): attach(), invoiceAttachment(), receiptAttachment(), safe(), documentPdf(), DocumentPdfResult, documentKeyFor(), isFinal() (+8 more)
-
-### Community 56 - "Community 56"
-Cohesion: 0.25
-Nodes (15): AdminGuard, requireAdminApi(), POST(), detectImage(), extensionForMime(), isImageMime(), parseCmsImageKey(), publicBucket() (+7 more)
-
-### Community 57 - "Community 57"
+### Community 58 - "Community 58"
 Cohesion: 0.25
 Nodes (11): aup, candidates, cookies, legalDocumentSeeds, partnerTerms, privacy, refunds, body() (+3 more)
 
-### Community 58 - "Community 58"
+### Community 59 - "Community 59"
 Cohesion: 0.1
 Nodes (20): 10. Before accepting any phase, 11. What not to test, 1. Stack, 2. Ledger — must pass before any provider goes live, 3. Idempotency, 4. Forgery and trust, 5. Amount integrity, 6. Authorization (+12 more)
 
-### Community 59 - "Community 59"
+### Community 60 - "Community 60"
+Cohesion: 0.14
+Nodes (16): DashboardActivity(), DashboardInvoices(), DASHBOARD_TABS, DashboardPayment, DashboardPaymentFilter, DashboardSnapshot, DashboardTab, filterDashboardPayments() (+8 more)
+
+### Community 61 - "Community 61"
+Cohesion: 0.21
+Nodes (11): Eclipse(), Orb(), FORM_COLORS, KATHMANDU, PointGlobe(), Showcase(), useIdleSpin(), SURFACES (+3 more)
+
+### Community 62 - "Community 62"
 Cohesion: 0.19
 Nodes (16): allowBooking(), allowTurn(), bookings, callerAddress(), hashAddress(), record(), turns, atNptMidday() (+8 more)
 
-### Community 60 - "Community 60"
-Cohesion: 0.12
-Nodes (15): CMS_IMAGE_KEY, cmsImageKey(), slugify(), different, GIF, html, JPEG, key (+7 more)
-
-### Community 61 - "Community 61"
-Cohesion: 0.12
-Nodes (15): AuditRecord, generateSessionId(), isSessionIdShape(), seen, suffix, makeSession(), audited, entry (+7 more)
-
-### Community 62 - "Community 62"
-Cohesion: 0.11
-Nodes (12): audited, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS, receipts, verified(), adapter (+4 more)
-
 ### Community 63 - "Community 63"
+Cohesion: 0.11
+Nodes (5): GeminiAiProvider, GroqAiProvider, OpenAiProvider, OpenRouterAiProvider, ResilientAiProvider
+
+### Community 64 - "Community 64"
+Cohesion: 0.16
+Nodes (15): mutatingEndpoint(), paisa(), serializeInvoice(), serializeRefund(), serializeSession(), serializeTransaction(), serializeTransactionView(), POST (+7 more)
+
+### Community 65 - "Community 65"
+Cohesion: 0.21
+Nodes (16): DEFAULT_MAILBOXES, EMAIL_CATEGORIES, EmailCategory, NAME_SUFFIX, EmailIdentity, fromHeaderFor(), normaliseDomain(), replyToFor() (+8 more)
+
+### Community 66 - "Community 66"
 Cohesion: 0.16
 Nodes (17): AT, signed(), slightly, stale, TS, Attempt, nextAttemptAt(), retryWebhooks() (+9 more)
 
-### Community 64 - "Community 64"
+### Community 67 - "Community 67"
 Cohesion: 0.1
 Nodes (19): 1. The company, 2. The problem, 3. What we're building, 4. Users, 5.1 Public site, 5.2 Payment platform, 5.3 Accounting, 5.4 Subscriptions (+11 more)
 
-### Community 65 - "Community 65"
+### Community 68 - "Community 68"
 Cohesion: 0.1
 Nodes (19): ☑ 0. Preview deployments must stop writing to the production ledger, ☑ 1. The one rate-limit rule, ☑ 2. `application_domains` — the allowlist, ☑ 3. The second hop — hand the customer back, ☑ 4. Applications, in the admin panel, ☑ 5. `/developers` — the public documentation, ☑ 6. `/legal/partner-terms`, ☑ 7. `future_implementation.md` (+11 more)
 
-### Community 66 - "Community 66"
-Cohesion: 0.12
-Nodes (8): Chip(), PostList(), PostSummary, PageContainer(), Skeleton(), SkeletonRows(), Toast, ToastContext
+### Community 69 - "Community 69"
+Cohesion: 0.16
+Nodes (15): sitemap(), isIndexableLegalDocument(), LegalReadiness, publishedPageSlugs(), JsonLd(), serialiseJsonLd(), isProductionSite(), crumbs (+7 more)
 
-### Community 67 - "Community 67"
+### Community 70 - "Community 70"
+Cohesion: 0.16
+Nodes (15): DashboardInvoice, DashboardMethod, DashboardMonth, ActivityEntry, dashboardAttentionPayments(), dashboardMetrics(), dashboardOverdueInvoices(), dashboardPaymentMethods() (+7 more)
+
+### Community 71 - "Community 71"
 Cohesion: 0.2
 Nodes (10): BLOOM_LAYERS, EXIT_DX, HeroArc(), CRESCENT_LAYERS, HeroEye(), EXIT_DX, Hero(), heroStart() (+2 more)
 
-### Community 68 - "Community 68"
-Cohesion: 0.21
-Nodes (15): DEFAULT_MAILBOXES, EMAIL_CATEGORIES, EmailCategory, NAME_SUFFIX, EmailIdentity, fromHeaderFor(), normaliseDomain(), replyToFor() (+7 more)
-
-### Community 69 - "Community 69"
+### Community 72 - "Community 72"
 Cohesion: 0.23
 Nodes (14): DetailRow, escapeHtml(), layout(), LayoutOptions, paragraph(), rowsTable(), EmailTemplate, contactEnquiryEmail() (+6 more)
 
-### Community 70 - "Community 70"
-Cohesion: 0.13
-Nodes (11): FiscalPeriod, fiscalPeriods, periodStatus, bsCalendar, BsMonthBoundary, FiscalPeriodSeed, audited, makeAttempt() (+3 more)
-
-### Community 71 - "Community 71"
-Cohesion: 0.14
-Nodes (13): listRefunds(), RefundRow, StatusBadge(), Tone, TONE_BY_STATUS, TONES, AdminRefundsPage(), metadata (+5 more)
-
-### Community 72 - "Community 72"
-Cohesion: 0.42
-Nodes (12): drawApp(), drawDesign(), bar(), fillRound(), ground(), label(), roundRect(), strokeRound() (+4 more)
-
 ### Community 73 - "Community 73"
-Cohesion: 0.17
-Nodes (12): PLACE_COORDINATES, PLACE_PHOTO, PlaceSection(), ServicesChapter(), BlurIn(), WordReveal(), LightForm(), LightFormScene (+4 more)
+Cohesion: 0.16
+Nodes (11): ConfirmOutcome, POST, POST, jobEndpoint(), JobHandler, equalInConstantTime(), isAuthorisedJobRequest(), NOT_FOUND (+3 more)
 
 ### Community 74 - "Community 74"
-Cohesion: 0.14
-Nodes (16): CUSTOMER, DUE, ISSUED, SAMPLE_INVOICE, SAMPLE_INVOICE_PART_PAID, SAMPLE_INVOICE_VOID, SAMPLE_RECEIPT, SAMPLE_RECEIPT_PARTIAL (+8 more)
+Cohesion: 0.16
+Nodes (15): expireOne(), ExpireSessionsResult, expireStaleSessions(), OPEN, isPaymentError(), PAYMENT_ERROR_STATUS, PaymentErrorCode, PUBLIC_MESSAGE (+7 more)
 
 ### Community 75 - "Community 75"
 Cohesion: 0.33
 Nodes (9): describedBy(), FieldShell(), ImageField(), Field(), MarkdownField(), TagsField(), TextField(), TextareaField() (+1 more)
 
 ### Community 76 - "Community 76"
+Cohesion: 0.16
+Nodes (12): PrinciplesSection(), CLOSING_HEADING, PRINCIPLES_HEADING, STATEMENT, TIERS_HEADING, Statement(), CRAFT_STATEMENT, Principle (+4 more)
+
+### Community 77 - "Community 77"
+Cohesion: 0.42
+Nodes (12): drawApp(), drawDesign(), bar(), fillRound(), ground(), label(), roundRect(), strokeRound() (+4 more)
+
+### Community 78 - "Community 78"
+Cohesion: 0.14
+Nodes (16): CUSTOMER, DUE, ISSUED, SAMPLE_INVOICE, SAMPLE_INVOICE_PART_PAID, SAMPLE_INVOICE_VOID, SAMPLE_RECEIPT, SAMPLE_RECEIPT_PARTIAL (+8 more)
+
+### Community 79 - "Community 79"
 Cohesion: 0.11
 Nodes (17): 1. Shape of the system, 2. The central payment principle, 3. Payment flow, end to end, 4. Package boundaries, 5. Data flow into the ledger, 6. Background work, 7. Trust boundaries, 8. Why this shape (+9 more)
 
-### Community 77 - "Community 77"
-Cohesion: 0.23
-Nodes (12): ActivityEntry, dashboardAttentionPayments(), dashboardMetrics(), dashboardOverdueInvoices(), dashboardPaymentMethods(), dashboardPayments(), dashboardRevenue(), dashboardSnapshot() (+4 more)
+### Community 80 - "Community 80"
+Cohesion: 0.24
+Nodes (12): DocumentKeyInput, documentPdfKey(), hex(), segment(), isFinal(), readDocumentPdf(), writeDocumentPdf(), privateBucket() (+4 more)
 
-### Community 78 - "Community 78"
-Cohesion: 0.18
-Nodes (12): OrderSummaryProps, PlanDetails(), prerenderInvoicePdf(), plainText(), Presentation, PresentationInput, presentationSchema, sellingPoint() (+4 more)
-
-### Community 79 - "Community 79"
+### Community 81 - "Community 81"
 Cohesion: 0.12
 Nodes (12): ESEWA_KEYS, esewaSet, hex32, issues, missing, parsed, PRIVATE_R2_KEYS, privateR2Set (+4 more)
 
-### Community 80 - "Community 80"
+### Community 82 - "Community 82"
+Cohesion: 0.15
+Nodes (10): Receipt, ReceiptInput, ReceiptSender, audited, makeAttempt(), makeSession(), NOW, receipts (+2 more)
+
+### Community 83 - "Community 83"
+Cohesion: 0.12
+Nodes (9): adapter, mockAdapter, mockSession, mockTxn, txn, NOW, PERIOD_ENDS, PERIOD_STARTS (+1 more)
+
+### Community 84 - "Community 84"
 Cohesion: 0.12
 Nodes (16): `apps/web`, code:block1 (softmato/), code:block2 (apps/web/), code:block3 (db/), code:block4 (payment-core/), code:block5 (accounting/), code:block6 (sdk/), code:block7 (ui/) (+8 more)
 
-### Community 81 - "Community 81"
+### Community 85 - "Community 85"
 Cohesion: 0.18
 Nodes (12): listPayments(), PAYMENT_STATUSES, PaymentFilter, PaymentRow, PaymentTotals, whereFor(), TableFilters(), TableFiltersProps (+4 more)
 
-### Community 82 - "Community 82"
-Cohesion: 0.26
-Nodes (11): paisa(), party(), serializeInvoiceDocument(), serializeReceiptDocument(), blankAsNull(), missingSellerFields(), sellerFromSettings(), DocumentLine (+3 more)
-
-### Community 83 - "Community 83"
-Cohesion: 0.21
-Nodes (9): AuditDetail(), changedKeys(), auditActions(), AuditRow, listAuditEntries(), AuditLogPage(), FilterLink(), formatBsNumeric() (+1 more)
-
-### Community 84 - "Community 84"
-Cohesion: 0.18
-Nodes (7): credentialsSchema, CODES, LOGIN_FAILURE_MESSAGE, LoginFailure, LoginFailureCode, { handlers, auth, signIn, signOut }, LoginPage()
-
-### Community 85 - "Community 85"
-Cohesion: 0.26
-Nodes (10): amountInWords(), InvoiceSheet(), DocumentDate(), PartyBlock(), STATUS_LABEL, StatusBadge(), vatNote(), ReceiptSheet() (+2 more)
-
 ### Community 86 - "Community 86"
 Cohesion: 0.14
-Nodes (12): __resetStore(), SmartFallbackProvider, args, data, fallback, mockContext, pricingDoc, prompt (+4 more)
+Nodes (12): audited, entry, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS, receipts, sendReceipt() (+4 more)
 
 ### Community 87 - "Community 87"
+Cohesion: 0.23
+Nodes (10): AdminGuard, requireAdminApi(), extensionForMime(), isImageMime(), CMS_IMAGE_KEY, cmsImageKey(), slugify(), key (+2 more)
+
+### Community 88 - "Community 88"
 Cohesion: 0.22
 Nodes (12): uploadCmsImage(), UploadResult, cmsObjectKey(), DetectedImage, Signature, SIGNATURES, validateImage(), ValidationFailure (+4 more)
 
-### Community 88 - "Community 88"
-Cohesion: 0.15
-Nodes (11): audited, entry, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS, receipts, sent (+3 more)
-
 ### Community 89 - "Community 89"
-Cohesion: 0.13
-Nodes (14): 1. What is actually built today, 2. The renewal shape, settled 2026-09-02, 3. Open: who drives renewals, §4 — how a SaaS gets credentials: **settled as deferred**, 4. Open: how a SaaS gets credentials, 5. Open: where the standards live, and what makes them binding, §5 — where the standards live: **two pages, and the line between them**, 6. What to pick up next session (+6 more)
+Cohesion: 0.23
+Nodes (13): FormPost, assertOffered(), selectProvider(), transitionSession(), text(), displayable(), liveAttempt(), StartedPayment (+5 more)
 
 ### Community 90 - "Community 90"
 Cohesion: 0.13
-Nodes (14): 10. Liability, 11. Term and termination, 12. General, 1. What we provide, 2. Students, 3. Fee and payment, 4. What the Institute provides, 5. Reporting and certificates (+6 more)
+Nodes (14): 1. What is actually built today, 2. The renewal shape, settled 2026-09-02, 3. Open: who drives renewals, §4 — how a SaaS gets credentials: **settled as deferred**, 4. Open: how a SaaS gets credentials, 5. Open: where the standards live, and what makes them binding, §5 — where the standards live: **two pages, and the line between them**, 6. What to pick up next session (+6 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.25
-Nodes (7): confirmEnrolment(), metadata, enrolmentUrl(), qrSvg(), activateWithSecret(), findEnrolmentSubject(), buildHandoff()
+Cohesion: 0.13
+Nodes (14): 10. Liability, 11. Term and termination, 12. General, 1. What we provide, 2. Students, 3. Fee and payment, 4. What the Institute provides, 5. Reporting and certificates (+6 more)
 
 ### Community 92 - "Community 92"
-Cohesion: 0.23
-Nodes (11): INVOICE_STATUSES, InvoiceFilter, InvoiceRow, InvoiceTotals, listInvoices(), numberingGaps(), whereFor(), AdminInvoicesPage() (+3 more)
+Cohesion: 0.4
+Nodes (10): POST(), detectImage(), parseCmsImageKey(), publicBucket(), publicUrl(), r2(), deleteCmsObject(), headCmsObject() (+2 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.36
-Nodes (5): TextTag, prefersReducedMotion(), registerMotionPlugins(), TextTag, TextTag
+Cohesion: 0.2
+Nodes (7): credentialsSchema, CODES, LOGIN_FAILURE_MESSAGE, LoginFailure, LoginFailureCode, { handlers, auth, signIn, signOut }, LoginPage()
 
 ### Community 94 - "Community 94"
 Cohesion: 0.23
-Nodes (11): mutatingEndpoint(), paisa(), serializeInvoice(), serializeRefund(), serializeSession(), serializeTransaction(), serializeTransactionView(), POST (+3 more)
+Nodes (11): INVOICE_STATUSES, InvoiceFilter, InvoiceRow, InvoiceTotals, listInvoices(), numberingGaps(), whereFor(), AdminInvoicesPage() (+3 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.16
@@ -621,136 +616,136 @@ Cohesion: 0.14
 Nodes (13): 10. Certificate, 11. Reference, 12. General, 1. What this is, and what it is not, 2. Dates, hours, and place, 3. What you will learn, 4. Money, 5. Equipment (+5 more)
 
 ### Community 100 - "Community 100"
-Cohesion: 0.18
-Nodes (9): CraftConstellation(), CRAFT_DISCS, CraftDisc, DisciplineCluster(), Discipline, DISCIPLINES, Satellite, Drift() (+1 more)
-
-### Community 101 - "Community 101"
 Cohesion: 0.27
 Nodes (7): chromeBinary(), renderWithChrome(), run(), fontsArrived(), renderWithBundledChromium(), renderPdf(), PdfResult
 
-### Community 102 - "Community 102"
-Cohesion: 0.23
-Nodes (8): POST, POST, jobEndpoint(), JobHandler, equalInConstantTime(), isAuthorisedJobRequest(), NOT_FOUND, POST
-
-### Community 103 - "Community 103"
-Cohesion: 0.24
-Nodes (9): ProductsSection(), RecentPosts(), ServicesSection(), homeTagline(), collapse(), splitLede(), HomePage(), JsonLd() (+1 more)
-
-### Community 104 - "Community 104"
+### Community 101 - "Community 101"
 Cohesion: 0.18
-Nodes (7): closeDb(), db, DbLike, DbTx, isNeon, teardown(), result
+Nodes (7): audited, makePayable(), NOW, PERIOD_ENDS, PERIOD_STARTS, receipts, verified()
 
-### Community 105 - "Community 105"
-Cohesion: 0.17
-Nodes (5): refunds, audited, NOW, payment(), refusal()
-
-### Community 106 - "Community 106"
+### Community 102 - "Community 102"
 Cohesion: 0.15
 Nodes (13): 9.1 — Every recorded eSewa sandbox key in this repo was wrong, 9.2 — Khalti is testable too, and always was, 9.3 — The provider rows had to be switched on, 9.4 — The composition root's idempotence guard was wrong, 9.5 — Cancelling a payment produced a 500, twice over, 9.6 — What is proven (updated 2026-09-02, after real sandbox payments), 9.8 — What acceptance 5 found: an unsigned POST crashed the consumer, 9.9 — Open question for go-live: eSewa `NOT_FOUND` is terminal (+5 more)
 
-### Community 107 - "Community 107"
+### Community 103 - "Community 103"
 Cohesion: 0.15
 Nodes (12): Are Nepali payment gateways supported?, Can I speak to a person instead of the assistant?, Does Softmato build mobile apps?, How do I book a meeting or consultation?, How do project quotes and estimates work?, How long does a project take?, Softmato Frequently Asked Questions, What happens after launch? (+4 more)
 
-### Community 108 - "Community 108"
+### Community 104 - "Community 104"
 Cohesion: 0.15
 Nodes (12): Ongoing after each phase, Phase 1 — Foundation, Phase 2 — Public site + CMS, Phase 3 — Payment core, Phase 3 — Payment core + manual QR, Phase 4 — Khalti, Phase 5 — eSewa, Phase 6 — Invoicing + subscriptions (+4 more)
 
-### Community 109 - "Community 109"
+### Community 105 - "Community 105"
 Cohesion: 0.15
 Nodes (12): 10. Raising a problem, 11. Leaving, 1. Hours and where you work, 2. Leave, 3. Probation and confirmation, 4. Pay, 5. Expenses, 6. Learning (+4 more)
 
-### Community 110 - "Community 110"
+### Community 106 - "Community 106"
 Cohesion: 0.15
 Nodes (12): 10. When you leave, 11. If you break this policy, 1. Accounts and access, 2. Credentials, keys, and secrets, 3. Production and customer data, 4. AI tools, 5. Devices, 6. Software (+4 more)
 
-### Community 111 - "Community 111"
-Cohesion: 0.32
-Nodes (9): escapeHtml(), invoiceHtml(), page(), receiptHtml(), GET(), render(), safeFilename(), UNAUTHORIZED (+1 more)
+### Community 107 - "Community 107"
+Cohesion: 0.26
+Nodes (7): AuditDetail(), changedKeys(), auditActions(), AuditRow, listAuditEntries(), AuditLogPage(), FilterLink()
 
-### Community 112 - "Community 112"
+### Community 108 - "Community 108"
+Cohesion: 0.17
+Nodes (10): different, GIF, html, JPEG, key, large, pdf, PNG (+2 more)
+
+### Community 109 - "Community 109"
 Cohesion: 0.26
 Nodes (11): assertKeyShape(), canonical(), HandlerResult, hashRequest(), IdempotentOutcome, IdempotentRequest, isIdempotencyKeyViolation(), read() (+3 more)
 
-### Community 113 - "Community 113"
+### Community 110 - "Community 110"
 Cohesion: 0.17
 Nodes (11): 10. General, 1. Position and start, 2. Probation, 3. Hours and rest, 4. Pay, 5. Social security, 6. Leave, 7. Confidentiality, intellectual property, and conduct (+3 more)
 
-### Community 114 - "Community 114"
+### Community 111 - "Community 111"
+Cohesion: 0.27
+Nodes (8): ProductsSection(), RecentPosts(), ServicesSection(), homeTagline(), collapse(), splitLede(), generateMetadata(), HomePage()
+
+### Community 112 - "Community 112"
 Cohesion: 0.22
 Nodes (6): MeetingSlot, MeetingSlotsCard(), ChatMessageUI, DEFAULT_WELCOME_MESSAGE, QUICK_ACTIONS, SESSION_STAMP
 
-### Community 115 - "Community 115"
-Cohesion: 0.29
-Nodes (9): hasEverRun(), HeldPayment, heldPayments(), openRunItems(), RunItem, AdminReconciliationPage(), metadata, MismatchRecord (+1 more)
-
-### Community 116 - "Community 116"
+### Community 113 - "Community 113"
 Cohesion: 0.24
 Nodes (4): FonepayProviderAdapter, unavailable(), adapter, surface
 
-### Community 117 - "Community 117"
+### Community 114 - "Community 114"
+Cohesion: 0.25
+Nodes (8): authenticateApplication(), AuthenticatedApplication, bearerToken(), matchSecret(), unauthenticated(), FiledRefund, REFUNDABLE, RequestRefundInput
+
+### Community 115 - "Community 115"
 Cohesion: 0.18
 Nodes (11): §10 — Invoice and receipt documents (2026-09-02), Decisions worth not relitigating, Documents are stored, not re-rendered (2026-09-02), Party snapshots are written (2026-09-02), `presentation` — the SaaS describes its own plan, Renewals and SaaS onboarding (2026-09-02), Still open, The engine, settled (2026-09-02) (+3 more)
 
-### Community 118 - "Community 118"
+### Community 116 - "Community 116"
 Cohesion: 0.18
 Nodes (10): 1. Palette, 2. Type, 3. Money and dates, 4. Component metrics (shadcn defaults, restyled), 5. The banded table, 6. Motion, 7. Screens in the file, 8. Behaviour worth copying exactly (+2 more)
 
-### Community 119 - "Community 119"
+### Community 117 - "Community 117"
 Cohesion: 0.18
 Nodes (10): code:block1 (marketplace: claude-video   (github: bradautomates/claude-vi), code:block2 (/watch "C:/Users/Aanand/Downloads/some-video.mp4" what happe), code:bash (PYTHONIOENCODING=utf-8 python \), code:bash (node scripts/shot.mjs hero /            0     1440 900   # v), How to use it, Related: seeing the site itself, Setup state, Three things a fresh session needs to know (+2 more)
 
-### Community 120 - "Community 120"
+### Community 118 - "Community 118"
 Cohesion: 0.18
 Nodes (10): 1. What this covers, 2. Work Product is ours, 3. What stays yours, 4. Confidentiality, 5. Third-party material and AI tools, 6. Personal information, 7. When you leave, 8. Not a restraint on your career (+2 more)
 
-### Community 121 - "Community 121"
+### Community 119 - "Community 119"
+Cohesion: 0.31
+Nodes (7): FormGround, LightForm(), LightFormScene, useNearViewport(), noopSubscribe(), serverSnapshot(), webglSupported()
+
+### Community 120 - "Community 120"
 Cohesion: 0.31
 Nodes (7): ContactNotification, emailConfigured, resendClient(), Message, SendResult, env, ContactEnquiry
 
-### Community 122 - "Community 122"
+### Community 121 - "Community 121"
 Cohesion: 0.22
 Nodes (4): confirmed(), form(), NAMES, reauthOk
 
-### Community 123 - "Community 123"
+### Community 122 - "Community 122"
 Cohesion: 0.2
 Nodes (9): 1. Before the last day, 2. On the last day — access, 3. Devices and data, 4. Money and statutory, 5. Paperwork, 6. The team and the outside world, Offboarding Checklist, Person leaving (+1 more)
 
-### Community 124 - "Community 124"
+### Community 123 - "Community 123"
 Cohesion: 0.2
 Nodes (9): code:block1 (@softmato:registry=https://npm.pkg.github.com), code:yaml (- run: pnpm install), code:bash (pnpm add @softmato/sdk), code:ts (import { SoftmatoClient, verifyWebhook } from '@softmato/sdk), Installing it in another Softmato repository, Releasing a new version, @softmato/sdk, Using it (+1 more)
 
-### Community 125 - "Community 125"
+### Community 124 - "Community 124"
 Cohesion: 0.28
 Nodes (8): config, DOCUMENTATION_HOSTS, isDocumentationHost(), proxy(), SUBDOMAIN_SURFACE, Surface, SURFACE_PREFIX, surfaceFor()
 
-### Community 126 - "Community 126"
-Cohesion: 0.31
-Nodes (6): EnrolmentHandoff(), expiresIn(), formatAdDateTime(), formatted, moment, now
+### Community 125 - "Community 125"
+Cohesion: 0.36
+Nodes (5): BuildTiers(), TierRow(), Tier, TIERS, TierSide
 
-### Community 127 - "Community 127"
+### Community 126 - "Community 126"
 Cohesion: 0.53
 Nodes (6): ContactResult, schema, submitContact(), notifyContact(), hashIp(), isRateLimited()
 
-### Community 128 - "Community 128"
+### Community 127 - "Community 127"
 Cohesion: 0.22
 Nodes (8): 1. UI & Admin Screens, 2. Database Models, API Endpoints, Admin Permissions & Audit Logs, 3. Payment Provider Adapters & Env Variable Controls, 4. Production Configuration Templates & Environment Setup, 5. Local & Staging Non-Live End-to-End Testing, Payment Integration & SaaS Billing Roadmap (`todo.md`), Phase 1: Pre-Billing & Sandbox Implementation (No Live Credentials Needed), Phase 2: Live Connection & Go-Live (Post Billing Credentials)
 
-### Community 129 - "Community 129"
+### Community 128 - "Community 128"
 Cohesion: 0.22
 Nodes (8): Booking a Discovery Call with Softmato, Changing or cancelling a booking, Dates in confirmations, How to book, If a slot is not available, If you would rather not book a call, What a discovery call is, When calls are available
 
-### Community 130 - "Community 130"
+### Community 129 - "Community 129"
 Cohesion: 0.22
 Nodes (8): Before launch, Product Legal Checklist, The floors a product may not go below, The umbrella rule, What a product may never do, What a product must decide for itself, What every product must publish, Where the parent documents are
 
-### Community 131 - "Community 131"
+### Community 130 - "Community 130"
 Cohesion: 0.22
 Nodes (8): 1. UI & Admin Screens, 2. Database Models, API Endpoints, Admin Permissions & Audit Logs, 3. Payment Provider Adapters & Env Variable Controls, 4. Production Configuration Templates & Environment Setup, 5. Local & Staging Non-Live End-to-End Testing, Payment Integration & SaaS Billing Roadmap (`todo.md`), Phase 1: Pre-Billing & Sandbox Implementation (No Live Credentials Needed), Phase 2: Live Connection & Go-Live (Post Billing Credentials)
 
-### Community 132 - "Community 132"
+### Community 131 - "Community 131"
 Cohesion: 0.22
 Nodes (8): 1. What is not acceptable, 2. What to do if it happens to you, 3. What we do about it, 4. Consequences, 5. Who to tell, 6. No retaliation, 7. Prevention, Anti-Harassment Policy
+
+### Community 132 - "Community 132"
+Cohesion: 0.46
+Nodes (4): listPublishedTeam(), TeamGrid(), generateMetadata(), TeamPage()
 
 ### Community 133 - "Community 133"
 Cohesion: 0.36
@@ -761,160 +756,140 @@ Cohesion: 0.32
 Nodes (5): QUALITIES, Quality, QualityPile(), TONE_CLASS, PillPile()
 
 ### Community 135 - "Community 135"
-Cohesion: 0.46
-Nodes (5): BlogIndexPage(), generateMetadata(), listPublishedPosts(), BS_MONTHS, formatBs()
-
-### Community 136 - "Community 136"
 Cohesion: 0.29
 Nodes (6): AdminUser, adminUsers, AuditLog, auditLogs, PlatformSetting, platformSettings
 
-### Community 138 - "Community 138"
+### Community 136 - "Community 136"
 Cohesion: 0.25
 Nodes (7): 1. Static Web Tier, 2. Advanced Web & SaaS Tier, 3. Custom Enterprise & System Tier, How Project Quotes Work, Project Classification Tiers, Softmato Pricing & Project Estimates, Support & Retainer Tiers
 
-### Community 139 - "Community 139"
+### Community 137 - "Community 137"
 Cohesion: 0.25
 Nodes (7): 1. Provider Abstraction & Model Routing Strategy, 2. Function Tools & Dynamic Action Capabilities, 3. Knowledge Base Retrieval (Repository RAG), Overview, Retrieval Pipeline:, Softmato AI & LLM Integration Architecture Plan, Supported LLM Providers & Fallback Priority:
 
-### Community 140 - "Community 140"
+### Community 138 - "Community 138"
 Cohesion: 0.25
 Nodes (7): code:bash (ffmpeg -i "$VIDEO" -vf "fps=4,scale=860:-1" -q:v 4 out/f_%03), Read these two warnings first, The closing form, which is ours, The five rules the film actually teaches, The frames, and what each one is for, Visual reference — the second film (layout grammar), What we deliberately did not take
 
-### Community 141 - "Community 141"
-Cohesion: 0.38
-Nodes (6): numberInWords(), ONES, SCALES, TENS, underHundred(), underThousand()
+### Community 139 - "Community 139"
+Cohesion: 0.29
+Nodes (4): APP_ROOT, offenders, ROOTS, source
 
-### Community 142 - "Community 142"
-Cohesion: 0.48
-Nodes (5): DocumentKeyInput, documentPdfKey(), hex(), segment(), invoice()
-
-### Community 143 - "Community 143"
-Cohesion: 0.43
-Nodes (4): ConfirmOutcome, sendEmail(), sendPaymentReceipt(), POST
-
-### Community 144 - "Community 144"
+### Community 140 - "Community 140"
 Cohesion: 0.29
 Nodes (5): Always read graph nodes before editing, graphify - READ THIS FIRST then docs folder PHASES.md, Keeping the graph fresh, What you MUST do at the start of every session, What you MUST NOT do
 
-### Community 145 - "Community 145"
+### Community 141 - "Community 141"
 Cohesion: 0.29
 Nodes (6): 1. Per-application rate limiting, 2. Third-party SaaS onboarding, 3. Platform-driven renewals, 4. A credential-provisioning API, 5. Automatic domain verification, Future implementation
 
-### Community 146 - "Community 146"
+### Community 142 - "Community 142"
 Cohesion: 0.29
 Nodes (6): About Softmato, Core Technology Stack, Core Values & Principles, Equal Founders & Leadership Structure, Headquarters & Location, Softmato Technology Pvt Ltd — Company Overview
 
-### Community 147 - "Community 147"
+### Community 143 - "Community 143"
 Cohesion: 0.29
 Nodes (6): 1. Confidentiality & Non-Disclosure (NDA), 2. Security & Data Protection, 3. Code Ownership & IP Transfer, 4. Refund & Cancellation Policy, 5. Support & Maintenance SLA, Softmato Business Policies & Governance
 
-### Community 148 - "Community 148"
+### Community 144 - "Community 144"
 Cohesion: 0.29
 Nodes (6): code:bash (ffmpeg -ss 9.4 -i "$VIDEO" -frames:v 1 -vf "scale=1100:-1" -), Read these two warnings first, The frames, and what to take from each, Visual reference — the founder's reference film, What already exists, so it does not get rebuilt, What the forms should be about
 
-### Community 150 - "Community 150"
+### Community 146 - "Community 146"
 Cohesion: 0.33
 Nodes (6): config, middleware(), SUBDOMAIN_SURFACE, Surface, SURFACE_PREFIX, surfaceFor()
 
-### Community 151 - "Community 151"
-Cohesion: 0.67
-Nodes (3): formatNpr(), formatPaisa(), groupLakhCrore()
+### Community 147 - "Community 147"
+Cohesion: 0.4
+Nodes (5): Badge(), BadgeTone, STATUS_TONES, toneForStatus(), TONES
 
-### Community 152 - "Community 152"
+### Community 148 - "Community 148"
 Cohesion: 0.33
 Nodes (5): invoice, key, readDocumentPdf, renderPdf, writeDocumentPdf
 
-### Community 153 - "Community 153"
+### Community 149 - "Community 149"
 Cohesion: 0.33
 Nodes (3): cjsRequire, loaded, MONTH_NAMES
 
-### Community 154 - "Community 154"
+### Community 150 - "Community 150"
 Cohesion: 0.33
 Nodes (5): 1. Softmato Platform, 2. Product Engineering & SaaS Solutions, 3. Custom Mobile & Web Applications, Softmato Portfolio & Case Studies, Technology & Engineering Highlights
 
-### Community 155 - "Community 155"
+### Community 151 - "Community 151"
 Cohesion: 0.33
 Nodes (5): 1. Softmato Platform, 2. Product Engineering & SaaS Solutions, 3. Custom Mobile & Web Applications, Softmato Portfolio & Case Studies, Technology & Engineering Highlights
 
-### Community 156 - "Community 156"
+### Community 152 - "Community 152"
 Cohesion: 0.33
 Nodes (5): 1. Product Engineering, 2. Web Applications, 3. Mobile Apps, 4. Technical Consulting & Infrastructure, Softmato Services & Technical Offerings
 
-### Community 157 - "Community 157"
+### Community 153 - "Community 153"
 Cohesion: 0.33
 Nodes (5): Brand assets, code:block1 (pnpm brand:build), Generated files, Palette, Requirements for the masters
 
-### Community 158 - "Community 158"
+### Community 154 - "Community 154"
 Cohesion: 0.33
 Nodes (5): Before the first person signs, Nepali law these are written against, People documents, The three intern tracks, Which document for which person
 
-### Community 159 - "Community 159"
+### Community 155 - "Community 155"
 Cohesion: 0.4
 Nodes (4): chromeBinary, chromiumUsable, renderWithBundledChromium, renderWithChrome
 
-### Community 160 - "Community 160"
+### Community 156 - "Community 156"
 Cohesion: 0.4
 Nodes (4): code:bash (npm run dev), Deploy on Vercel, Getting Started, Learn More
 
-### Community 161 - "Community 161"
+### Community 157 - "Community 157"
 Cohesion: 0.4
 Nodes (4): Before you end a session, Before you start a session, Softmato Platform — Documentation, The one-paragraph version
 
+### Community 158 - "Community 158"
+Cohesion: 0.5
+Nodes (3): envPath, [, key, rawValue], match
+
+### Community 159 - "Community 159"
+Cohesion: 0.67
+Nodes (3): logoDataUri(), OpengraphImage(), size
+
+### Community 161 - "Community 161"
+Cohesion: 0.5
+Nodes (3): body, html, key
+
 ### Community 162 - "Community 162"
+Cohesion: 0.5
+Nodes (3): JWT, Session, User
+
+### Community 163 - "Community 163"
 Cohesion: 0.5
 Nodes (3): envPath, [, key, rawValue], match
 
 ### Community 164 - "Community 164"
 Cohesion: 0.5
-Nodes (3): CASES, combined, total
-
-### Community 165 - "Community 165"
-Cohesion: 0.67
-Nodes (3): ContactDetails(), SiteFooter(), getSettings
-
-### Community 166 - "Community 166"
-Cohesion: 0.67
-Nodes (3): logoDataUri(), OpengraphImage(), size
-
-### Community 167 - "Community 167"
-Cohesion: 0.5
-Nodes (3): body, html, key
-
-### Community 168 - "Community 168"
-Cohesion: 0.5
-Nodes (3): JWT, Session, User
-
-### Community 169 - "Community 169"
-Cohesion: 0.5
-Nodes (3): envPath, [, key, rawValue], match
-
-### Community 170 - "Community 170"
-Cohesion: 0.5
 Nodes (4): 9.7 — The runbook (this is what was run), code:block4 (pnpm --filter @softmato/web dev), code:sql (SELECT webhook_secret FROM applications), code:sql (SELECT * FROM v_unbalanced_journals;   -- must be empty)
 
-### Community 171 - "Community 171"
+### Community 165 - "Community 165"
 Cohesion: 0.5
 Nodes (3): Changelog, code:markdown (## [Phase N] — YYYY-MM-DD), Entry template
 
 ## Knowledge Gaps
-- **1373 isolated node(s):** `eslintConfig`, `RemotePatterns`, `TRUSTED_IMAGE_HOSTS`, `nextConfig`, `config` (+1368 more)
+- **1377 isolated node(s):** `eslintConfig`, `RemotePatterns`, `TRUSTED_IMAGE_HOSTS`, `nextConfig`, `config` (+1372 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `isPaymentError()` connect `Community 8` to `Community 32`, `Community 34`, `Community 2`, `Community 105`, `Community 42`, `Community 14`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
-- **Why does `cn()` connect `Community 22` to `Community 133`, `Community 134`, `Community 9`, `Community 15`, `Community 24`, `Community 26`, `Community 30`, `Community 35`, `Community 36`, `Community 37`, `Community 165`, `Community 39`, `Community 47`, `Community 48`, `Community 53`, `Community 66`, `Community 73`, `Community 83`, `Community 93`, `Community 100`?**
+- **Why does `isPaymentError()` connect `Community 74` to `Community 32`, `Community 1`, `Community 33`, `Community 35`, `Community 5`, `Community 21`?**
+  _High betweenness centrality (0.079) - this node is a cross-community bridge._
+- **Why does `cn()` connect `Community 50` to `Community 1`, `Community 133`, `Community 134`, `Community 39`, `Community 38`, `Community 41`, `Community 42`, `Community 107`, `Community 43`, `Community 13`, `Community 76`, `Community 15`, `Community 18`, `Community 147`, `Community 22`, `Community 54`, `Community 27`, `Community 60`?**
   _High betweenness centrality (0.052) - this node is a cross-community bridge._
-- **Why does `CheckoutView` connect `Community 32` to `Community 24`, `Community 8`, `Community 14`?**
-  _High betweenness centrality (0.036) - this node is a cross-community bridge._
+- **Why does `submitContact()` connect `Community 126` to `Community 10`, `Community 13`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
 - **What connects `eslintConfig`, `RemotePatterns`, `TRUSTED_IMAGE_HOSTS` to the rest of the system?**
-  _1373 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _1377 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.02 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05 - nodes in this community are weakly interconnected._
