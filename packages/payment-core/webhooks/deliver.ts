@@ -18,7 +18,11 @@
  */
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 
-import { applications, webhookDeliveries, type DbLike } from '@softmato/db';
+import {
+  applicationCredentials,
+  webhookDeliveries,
+  type DbLike,
+} from '@softmato/db';
 
 import { sign } from './signature';
 
@@ -61,13 +65,19 @@ export async function retryWebhooks(
       eventType: webhookDeliveries.eventType,
       payload: webhookDeliveries.payload,
       attempts: webhookDeliveries.attempts,
-      url: applications.webhookUrl,
-      secret: applications.webhookSecret,
+      url: applicationCredentials.webhookUrl,
+      secret: applicationCredentials.webhookSecret,
     })
     .from(webhookDeliveries)
+    /*
+     * Joined on the credential the delivery was signed for, not on the
+     * application. An inner join also means a delivery whose credential has
+     * gone — or one enqueued before credentials existed and never backfilled —
+     * is skipped rather than sent to whatever endpoint happens to be there now.
+     */
     .innerJoin(
-      applications,
-      eq(applications.id, webhookDeliveries.applicationId),
+      applicationCredentials,
+      eq(applicationCredentials.id, webhookDeliveries.credentialId),
     )
     .where(
       and(

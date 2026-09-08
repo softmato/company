@@ -5,17 +5,21 @@
  * checkout page, so it is 32 bytes of CSPRNG (docs/API.md §3) — base64url'd to
  * 43 characters, which satisfies the `session_id_format` check constraint.
  *
- * `live` vs `test` comes from the application, not from `PAYMENT_MODE`: a
- * single deployment can serve a live SaaS and a sandbox one, and the prefix
- * has to describe the money, not the server.
+ * `live` vs `test` comes from the credential that opened the session, not from
+ * `PAYMENT_MODE`: a single deployment can serve a Production integration and a
+ * Sandbox one, and the prefix has to describe the credential, not the server.
+ *
+ * It is a label. It does not isolate anything — see `AuthenticatedApplication`.
  */
+import type { CredentialMode } from '@softmato/db';
+
 import { randomBytes } from 'node:crypto';
 
 const ENTROPY_BYTES = 32;
 
-export function generateSessionId(isLive: boolean): string {
+export function generateSessionId(mode: CredentialMode): string {
   const suffix = randomBytes(ENTROPY_BYTES).toString('base64url');
-  return `cs_${isLive ? 'live' : 'test'}_${suffix}`;
+  return `cs_${mode}_${suffix}`;
 }
 
 /**

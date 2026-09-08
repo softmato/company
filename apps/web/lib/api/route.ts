@@ -10,7 +10,7 @@ import {
 import { PaymentError } from '@softmato/payment-core';
 
 import { newRequestId } from './request-id';
-import { apiError, apiJson } from './respond';
+import { apiError, apiJson, secretExpiryHeaders } from './respond';
 
 /**
  * The shape every `/api/v1` handler has.
@@ -65,9 +65,26 @@ export function readEndpoint<P = Record<string, never>>(
         request,
       });
 
-      if (result instanceof Response) return result;
+      const warning = secretExpiryHeaders(application.previousSecretExpiresAt);
 
-      return apiJson(result.body, { status: result.status ?? 200, requestId });
+      /*
+       * A handler that built its own `Response` — the PDF endpoints — gets
+       * the header set on it rather than skipped. The warning is about the
+       * credential, not about the content type, and an integrator whose only
+       * call is a receipt download would otherwise never be told.
+       */
+      if (result instanceof Response) {
+        for (const [key, value] of Object.entries(warning)) {
+          result.headers.set(key, value);
+        }
+        return result;
+      }
+
+      return apiJson(result.body, {
+        status: result.status ?? 200,
+        requestId,
+        headers: warning,
+      });
     } catch (error) {
       return apiError(error, requestId);
     }
@@ -117,7 +134,11 @@ export function mutatingEndpoint<T extends Record<string, unknown>>(
         },
       );
 
-      return apiJson(outcome.body, { status: outcome.status, requestId });
+      return apiJson(outcome.body, {
+        status: outcome.status,
+        requestId,
+        headers: secretExpiryHeaders(application.previousSecretExpiresAt),
+      });
     } catch (error) {
       return apiError(error, requestId);
     }

@@ -285,10 +285,43 @@ CREATE TRIGGER ledger_entries_postable
 -- SECTION 3 — API CLIENTS (the SaaS products calling the payment API)
 -- =============================================================================
 
+-- Three tables, and the split between them is the point:
+--
+--   * applications           — what the integration *is*.
+--   * application_credentials — how it authenticates, once per mode.
+--   * application_domains     — where a credential may send a customer.
+--
+-- 'test' and 'live' live in the columns and in the identifiers; every word a
+-- human reads says Sandbox or Production (API.md §2).
+
+CREATE TYPE credential_mode AS ENUM ('test', 'live');
+
 CREATE TABLE applications (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id      TEXT        NOT NULL REFERENCES products(id),
     name            TEXT        NOT NULL,
+    -- Shared by both credentials. A scope describes what the integration does
+    -- and must not differ between the credential somebody tested with and the
+    -- one they went live with.
+    scopes          TEXT[]      NOT NULL DEFAULT '{}',
+    is_active       BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    CONSTRAINT scopes_known CHECK (
+        scopes <@ ARRAY[
+            'payment:create','payment:read',
+            'invoice:create','invoice:read',
+            'refund:request','customer:read'
+        ]::TEXT[]
+    )
+);
+
+CREATE INDEX applications_product_idx ON applications(product_id);
+
+CREATE TABLE application_credentials (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    application_id  BIGINT      NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+    mode            credential_mode NOT NULL,
     client_id       TEXT        NOT NULL UNIQUE,   -- 'app_live_hostelhub_...'
     secret_hash     TEXT        NOT NULL,          -- argon2id. Never the secret.
     secret_last4    TEXT        NOT NULL,
@@ -297,14 +330,16 @@ CREATE TABLE applications (
     previous_secret_hash       TEXT,
     previous_secret_last4      TEXT,
     previous_secret_expires_at TIMESTAMPTZ,
-    scopes          TEXT[]      NOT NULL DEFAULT '{}',
-    webhook_url     TEXT,
     webhook_secret  TEXT,                          -- for signing outbound events
-    is_live         BOOLEAN     NOT NULL DEFAULT FALSE,
-    is_active       BOOLEAN     NOT NULL DEFAULT TRUE,
+    webhook_url     TEXT,
     rotated_at      TIMESTAMPTZ,
+    -- Per credential. Revoking Sandbox leaves Production authenticating;
+    -- turning the whole integration off is applications.is_active.
     revoked_at      TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+    -- At most one Sandbox and at most one Production credential.
+    CONSTRAINT application_credentials_mode_key UNIQUE (application_id, mode),
 
     -- All three overlap columns move together. A hash with no expiry would be
     -- a second permanent credential, which is the opposite of rotating.
@@ -317,16 +352,47 @@ CREATE TABLE applications (
             AND previous_secret_expires_at IS NOT NULL)
     ),
 
-    CONSTRAINT scopes_known CHECK (
-        scopes <@ ARRAY[
-            'payment:create','payment:read',
-            'invoice:create','invoice:read',
-            'refund:request','customer:read'
-        ]::TEXT[]
+    -- The prefix and the column must agree. Two places holding the same fact
+    -- is two places to disagree, and the disagreement would be invisible: a
+    -- row labelled test handing out a client id that reads app_live_.
+    CONSTRAINT client_id_matches_mode CHECK (
+        client_id LIKE 'app_' || mode::TEXT || '\_%'
     )
 );
 
-CREATE INDEX applications_product_idx ON applications(product_id);
+CREATE INDEX application_credentials_application_idx
+    ON application_credentials(application_id);
+
+-- The hostnames a credential may send customers to and receive webhooks on.
+-- Per credential, not per application: a Sandbox integration points at staging
+-- hosts and a Production one at real hosts, and letting a test credential send
+-- a customer to the production site is the confusion this table prevents.
+--
+-- Written by an admin in advance, never taken from a request. No wildcards.
+CREATE TABLE application_domains (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    credential_id   BIGINT      NOT NULL REFERENCES application_credentials(id) ON DELETE CASCADE,
+    hostname        TEXT        NOT NULL,          -- 'questioncall.com'
+    note            TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by      TEXT,
+
+    -- The shape rules live here, not only in the form that writes them. The
+    -- no-all-numeric-final-label rule is what stops 169.254.169.254, which is
+    -- four perfectly legal hostname labels.
+    CONSTRAINT hostname_is_bare_lowercase CHECK (
+        hostname = lower(hostname)
+        AND hostname !~ '[/:*[:space:]]'
+        AND hostname ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+        AND hostname !~ '\.[0-9]+$'
+        AND length(hostname) BETWEEN 4 AND 253
+    )
+);
+
+CREATE UNIQUE INDEX application_domains_unique
+    ON application_domains(credential_id, hostname);
+CREATE INDEX application_domains_credential_idx
+    ON application_domains(credential_id);
 
 -- =============================================================================
 -- SECTION 4 — CUSTOMERS & INVOICES

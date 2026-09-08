@@ -17,7 +17,12 @@ export interface DomainRow {
 }
 
 /**
- * The allowlist for one application.
+ * The allowlist for one **credential**.
+ *
+ * Sandbox and Production have separate lists on purpose: a test credential
+ * that could send a customer to the production site is the confusion this
+ * table exists to prevent. `applicationId` is carried only so the action can
+ * revalidate the page this was submitted from.
  *
  * Each row removes itself through its own form, so removing the third domain
  * cannot submit the second — the same one-form-per-verb rule the credential
@@ -25,10 +30,12 @@ export interface DomainRow {
  */
 export function DomainList({
   applicationId,
+  credentialId,
   domains,
   readOnly,
 }: {
   applicationId: number;
+  credentialId: number;
   domains: DomainRow[];
   readOnly: boolean;
 }) {
@@ -70,34 +77,46 @@ export function DomainList({
         </ul>
       )}
 
-      {readOnly ? null : <AddDomainForm applicationId={applicationId} />}
+      {readOnly ? null : (
+        <AddDomainForm
+          applicationId={applicationId}
+          credentialId={credentialId}
+        />
+      )}
     </div>
   );
 }
 
-function AddDomainForm({ applicationId }: { applicationId: number }) {
+function AddDomainForm({
+  applicationId,
+  credentialId,
+}: {
+  applicationId: number;
+  credentialId: number;
+}) {
   const [state, action] = useActionState(addDomainAction, undefined);
 
   return (
     <form action={action} className="mt-4 rounded-md border border-border p-4">
       <input type="hidden" name="applicationId" value={applicationId} />
+      <input type="hidden" name="credentialId" value={credentialId} />
 
       <label
         className="block text-sm font-medium"
-        htmlFor={`hostname-${applicationId}`}
+        htmlFor={`hostname-${credentialId}`}
       >
         Add a domain
       </label>
       <input
-        id={`hostname-${applicationId}`}
+        id={`hostname-${credentialId}`}
         name="hostname"
         required
         placeholder="questioncall.com"
-        aria-describedby={`hostname-help-${applicationId}`}
+        aria-describedby={`hostname-help-${credentialId}`}
         className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
       />
       <p
-        id={`hostname-help-${applicationId}`}
+        id={`hostname-help-${credentialId}`}
         className="mt-1 text-xs text-muted-foreground"
       >
         The bare hostname — no <code className="font-mono">https://</code>, no
@@ -111,12 +130,12 @@ function AddDomainForm({ applicationId }: { applicationId: number }) {
 
       <label
         className="mt-4 block text-sm font-medium"
-        htmlFor={`note-${applicationId}`}
+        htmlFor={`note-${credentialId}`}
       >
         Note <span className="font-normal">(optional)</span>
       </label>
       <input
-        id={`note-${applicationId}`}
+        id={`note-${credentialId}`}
         name="note"
         placeholder="Marketing site — return URL only"
         className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"

@@ -59,14 +59,53 @@ Scopes: `payment:create`, `payment:read`, `invoice:create`, `invoice:read`,
 Never granted to a SaaS: refund approval, accounting access, cross-product
 reads, provider configuration, admin anything.
 
-Rotation issues a new secret with a 24-hour overlap. Revocation is immediate.
+Rotation issues a new secret with a 24-hour overlap. Revocation is immediate
+and applies to one credential set, not to the application.
+
+### `Softmato-Secret-Expires`
+
+Set on any authenticated response whose caller presented the **superseded**
+secret while its overlap is still open. The value is an ISO-8601 instant: the
+moment that secret stops authenticating.
+
+    Softmato-Secret-Expires: 2026-09-09T07:00:45.000Z
+
+Absence means the current secret was used. There is deliberately no header for
+that case. It is set on every endpoint including the ones returning a PDF, and
+on error responses too — a `422` during the overlap still authenticated with
+the old secret, and the expiry is worth knowing either way.
+
+`authenticateApplication` has always known this (`usedPreviousSecret`); until
+2026-09-08 nothing read it, so the overlap passed in silence and the
+integration simply began failing at hour 24.
+
+### Sandbox and Production
+
+An application holds up to two credential sets. **Sandbox** is minted when the
+application is registered; **Production** is minted later, on request. Each set
+has its own `client_id`, its own secret, its own webhook URL, its own signing
+secret and its own domain list, and rotating or revoking one does not touch the
+other. Scopes are shared — they describe the integration, not the credential.
+
+The mode is carried in the identifiers: `app_test_…` / `app_live_…`, and
+checkout sessions `cs_test_…` / `cs_live_…`. Those two words appear nowhere
+else. Every sentence written for a person says Sandbox or Production.
+
+**Sandbox is a label on the identifier, not an isolation boundary.** It does
+not select a payment provider, does not change which gateway is called, and
+does not keep anything out of the ledger. `PAYMENT_MODE` decides that, and it
+is deployment-wide. So a Sandbox credential used against the production
+deployment reaches the real gateways, takes real money and posts real journal
+entries. Use one against a non-production deployment and nowhere else.
 
 ### A credential is not sufficient on its own
 
-Every application also has a **registered domain list** (`application_domains`),
+Every credential also has a **registered domain list** (`application_domains`),
 set by an admin in advance and never taken from a request. The credential says
-who the caller is; the domain list says where they are allowed to send a
-customer, and where we are willing to deliver a webhook.
+who the caller is; the domain list says where that credential is allowed to
+send a customer, and where we are willing to deliver its webhooks. Sandbox and
+Production hold separate lists, so a Sandbox credential cannot send a customer
+to a production host.
 
 - `return_url` on `POST /v1/checkout` must be https and on a registered
   hostname, or the request is refused `422 VALIDATION_FAILED` with the rejected
@@ -80,7 +119,8 @@ different host and needs its own row. `endsWith` is never used: it would match
 
 `assertRegisteredHost` in `packages/payment-core/applications/domains.ts` is the
 only place this is decided, and it owns the https check too, so there is one
-answer to "is this an acceptable destination" rather than one per call site.
+answer to "is this an acceptable destination" rather than one per call site. It
+takes a credential id, not an application id.
 
 ---
 

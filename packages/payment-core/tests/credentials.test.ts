@@ -10,24 +10,25 @@ import {
 
 describe('client ids', () => {
   it('names the product and the mode', () => {
-    expect(generateClientId('hostelhub', true)).toMatch(
+    expect(generateClientId('hostelhub', 'live')).toMatch(
       /^app_live_hostelhub_[0-9bcdfghjkmnpqrstvwxyz]{8}$/,
     );
-    expect(generateClientId('questioncall', false)).toMatch(
+    expect(generateClientId('questioncall', 'test')).toMatch(
       /^app_test_questioncall_[0-9bcdfghjkmnpqrstvwxyz]{8}$/,
     );
   });
 
   it('does not repeat', () => {
     const seen = new Set<string>();
-    for (let i = 0; i < 500; i++) seen.add(generateClientId('hostelhub', true));
+    for (let i = 0; i < 500; i++)
+      seen.add(generateClientId('hostelhub', 'live'));
     expect(seen.size).toBe(500);
   });
 });
 
 describe('client secrets', () => {
   it('carries the client id it belongs to', async () => {
-    const clientId = generateClientId('hostelhub', true);
+    const clientId = generateClientId('hostelhub', 'live');
     const { secret } = await issueSecret(clientId);
 
     expect(secret.startsWith('sk_live_hostelhub_')).toBe(true);
@@ -35,7 +36,7 @@ describe('client secrets', () => {
   });
 
   it('verifies only against its own hash', async () => {
-    const clientId = generateClientId('hostelhub', false);
+    const clientId = generateClientId('hostelhub', 'test');
     const issued = await issueSecret(clientId);
     const other = await issueSecret(clientId);
 
@@ -45,7 +46,7 @@ describe('client secrets', () => {
 
   it('stores a hash, never the secret', async () => {
     const { secret, secretHash } = await issueSecret(
-      generateClientId('hostelhub', true),
+      generateClientId('hostelhub', 'live'),
     );
 
     expect(secretHash.startsWith('$argon2id$')).toBe(true);
@@ -54,7 +55,7 @@ describe('client secrets', () => {
 
   it('records only the last four characters for display', async () => {
     const { secret, secretLast4 } = await issueSecret(
-      generateClientId('hostelhub', true),
+      generateClientId('hostelhub', 'live'),
     );
     expect(secret.endsWith(secretLast4)).toBe(true);
     expect(secretLast4).toHaveLength(4);

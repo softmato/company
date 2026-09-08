@@ -10,10 +10,12 @@
 import { eq } from 'drizzle-orm';
 
 import {
+  applicationCredentials,
   applications,
   db,
-  type Application,
+  type ApplicationCredential,
   type ApplicationScope,
+  type CredentialMode,
 } from '@softmato/db';
 
 import { PaymentError } from '../errors';
@@ -24,15 +26,38 @@ const DUMMY_HASH =
   '$argon2id$v=19$m=19456,t=2,p=1$c29mdG1hdG9hcHBkdW1teQ$8Xf1kQ0Zx2Xk0YQ3S8xdOkQ3xW5xk1Jm0GhIfJmXWJ3';
 
 export interface AuthenticatedApplication {
+  /** The application, not the credential. Payments belong to this. */
   id: number;
+  /** The credential that authenticated. Rotation and revocation act on this. */
+  credentialId: number;
   clientId: string;
   productId: string;
   name: string;
-  isLive: boolean;
+  /**
+   * Which credential set this is.
+   *
+   * **It isolates nothing on its own.** It picks the `cs_test_` / `cs_live_`
+   * session prefix and nothing else: not the provider, not the gateway, not
+   * whether a journal posts. What decides whether real money moves is
+   * `PAYMENT_MODE`, read at boot and deployment-wide. A Sandbox credential
+   * used against the production deployment takes real money.
+   */
+  mode: CredentialMode;
   scopes: ApplicationScope[];
   webhookUrl: string | null;
   /** True when the caller presented the superseded secret during its overlap. */
   usedPreviousSecret: boolean;
+  /**
+   * When the superseded secret stops working — set only when this request
+   * used it, `null` otherwise.
+   *
+   * The boolean above has existed since rotation shipped and nothing read
+   * it, so during the 24 hours an integrator had to notice, they were told
+   * nothing at all, and at hour 24 their integration simply began failing.
+   * A boolean cannot say *when*, and "when" is the entire content of the
+   * warning, so the timestamp comes out with it.
+   */
+  previousSecretExpiresAt: Date | null;
 }
 
 function unauthenticated(reason: string, context?: Record<string, unknown>) {
@@ -50,39 +75,92 @@ export async function authenticateApplication(
   const clientId = clientIdFromSecret(secret);
   if (!clientId) throw unauthenticated('Bearer token is not a client secret');
 
-  const [application] = await db
-    .select()
-    .from(applications)
-    .where(eq(applications.clientId, clientId))
+  /*
+   * One query, joining the credential to the integration it belongs to. The
+   * client id is unique across `application_credentials`, so this is still a
+   * single index hit — the credential set an integrator holds is what
+   * identifies them, and the application is what it hangs off.
+   */
+  const [found] = await db
+    .select({
+      credential: applicationCredentials,
+      applicationId: applications.id,
+      productId: applications.productId,
+      name: applications.name,
+      scopes: applications.scopes,
+      isActive: applications.isActive,
+    })
+    .from(applicationCredentials)
+    .innerJoin(
+      applications,
+      eq(applications.id, applicationCredentials.applicationId),
+    )
+    .where(eq(applicationCredentials.clientId, clientId))
     .limit(1);
 
-  // Constant work whether or not the application exists.
-  const match = await matchSecret(application, secret);
+  // Constant work whether or not the credential exists.
+  const match = await matchSecret(found?.credential, secret);
 
-  if (!application) {
-    throw unauthenticated('No application for that client id', { clientId });
+  if (!found) {
+    throw unauthenticated('No credential for that client id', { clientId });
   }
 
   if (!match.ok) {
     throw unauthenticated('Secret did not verify', { clientId });
   }
 
-  // Checked after verification on purpose: telling an unauthenticated caller
-  // that an application is revoked is telling them it exists.
-  if (!application.isActive || application.revokedAt) {
-    throw unauthenticated('Application is revoked or inactive', { clientId });
+  /*
+   * Checked after verification on purpose: telling an unauthenticated caller
+   * that a credential is revoked is telling them it exists.
+   *
+   * Both are checked. `credential.revoked_at` kills one credential set and
+   * leaves the other authenticating; `application.is_active` turns the whole
+   * integration off. Neither implies the other.
+   */
+  if (!found.isActive || found.credential.revokedAt) {
+    throw unauthenticated(
+      'Credential is revoked, or its application is inactive',
+      {
+        clientId,
+      },
+    );
   }
 
-  return {
-    id: application.id,
-    clientId: application.clientId,
-    productId: application.productId,
-    name: application.name,
-    isLive: application.isLive,
-    scopes: application.scopes,
-    webhookUrl: application.webhookUrl,
+  const result: AuthenticatedApplication = {
+    id: found.applicationId,
+    credentialId: found.credential.id,
+    clientId: found.credential.clientId,
+    productId: found.productId,
+    name: found.name,
+    mode: found.credential.mode,
+    scopes: found.scopes,
+    webhookUrl: found.credential.webhookUrl,
     usedPreviousSecret: match.previous,
+    previousSecretExpiresAt: match.previous
+      ? (found.credential.previousSecretExpiresAt ?? null)
+      : null,
   };
+
+  /*
+   * Record that the old secret was used, without making the caller wait for
+   * it and without letting it fail the request.
+   *
+   * Deliberately after the result is built and deliberately not awaited.
+   * Authentication is the hot path on every `/v1` call, and this write is
+   * bookkeeping for a human reading a screen later — a database hiccup here
+   * must not turn a good request into a `500`. It only runs during the
+   * overlap window, so it is a handful of writes over 24 hours, not one per
+   * request.
+   */
+  if (match.previous) {
+    void db
+      .update(applicationCredentials)
+      .set({ previousSecretLastUsedAt: new Date() })
+      .where(eq(applicationCredentials.id, found.credential.id))
+      .catch(() => {});
+  }
+
+  return result;
 }
 
 /**
@@ -92,20 +170,20 @@ export async function authenticateApplication(
  * with an expiry rather than cleared by a job that might not run.
  */
 async function matchSecret(
-  application: Application | undefined,
+  credential: ApplicationCredential | undefined,
   presented: string,
 ): Promise<{ ok: boolean; previous: boolean }> {
-  if (!application) {
+  if (!credential) {
     await verifySecret(DUMMY_HASH, presented);
     return { ok: false, previous: false };
   }
 
-  if (await verifySecret(application.secretHash, presented)) {
+  if (await verifySecret(credential.secretHash, presented)) {
     return { ok: true, previous: false };
   }
 
   const { previousSecretHash: hash, previousSecretExpiresAt: expiresAt } =
-    application;
+    credential;
 
   if (hash && expiresAt && expiresAt > new Date()) {
     if (await verifySecret(hash, presented)) {

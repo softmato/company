@@ -37,7 +37,7 @@ export const dynamic = 'force-static';
 export const metadata: Metadata = {
   title,
   description:
-    "The internal integration guide for Softmato's own SaaS product teams: invoices, checkout, webhooks, and the rules a live credential is held to. Not a self-service API.",
+    "The internal integration guide for Softmato's own SaaS product teams: invoices, checkout, webhooks, and the rules a Production credential is held to. Not a self-service API.",
   alternates: { canonical: '/developers' },
 };
 
@@ -70,10 +70,10 @@ export default function DevelopersPage() {
           aria-label="Related"
           className="section-frame mt-12 rounded-lg p-5"
         >
-          <p className="eyebrow">Before you go live</p>
+          <p className="eyebrow">Before you go to production</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            The terms a live credential is issued under are the technical rules
-            described above, written down.
+            The terms a Production credential is issued under are the technical
+            rules described above, written down.
           </p>
 
           <p className="mt-3 text-sm">

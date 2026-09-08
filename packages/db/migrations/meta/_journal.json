@@ -50,6 +50,34 @@
       "when": 1788400000000,
       "tag": "0006_application_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788529281590,
+      "tag": "0007_application_credentials",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788529788083,
+      "tag": "0008_credential_on_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788876385958,
+      "tag": "0009_credential_slot_frees_on_revoke",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788877541905,
+      "tag": "0010_previous_secret_last_used",
+      "breakpoints": true
     }
   ]
 }

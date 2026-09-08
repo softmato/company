@@ -7,14 +7,18 @@
  * into the audit log has not been audited, it has been published.
  */
 import { randomBytes } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import {
+  applicationCredentials,
   applicationDomains,
   applications,
   db,
   type Application,
+  type ApplicationCredential,
+  CREDENTIAL_MODE_LABEL,
   type ApplicationScope,
+  type CredentialMode,
 } from '@softmato/db';
 
 import type { Actor, AuditRecorder } from '../audit';
@@ -40,18 +44,20 @@ export interface RegisterInput {
   name: string;
   scopes: ApplicationScope[];
   webhookUrl?: string | null;
-  isLive: boolean;
+  /** Which credential set to mint. Registration mints Sandbox; see item 8. */
+  mode: CredentialMode;
   /**
-   * At least one. Registered in the same transaction as the application, so
-   * an application cannot exist for even a moment without its allowlist — a
-   * credential that is briefly allowed to send customers anywhere is a
-   * credential that will be used in exactly that window.
+   * At least one. Registered in the same transaction as the credential, so
+   * a credential cannot exist for even a moment without its allowlist — one
+   * that is briefly allowed to send customers anywhere is one that will be
+   * used in exactly that window.
    */
   domains: DomainInput[];
 }
 
 export interface IssuedCredential {
   application: Application;
+  credential: ApplicationCredential;
   /** Displayed once. There is no second chance to read this. */
   secret: string;
 }
@@ -91,27 +97,20 @@ export async function registerApplication(
     }
   }
 
-  const clientId = generateClientId(input.productId, input.isLive);
+  const clientId = generateClientId(input.productId, input.mode);
   const { secret, secretHash, secretLast4 } = await issueSecret(clientId);
 
-  const application = await db.transaction(async (tx) => {
-    const [created] = await tx
+  const created = await db.transaction(async (tx) => {
+    const [application] = await tx
       .insert(applications)
       .values({
         productId: input.productId,
         name: input.name,
-        clientId,
-        secretHash,
-        secretLast4,
         scopes: input.scopes,
-        webhookUrl: input.webhookUrl ?? null,
-        // Signs outbound events. Never reaches a client bundle (RULES.md §6).
-        webhookSecret: randomBytes(32).toString('base64url'),
-        isLive: input.isLive,
       })
       .returning();
 
-    if (!created) {
+    if (!application) {
       throw new PaymentError(
         'VALIDATION_FAILED',
         'Application insert returned no row',
@@ -119,9 +118,31 @@ export async function registerApplication(
       );
     }
 
+    const [credential] = await tx
+      .insert(applicationCredentials)
+      .values({
+        applicationId: application.id,
+        mode: input.mode,
+        clientId,
+        secretHash,
+        secretLast4,
+        webhookUrl: input.webhookUrl ?? null,
+        // Signs outbound events. Never reaches a client bundle (RULES.md §6).
+        webhookSecret: randomBytes(32).toString('base64url'),
+      })
+      .returning();
+
+    if (!credential) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        'Credential insert returned no row',
+        { clientId },
+      );
+    }
+
     await tx.insert(applicationDomains).values(
       hostnames.map((domain) => ({
-        applicationId: created.id,
+        credentialId: credential.id,
         hostname: domain.hostname,
         note: domain.note,
         createdBy: actor.id,
@@ -134,12 +155,13 @@ export async function registerApplication(
         actorId: actor.id,
         action: 'application.register',
         resourceType: 'application',
-        resourceId: String(created.id),
+        resourceId: String(application.id),
         afterState: {
           clientId,
+          credentialId: credential.id,
           productId: input.productId,
           scopes: input.scopes,
-          isLive: input.isLive,
+          mode: input.mode,
           secretLast4,
           domains: hostnames.map((domain) => domain.hostname),
         },
@@ -147,14 +169,123 @@ export async function registerApplication(
       tx,
     );
 
-    return created;
+    return { application, credential };
   });
 
-  return { application, secret };
+  return { ...created, secret };
+}
+
+/**
+ * The second credential set, minted later from the same application.
+ *
+ * This is the whole point of the split: an admin registers QuestionCall once,
+ * gets a Sandbox credential, and adds Production when the integration is ready
+ * — same name, same product, same scopes, its own secrets and its own domain
+ * list.
+ *
+ * **It refuses when that mode already exists.** `UNIQUE (application_id, mode)`
+ * would refuse it anyway; this turns a constraint violation into a sentence an
+ * admin can read.
+ *
+ * Domains start empty on purpose. The Sandbox credential points at staging
+ * hosts and the Production one does not, so copying the list across would seed
+ * the exact confusion the per-credential allowlist exists to prevent. The
+ * detail page shows an empty list and the checkout endpoint refuses every
+ * `return_url` until an admin fills it in, which is the safe direction to fail.
+ */
+export async function addCredential(
+  applicationId: number,
+  mode: CredentialMode,
+  actor: Actor,
+  audit: AuditRecorder,
+): Promise<IssuedCredential> {
+  return db.transaction(async (tx) => {
+    const [application] = await tx
+      .select()
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .for('update')
+      .limit(1);
+
+    if (!application) {
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
+        applicationId,
+      });
+    }
+
+    /*
+     * A **revoked** credential does not hold the slot. It used to, because
+     * this read had no `revoked_at` filter and the unique constraint behind
+     * it had no `WHERE` clause, so revoking Production was terminal for that
+     * application: no button, no API, no way back short of a new application.
+     * Revocation is meant to kill a key, not a mode.
+     */
+    const [existing] = await tx
+      .select({ id: applicationCredentials.id })
+      .from(applicationCredentials)
+      .where(
+        and(
+          eq(applicationCredentials.applicationId, applicationId),
+          eq(applicationCredentials.mode, mode),
+          isNull(applicationCredentials.revokedAt),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      throw new PaymentError(
+        'INVALID_STATE',
+        `This application already has a live ${CREDENTIAL_MODE_LABEL[mode]} credential. Rotate it rather than minting a second.`,
+        { applicationId, mode },
+      );
+    }
+
+    const clientId = generateClientId(application.productId, mode);
+    const { secret, secretHash, secretLast4 } = await issueSecret(clientId);
+
+    const [credential] = await tx
+      .insert(applicationCredentials)
+      .values({
+        applicationId,
+        mode,
+        clientId,
+        secretHash,
+        secretLast4,
+        webhookSecret: randomBytes(32).toString('base64url'),
+      })
+      .returning();
+
+    if (!credential) {
+      throw new PaymentError(
+        'VALIDATION_FAILED',
+        'Credential insert returned no row',
+        { clientId },
+      );
+    }
+
+    await audit(
+      {
+        actorType: actor.type,
+        actorId: actor.id,
+        action: 'application.add_credential',
+        resourceType: 'application',
+        resourceId: String(applicationId),
+        afterState: {
+          clientId,
+          credentialId: credential.id,
+          mode,
+          secretLast4,
+        },
+      },
+      tx,
+    );
+
+    return { application, credential, secret };
+  });
 }
 
 export interface RotationResult {
-  application: Application;
+  credential: ApplicationCredential;
   secret: string;
   /** Until when the superseded secret keeps working. */
   previousSecretExpiresAt: Date;
@@ -167,32 +298,38 @@ export interface RotationResult {
  * growing set of keys.
  */
 export async function rotateSecret(
-  applicationId: number,
+  credentialId: number,
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<RotationResult> {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select()
-      .from(applications)
-      .where(eq(applications.id, applicationId))
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.id, credentialId))
       .for('update')
       .limit(1);
 
     if (!existing) {
-      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
-        applicationId,
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+        credentialId,
       });
     }
 
     if (existing.revokedAt) {
       throw new PaymentError(
         'INVALID_STATE',
-        'A revoked application cannot rotate its secret; register a new one',
-        { applicationId },
+        'A revoked credential cannot rotate its secret; mint a new one',
+        { credentialId },
       );
     }
 
+    /*
+     * The same client id keeps its secret rotated under it. The identifier is
+     * how an integrator, a log line and this table all name the credential —
+     * changing it on rotation would turn a 24-hour grace period into a
+     * re-registration.
+     */
     const { secret, secretHash, secretLast4 } = await issueSecret(
       existing.clientId,
     );
@@ -202,7 +339,7 @@ export async function rotateSecret(
     );
 
     const [updated] = await tx
-      .update(applications)
+      .update(applicationCredentials)
       .set({
         secretHash,
         secretLast4,
@@ -211,12 +348,12 @@ export async function rotateSecret(
         previousSecretExpiresAt,
         rotatedAt: now,
       })
-      .where(eq(applications.id, applicationId))
+      .where(eq(applicationCredentials.id, credentialId))
       .returning();
 
     if (!updated) {
       throw new PaymentError('RESOURCE_NOT_FOUND', 'Rotation updated no row', {
-        applicationId,
+        credentialId,
       });
     }
 
@@ -225,10 +362,11 @@ export async function rotateSecret(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.rotate_secret',
-        resourceType: 'application',
-        resourceId: String(applicationId),
+        resourceType: 'application_credential',
+        resourceId: String(credentialId),
         beforeState: { secretLast4: existing.secretLast4 },
         afterState: {
+          mode: existing.mode,
           secretLast4,
           previousSecretExpiresAt: previousSecretExpiresAt.toISOString(),
         },
@@ -236,7 +374,7 @@ export async function rotateSecret(
       tx,
     );
 
-    return { application: updated, secret, previousSecretExpiresAt };
+    return { credential: updated, secret, previousSecretExpiresAt };
   });
 }
 
@@ -244,45 +382,48 @@ export async function rotateSecret(
  * Revocation is immediate (docs/API.md §2) — including for the secret that was
  * mid-overlap, which is the only reason the overlap columns are cleared here
  * rather than left to expire on their own.
+ *
+ * **It revokes one credential, not the integration.** Killing a Sandbox
+ * credential must leave Production authenticating: they are separate keys, and
+ * the reason to kill one is rarely a reason to kill the other. Turning the
+ * whole integration off is `applications.is_active`, which is a different act
+ * with a different blast radius.
  */
-export async function revokeApplication(
-  applicationId: number,
+export async function revokeCredential(
+  credentialId: number,
   actor: Actor,
   audit: AuditRecorder,
-): Promise<Application> {
+): Promise<ApplicationCredential> {
   return db.transaction(async (tx) => {
     const [existing] = await tx
       .select()
-      .from(applications)
-      .where(eq(applications.id, applicationId))
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.id, credentialId))
       .for('update')
       .limit(1);
 
     if (!existing) {
-      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such application', {
-        applicationId,
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+        credentialId,
       });
     }
 
     const [updated] = await tx
-      .update(applications)
+      .update(applicationCredentials)
       .set({
-        isActive: false,
         revokedAt: existing.revokedAt ?? new Date(),
         previousSecretHash: null,
         previousSecretLast4: null,
         previousSecretExpiresAt: null,
       })
-      .where(eq(applications.id, applicationId))
+      .where(eq(applicationCredentials.id, credentialId))
       .returning();
 
     if (!updated) {
       throw new PaymentError(
         'RESOURCE_NOT_FOUND',
         'Revocation updated no row',
-        {
-          applicationId,
-        },
+        { credentialId },
       );
     }
 
@@ -291,10 +432,10 @@ export async function revokeApplication(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.revoke',
-        resourceType: 'application',
-        resourceId: String(applicationId),
-        beforeState: { isActive: existing.isActive },
-        afterState: { isActive: false, revokedAt: updated.revokedAt },
+        resourceType: 'application_credential',
+        resourceId: String(credentialId),
+        beforeState: { revokedAt: existing.revokedAt },
+        afterState: { mode: updated.mode, revokedAt: updated.revokedAt },
       },
       tx,
     );
@@ -303,13 +444,20 @@ export async function revokeApplication(
   });
 }
 
-/** Scopes and webhook URL are editable; credentials never are, only rotated. */
+/**
+ * The application's own fields: its name and its scopes.
+ *
+ * **`webhook_url` is not here any more.** It belongs to a credential — Sandbox
+ * delivers to a staging endpoint and Production to a real one — so it is set
+ * by `setCredentialWebhookUrl` below. Scopes stay here, shared: a scope
+ * describes what the integration does, and it should not differ between the
+ * credential somebody tested with and the one they went live with.
+ */
 export async function updateApplication(
   applicationId: number,
   patch: {
     name?: string;
     scopes?: ApplicationScope[];
-    webhookUrl?: string | null;
   },
   actor: Actor,
   audit: AuditRecorder,
@@ -328,32 +476,11 @@ export async function updateApplication(
       });
     }
 
-    /*
-     * The other door. `return_url` is checked in the checkout route; this is
-     * the path that writes `webhook_url`, and it is the one that matters more
-     * — that URL is fetched by our own server, so an unchecked internal
-     * address here is an SSRF with our own network position behind it.
-     *
-     * Checked on every write rather than only when the value changes: "it was
-     * already in the column" is not evidence it was ever validated.
-     */
-    if (patch.webhookUrl) {
-      await assertRegisteredHost(
-        applicationId,
-        patch.webhookUrl,
-        'webhook_url',
-        tx,
-      );
-    }
-
     const [updated] = await tx
       .update(applications)
       .set({
         ...(patch.name !== undefined ? { name: patch.name } : {}),
         ...(patch.scopes !== undefined ? { scopes: patch.scopes } : {}),
-        ...(patch.webhookUrl !== undefined
-          ? { webhookUrl: patch.webhookUrl }
-          : {}),
       })
       .where(eq(applications.id, applicationId))
       .returning();
@@ -371,16 +498,74 @@ export async function updateApplication(
         action: 'application.update',
         resourceType: 'application',
         resourceId: String(applicationId),
-        beforeState: {
-          name: existing.name,
-          scopes: existing.scopes,
-          webhookUrl: existing.webhookUrl,
-        },
-        afterState: {
-          name: updated.name,
-          scopes: updated.scopes,
-          webhookUrl: updated.webhookUrl,
-        },
+        beforeState: { name: existing.name, scopes: existing.scopes },
+        afterState: { name: updated.name, scopes: updated.scopes },
+      },
+      tx,
+    );
+
+    return updated;
+  });
+}
+
+/**
+ * Where this credential's webhooks are delivered.
+ *
+ * **The door that matters most.** `return_url` sends a customer's browser
+ * somewhere and is checked in the checkout route; this URL is fetched by our
+ * own server, so an unchecked internal address here is an SSRF with our
+ * network position behind it. `assertRegisteredHost` runs inside the same
+ * transaction that writes the value, so a domain deleted mid-request cannot be
+ * validated against and then vanish.
+ *
+ * Checked on every write rather than only when the value changes: "it was
+ * already in the column" is not evidence it was ever validated.
+ */
+export async function setCredentialWebhookUrl(
+  credentialId: number,
+  webhookUrl: string | null,
+  actor: Actor,
+  audit: AuditRecorder,
+): Promise<ApplicationCredential> {
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select()
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.id, credentialId))
+      .for('update')
+      .limit(1);
+
+    if (!existing) {
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+        credentialId,
+      });
+    }
+
+    if (webhookUrl) {
+      await assertRegisteredHost(credentialId, webhookUrl, 'webhook_url', tx);
+    }
+
+    const [updated] = await tx
+      .update(applicationCredentials)
+      .set({ webhookUrl })
+      .where(eq(applicationCredentials.id, credentialId))
+      .returning();
+
+    if (!updated) {
+      throw new PaymentError('RESOURCE_NOT_FOUND', 'Update touched no row', {
+        credentialId,
+      });
+    }
+
+    await audit(
+      {
+        actorType: actor.type,
+        actorId: actor.id,
+        action: 'application.set_webhook_url',
+        resourceType: 'application_credential',
+        resourceId: String(credentialId),
+        beforeState: { webhookUrl: existing.webhookUrl },
+        afterState: { webhookUrl: updated.webhookUrl },
       },
       tx,
     );

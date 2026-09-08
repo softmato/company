@@ -16,17 +16,17 @@ import { PaymentError } from '../errors';
 import { normalizeHostnameInput } from './domains';
 
 export async function listDomains(
-  applicationId: number,
+  credentialId: number,
 ): Promise<ApplicationDomain[]> {
   return db
     .select()
     .from(applicationDomains)
-    .where(eq(applicationDomains.applicationId, applicationId))
+    .where(eq(applicationDomains.credentialId, credentialId))
     .orderBy(asc(applicationDomains.hostname));
 }
 
 export interface AddDomainInput {
-  applicationId: number;
+  credentialId: number;
   /** `questioncall.com` — bare host. A scheme, port or path is refused. */
   hostname: string;
   note?: string | null;
@@ -66,20 +66,20 @@ export async function addDomain(
     const [created] = await tx
       .insert(applicationDomains)
       .values({
-        applicationId: input.applicationId,
+        credentialId: input.credentialId,
         hostname,
         note: input.note?.trim() || null,
         createdBy: actor.id,
       })
       .onConflictDoNothing({
-        target: [applicationDomains.applicationId, applicationDomains.hostname],
+        target: [applicationDomains.credentialId, applicationDomains.hostname],
       })
       .returning();
 
     if (!created) {
       throw new PaymentError(
         'VALIDATION_FAILED',
-        `"${hostname}" is already registered for this application.`,
+        `"${hostname}" is already registered for this credential.`,
         { hostname },
       );
     }
@@ -89,8 +89,8 @@ export async function addDomain(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.domain_add',
-        resourceType: 'application',
-        resourceId: String(input.applicationId),
+        resourceType: 'application_credential',
+        resourceId: String(input.credentialId),
         afterState: { hostname, note: created.note },
       },
       tx,
@@ -127,8 +127,8 @@ export async function removeDomain(
         actorType: actor.type,
         actorId: actor.id,
         action: 'application.domain_remove',
-        resourceType: 'application',
-        resourceId: String(deleted.applicationId),
+        resourceType: 'application_credential',
+        resourceId: String(deleted.credentialId),
         beforeState: { hostname: deleted.hostname, note: deleted.note },
       },
       tx,

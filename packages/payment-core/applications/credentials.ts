@@ -19,6 +19,8 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { hash as argon2Hash, verify as argon2Verify } from '@node-rs/argon2';
 
+import type { CredentialMode } from '@softmato/db';
+
 /** OWASP-recommended argon2id parameters: 19 MiB, 2 iterations, 1 lane. */
 const ARGON2 = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const;
 
@@ -42,8 +44,11 @@ function randomHandle(): string {
  * `app_live_hostelhub_7fk2m9qz`. The product id is in there so an admin
  * reading a log line knows whose credential it is without a query.
  */
-export function generateClientId(productId: string, isLive: boolean): string {
-  return `${CLIENT_ID_PREFIX}${isLive ? 'live' : 'test'}_${productId}_${randomHandle()}`;
+export function generateClientId(
+  productId: string,
+  mode: CredentialMode,
+): string {
+  return `${CLIENT_ID_PREFIX}${mode}_${productId}_${randomHandle()}`;
 }
 
 export interface IssuedSecret {

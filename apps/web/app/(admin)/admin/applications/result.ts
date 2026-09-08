@@ -19,6 +19,8 @@ export interface CredentialResult {
   webhookSecret?: string;
   clientId?: string;
   applicationId?: number;
+  /** Which credential set the result is about. Sandbox and Production differ. */
+  credentialId?: number;
   /** When a rotated-away client secret stops working. */
   previousSecretExpiresAt?: string;
 }

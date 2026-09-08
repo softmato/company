@@ -9,9 +9,20 @@
  * for one of them to drop the code field, which fails open and looks like
  * nothing.
  *
- * `autoComplete="off"` on the password because this is a re-authentication
- * prompt, not a sign-in — offering to save it here trains the browser to fill
- * it into a form whose purpose is to prove someone is present.
+ * **`autoComplete="new-password"`, not `"off"`.** Chrome ignores `off` on a
+ * password input: it decides a form holding one is a sign-in form, fills the
+ * saved password, and fills the account's email into whatever text input sits
+ * nearest above it — looking for the username field. On this page that input
+ * is the webhook URL, or the field where the application's name has to be
+ * typed to confirm a revocation. The founder's first screenshot of the
+ * finished panel had `sidd@softmato.com` sitting in both.
+ *
+ * `new-password` is the documented way to say "this is not the credential you
+ * have saved". It costs a manual pick from the password manager, which is the
+ * right trade against a form that silently rewrites the field above it — and
+ * it is what a re-authentication prompt wants anyway: offering to save it here
+ * trains the browser to fill a form whose purpose is to prove someone is
+ * present.
  */
 export function ReauthFields({
   idPrefix,
@@ -36,7 +47,7 @@ export function ReauthFields({
             id={`${idPrefix}-password`}
             name="password"
             type="password"
-            autoComplete="off"
+            autoComplete="new-password"
             className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
           />
         </div>

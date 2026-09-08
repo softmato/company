@@ -442,7 +442,147 @@ without a correct password and code, and the refusal writes an audit row).
 
 ---
 
-## ☐ 5. One application, two credential sets
+## ☑ 5. One application, two credential sets
+
+> **Done 2026-09-04, applied to `softmato-dev` only.** Production is
+> untouched and needs the founder — see "Before this reaches production" at the
+> end of this note.
+>
+> The shape is the one specified: `applications` keeps `id, product_id, name,
+scopes, is_active, created_at` and nothing else; `application_credentials`
+> holds everything per-mode with `UNIQUE (application_id, mode)`;
+> `application_domains.application_id` became `credential_id`. Scopes stayed on
+> the application.
+>
+> **Two migrations, not one, and the second was not in the plan.**
+>
+> `0007_application_credentials` is the split, with the data migration in the
+> same file as required. `0008_credential_on_payments` adds `credential_id` to
+> `payment_sessions`, `transactions` and `webhook_deliveries`, and it exists
+> because 0007 breaks webhook delivery on its own: `webhook_url` and
+> `webhook_secret` moved onto the credential, and an application can now hold
+> two with different endpoints and different signing keys. Nothing recorded
+> which one made a payment. Deriving it from the `cs_test_` prefix would be a
+> guess dressed as a lookup and does not work at all for a transaction with no
+> session, so the credential is recorded where the payment is. On
+> `webhook_deliveries` it is kept on the row rather than resolved at send time:
+> a rotation between enqueue and delivery must not change which key a queued
+> row was signed with.
+>
+> **0007 had to be hand-written, and the reason is a defect worth knowing
+> about.** `drizzle-kit generate` diffs against the newest snapshot in `meta/`,
+> and there is **no `0006_snapshot.json`** — migration 0006 was hand-written
+> and never recorded one. So the generator's baseline was 0005, which predates
+> `application_domains` entirely, and it emitted `CREATE TABLE
+"application_domains"` for a table that already exists. That statement fails
+> on every database that has run 0006. The generated _snapshot_ is correct
+> because it is built from the schema files rather than from the diff, so it
+> was kept and the drift heals from here — the next `generate` has a truthful
+> baseline. `drizzle-kit check` reports "Everything's fine" either way: it
+> validates the journal, not the SQL.
+>
+> **A silent pre-existing bug turned up in `lib/applications/queries.ts`, and
+> the gate test is what caught it.** Drizzle renders `${table.column}` inside a
+> `sql` template **unqualified**, so a correlated subquery written as
+>
+>     WHERE ${applicationDomains.applicationId} = ${applications.id}
+>
+> comes out as `WHERE "application_id" = "id"` — and inside the subquery both
+> names resolve against `application_domains`, comparing a row's own two
+> columns to each other. It compiles, it runs, and it answers the wrong
+> question. That has been live on the applications list since the allowlist
+> shipped, computing the domain count from
+> `application_domains.application_id = application_domains.id`. Nobody saw it
+> because the only application had no domains, so zero was right by accident.
+> The counts are now a `GROUP BY` and the `EXISTS` gates use literal qualified
+> table names.
+>
+> ### The code that followed
+>
+> - `authenticateApplication` looks up `application_credentials.client_id`,
+>   joins to `applications`, and checks **both** `credentials.revoked_at` and
+>   `applications.is_active` — neither implies the other. The fail-closed
+>   structure is unchanged: constant work for a missing credential, revocation
+>   checked only after verification, one `UNAUTHENTICATED` for every cause.
+> - `AuthenticatedApplication` gained `credentialId` and `mode` and lost
+>   `isLive`. `generateSessionId` and `generateClientId` take the mode.
+> - `addCredential(applicationId, mode)` mints the second set and refuses when
+>   that mode already exists — the `UNIQUE` would refuse it anyway; this turns
+>   a constraint violation into a sentence. **Domains start empty on purpose**:
+>   copying the Sandbox list onto Production would seed the exact confusion the
+>   per-credential allowlist exists to prevent.
+> - `rotateSecret`, `revokeCredential` (renamed from `revokeApplication`),
+>   `revealWebhookSecret`, `rotateWebhookSecret` and the new
+>   `setCredentialWebhookUrl` all take a credential id. `updateApplication` is
+>   down to name and scopes.
+> - `assertRegisteredHost` / `isRegisteredHost` / `addDomain` / `listDomains`
+>   take a credential id.
+> - `scripts/app-secret.mts` and `scripts/webhook-status.mts` follow. The CLI's
+>   `--yes-live` guard now reads `mode`, and `webhook:status` lists per
+>   credential rather than per application — one line per application would be
+>   an average of two different answers.
+> - A new `client_id_matches_mode` CHECK: `app_live_…` cannot sit on a row
+>   labelled `test`. Two places holding the same fact is two places to
+>   disagree, and that disagreement would be invisible.
+>
+> ### The screens
+>
+> `application-panel.tsx` and `webhook-secret-panel.tsx` are gone, replaced by
+> `credential-panel.tsx` (identity / delivery / domains / danger, drawn once
+> per mode, with a **Create Production credential** button where a mode has no
+> credential) and `application-header.tsx` for the shared name, scopes and
+> state. The Sandbox panel carries the honest note this plan requires. That is
+> most of item 7's structure; item 7 still owns the hierarchy pass, and item 6
+> still owns the vocabulary — the `test` / `live` badges are not all gone yet.
+>
+> **Editing scopes is gated by the application, not by a mode**, because both
+> credentials share them: narrowing a scope on an application that has a
+> Production credential breaks a live integration even though the form never
+> mentions modes.
+>
+> ### Verified
+>
+> Against `softmato-dev`, end to end, exactly the list this item asks for:
+>
+>     register → one Sandbox credential, and its secret authenticates
+>     mint Production on the same application → prefixes and handles differ
+>     a second Production credential → refused
+>     signing secrets → differ
+>     domain lists → separate (sandbox.example.com vs live.example.com)
+>     rotate Sandbox → Production still authenticates
+>     revoke Sandbox → Production still authenticates
+>
+> **The migrated row survived.** `HostelHub sandbox`
+> (`app_test_hostelhub_2d90d3bq`) moved with its `client_id`, `secret_hash`,
+> `secret_last4`, `webhook_url` and original `created_at` unchanged. It was
+> then rotated **through the CLI** and the new secret authenticated over real
+> HTTP against `GET /v1/transactions/…` — `401` for a wrong secret on the same
+> route, so the refusal is real. That proves the migrated row is found by
+> client id in the new table and its hash verifies.
+>
+> What it does _not_ prove is that an **already-issued** secret still works,
+> because the plaintext was shown once and is not stored — there is nothing to
+> test with. The migration copies `secret_hash` verbatim and never rehashes,
+> which is the mechanism the guarantee rests on.
+>
+> `pnpm typecheck`, `pnpm lint` and `pnpm turbo run test --force` all pass —
+> 667 tests. `drizzle-kit check` reports no drift.
+>
+> ### Before this reaches production
+>
+> QuestionCall's `app_test_questioncall_f3kv9zgz` lives on the production
+> branch and its secret is in QuestionCall's hands, not ours. So:
+>
+> 1. Run this **pre-flight read** on production first. Every row must pass the
+>    new CHECK, or 0007 aborts on the insert:
+>
+>        SELECT client_id, is_live,
+>               client_id LIKE 'app_' || (CASE WHEN is_live THEN 'live' ELSE 'test' END) || '\_%' AS ok
+>        FROM applications;
+>
+> 2. Apply `0007` and `0008` together. They are one logical change.
+> 3. Have QuestionCall make any authenticated call. A `401` means roll back —
+>    a failed authentication after this migration is a failed migration.
 
 **This is the schema change and the largest item. Do it in its own commit.**
 
@@ -529,7 +669,70 @@ secret is untouched, revoke one and confirm the other still authenticates.
 
 ---
 
-## ☐ 6. Sandbox and Production, everywhere a person reads
+## ☑ 6. Sandbox and Production, everywhere a person reads
+
+> **Done 2026-09-08.** Nine strings and one lookup.
+>
+> **A defect, not just wording.** `addCredential` interpolated the raw column
+> into its refusal — `This application already has a ${mode} credential` — and
+> `failure()` in `applications/result.ts` hands the panel
+> `error.publicDetail ?? error.message` unchanged. So the one sentence in this
+> flow that a person only ever sees when something has gone wrong was also the
+> one still saying "test". Fixed at the throw.
+>
+> **`CREDENTIAL_MODE_LABEL` now decides the word.** It lives in
+> `packages/db/schema/applications.ts`, beside the enum whose rule it enforces.
+> Four call sites had each written their own
+> `mode === 'live' ? 'Production' : 'Sandbox'`, and
+> a rule re-implemented four times is a rule that drifts on the fifth. The two
+> screens and the `payment-core` message go through the lookup now. The two
+> CLI scripts do not: `app-secret.mts` prints `PRODUCTION` in capitals on
+> purpose, which is the same word doing emphasis, and importing a label map to
+> lower-case it would be a worse trade than leaving two correct strings alone.
+>
+> **"Go live" was treated as a synonym and removed too.** `docs/INTEGRATION.md`
+> §7 "Going live" is now "Going to production", and `/developers`' related-links
+> panel reads "Before you go to production". This is a judgement call and worth
+> disagreeing with: "go live" is ordinary English for launching, not a name for
+> the credential. It went because both places are literally about being issued
+> a Production credential, and a reader who meets "go live" and "live
+> credential" on the same page has been handed the synonym this item exists to
+> delete.
+>
+> **`docs/API.md` §2 gained the section it never had**, and the section it did
+> have was stale: "Every application also has a registered domain list" has
+> been wrong since item 5 moved `application_domains` onto `credential_id`.
+> Both are fixed together, because a vocabulary paragraph sitting above a false
+> ownership claim is not an improvement. The new text states the honest
+> position from the top of this plan — Sandbox is a label on the identifier,
+> `PAYMENT_MODE` is what decides whether money is real — rather than implying
+> an isolation that does not exist.
+>
+> **The register form's checkbox was fixed, not skipped.** It now reads
+> "Production credential / leave off to mint a Sandbox credential". Item 8
+> deletes the whole control four commits from now, so this is two words with a
+> short life; they were changed anyway so that this item is true on its own and
+> the tree is never in a state where the plan says the vocabulary is done and a
+> screen disagrees.
+>
+> **Deliberately left alone.** `--yes-live` (a flag name, in the identifier
+> class with `app_live_` and the `mode` column); `isLive` locals and props;
+> code comments that discuss the wire values; and the dashboard's "Live" tab
+> and the CMS's "goes live on the public site", which are about publishing
+> content and have nothing to do with a credential.
+>
+> **What ran.** `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force`
+> — 667 tests, unchanged, across five packages — and `pnpm legal:check`, 8
+> documents, 0 blocking. Formatting was checked on the **staged bytes**
+> (`git show :<path> | prettier --check --stdin-filepath <path>`) because
+> `core.autocrlf=true` makes a plain `prettier --check` call every file dirty;
+> it caught one real reflow in `application-header.tsx`, which was fixed and
+> re-checked.
+>
+> **Not verified: the screens.** `/admin/applications` is behind a password and
+> a TOTP code, so what was confirmed is which strings the components contain,
+> not how they render. Item 7's verify covers that and requires the founder's
+> own session.
 
 One word for each idea, no synonyms.
 
@@ -548,7 +751,122 @@ Production.
 
 ---
 
-## ☐ 7. Rebuild the application detail page
+## ☑ 7. Rebuild the application detail page
+
+> **Done 2026-09-08, over three passes, the first two of which failed.** The
+> founder drove the page in their own admin session and sent screenshots; this
+> item was not marked on code review.
+>
+> ### What it is now
+>
+> Each panel is **Keys, Delivery, Domains, Danger**, headed "Sandbox
+> credentials" / "Production credentials".
+>
+> **Keys** is a table and answers "what have I got" with no form on screen:
+> the count stated (`two secrets · one public id`), then client id, client
+> secret and signing secret. **Delivery** is the webhook URL. **Domains** is
+> unchanged. **Danger** holds reveal, rotate-signing, rotate-client and revoke,
+> each closed behind its own button.
+>
+> What each key is _for_ lives in `key-legend.tsx`, a sticky rail at the right
+> of the page in the `TocRail` shape the legal and `/developers` pages already
+> use — said once, in the margin, instead of once per row and therefore twice
+> per page.
+>
+> ### The first pass failed, and the founder's word for it was "confusing"
+>
+> It was the accurate word. Adding headings to a flat column does not fix a
+> flat column. With both credentials present the page rendered about ten forms
+> and — because every Production action carries its own password and
+> authenticator fields — **six "Your password / Authenticator code" pairs
+> visible at once**, which reads as six different passwords rather than one
+> asked six times. Collapsing the actions is what fixed it; nothing else came
+> close.
+>
+> **`Collapsible` never closes itself.** A rotation's one-time secret and a
+> reveal's key are rendered by the form inside, so auto-closing on success
+> would throw away the only copy an admin will ever see. Cancel is the only
+> thing that unmounts one, which doubles as the way to clear a revealed secret
+> off the screen.
+>
+> ### Two defects the screenshots caught that no gate would have
+>
+> **The browser was writing the admin's email into the form.** Both screenshots
+> had `sidd@softmato.com` sitting in the Production webhook URL field and in
+> the type-the-name-to-revoke field. Chrome ignores `autocomplete="off"` on a
+> password input, decides any form containing one is a sign-in form, and fills
+> the account email into the nearest text input above it. `ReauthFields` now
+> uses `autocomplete="new-password"`, which is the documented way to say "not
+> the credential you have saved". **Unverified in a browser** — it needs a
+> real password manager, so confirm it on the next look.
+>
+> **A `500` shipped in the previous commit and every gate was green.**
+> `credential-panel.tsx` is a client component, and importing
+> `CREDENTIAL_MODE_LABEL` by value from `@softmato/db` pulled `pg` — and so
+> `dns`, `net`, `tls`, `fs` — into the browser bundle. `tsc` was happy, ESLint
+> was happy, 667 tests were happy: the failure exists only inside the bundler,
+> and the only way to see it is to load the page, which needs a password and a
+> TOTP code. `apps/web/tests/client-boundary.test.ts` now fails on any
+> `'use client'` file that imports a db value; it was checked by reintroducing
+> the exact broken import and watching it name the file. **`pnpm build` is part
+> of the gates for UI work from here** — it is what exercises every route's
+> client graph.
+>
+> ### The Sandbox signing secret is printed, and that is a trade
+>
+> Asked for directly. A Sandbox credential is not gated, so the Reveal click
+> asked nothing and refused nothing. What it also did was keep the key out of
+> screenshots — which the founder's own screenshot then demonstrated by putting
+> the `softmato-dev` Sandbox signing secret into a chat log. Production is
+> untouched: still behind Reveal, still re-authenticated, still audited.
+>
+> The read is a second named query, `sandboxSigningSecret`, rather than a
+> widened `credentialColumns` — that object exists so a `select()` cannot start
+> leaking a secret the day a column is added — and the `mode = 'test'` check is
+> in the `WHERE` clause rather than in the caller, because a guard the caller
+> must remember is one that is eventually forgotten. **It is not audited**: a
+> page render is not an event, and auditing it would put a row in the log every
+> time the screen opens and bury the Production reads that matter.
+>
+> ### The client secret cannot be shown, and was asked for
+>
+> "We should also reveal the client secret as this is just sandbox." It cannot
+> be done in either mode. `secret_hash` is argon2id and argon2 salts every
+> hash, so there is no query, no key and no admin route that produces the
+> plaintext — Sandbox is not a special case, it is the same column. The panel
+> says so in a sentence and points at rotation, which for Sandbox asks for
+> nothing. Making it readable would mean storing it reversibly, which is a
+> change to how the payment API authenticates and belongs to the founder, not
+> to a session.
+>
+> ### Verified
+>
+> Two of the three states the plan asks for, seen in the founder's own admin
+> session on `softmato-dev`:
+>
+>     both credentials       ✔ screenshot
+>     Production revoked     ✔ screenshot
+>     Sandbox only           ✘ not captured
+>
+> The third **cannot be produced on that application any more**, and that is
+> what turned up the bug below: application 1 now carries a revoked Production
+> credential, and before migration 0009 a revoked credential held its mode's
+> slot for good.
+>
+> **Revoking Production was a dead end**, which the founder found by asking how
+> to undo it. `UNIQUE (application_id, mode)` counted revoked rows, so the
+> panel had no button and `addCredential` refused; the only routes back were a
+> new application or an `UPDATE` by hand. Migration `0009` makes the index
+> partial, the panel offers a replacement, and the dead credentials are listed
+> underneath as a footnote so an old client id in a log still resolves to
+> something on screen. `packages/db/tests/credential-slot.test.ts` covers it.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force`, `pnpm build`
+> and `pnpm legal:check` all pass. Formatting checked on the staged bytes.
+>
+> **Still worth a look when the founder is next signed in:** the rail at `lg`
+> and above, the autofill fix, and a fresh application showing the Sandbox-only
+> state.
 
 The current page puts four different kinds of thing in one flat column with
 identical visual weight — read-only facts, routine settings, secret
@@ -589,7 +907,35 @@ with their own admin session. Do not claim a browser check that was not done.
 
 ---
 
-## ☐ 8. Registration mints the Sandbox credential
+## ☑ 8. Registration mints the Sandbox credential
+
+> **Done 2026-09-08.** The checkbox is gone, and so is the re-authentication
+> block it used to reveal.
+>
+> **The mode is no longer read from the request at all.** It would have been
+> enough to delete the control and default `mode` to `test`, and that would
+> have been wrong: `registerApplicationAction` is reachable by anyone who can
+> post to it, so a default is something a caller overrides. A hand-rolled
+> `isLive=true` against the old code would have minted a Production credential
+> through the one path in this file that asks for no password and no code. It
+> is now the literal `'test'`, and there is no field to send.
+>
+> **Two cases in `apps/web/tests/application-gate.test.ts`**, which already
+> holds the mocks this needs. The first posts `isLive=true` by hand and asserts
+> on the **row** — one credential, `mode` `test`, client id prefixed
+> `app_test_` — rather than on the returned message, because a response saying
+> "Registered" over a `live` row is exactly the bug. The second asserts
+> `reauthenticate` is never called, which is the other half of the item: a
+> Sandbox credential is not worth a TOTP prompt. Against the old code the first
+> case fails twice over — it would mint `live`, and the empty form would be
+> refused by the gate.
+>
+> Scopes and the domain rule are untouched: `DEFAULT_APPLICATION_SCOPES` still
+> seeds the form, an application with no scopes is still refused, and so is one
+> with no domains.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force` and `pnpm build`
+> all pass — 19 cases in the gate file, 676 across the repo.
 
 The register form currently offers a "Live credential" checkbox, which is the
 old one-row model showing through.
@@ -607,7 +953,43 @@ rule that an application with no scopes is refused.
 
 ---
 
-## ☐ 9. `docs/INTEGRATION.md` — make the SDK optional
+## ☑ 9. `docs/INTEGRATION.md` — make the SDK optional
+
+> **Done 2026-09-08.** Every call in §2 is shown twice, and the three things
+> the client does quietly are now a numbered section rather than a sentence.
+>
+> **§2.1, 2.2, 2.3 and 2.4 each carry a `curl` beside the SDK form** —
+> method, path, `Authorization: Bearer`, `Idempotency-Key` on the mutating
+> ones, the JSON body and the response. The transaction example keeps the
+> unescaped slash in `TXN-2083/84-00000008`, because that is what the
+> catch-all route actually accepts and an escaped one would not work.
+>
+> **The webhook section gained a from-scratch verification**, which is the part
+> an integrator genuinely cannot reverse-engineer from the docs: the signed
+> message is `${timestamp}.${raw body}`, HMAC-SHA256 under the signing secret,
+> hex, compared in constant time, with the five-minute age check. That was read
+> off `packages/sdk/webhooks.ts` — `signingBase`, `sign` and `MAX_AGE_SECONDS`
+> — and not written from memory. A wrong recipe here is worse than none: it
+> fails on genuine deliveries while a forged one nobody checked sails through.
+>
+> **New §6.7, "What you take on by not using the SDK"**, states the three in
+> the order they bite. The idempotency one says the part that is easy to miss:
+> the key must be generated **before the first attempt and stored with the
+> work**, because a key generated per attempt is not a key at all — and the
+> cost of getting it wrong is a second charge, not an error.
+>
+> **Two more sections the item asks for.** "What the SDK cannot do for you" —
+> no credential provisioning, no rotation, both admin-only, because a
+> credential that can mint another credential never has to be stolen twice.
+> And "What Sandbox means", carrying the honest position from the top of this
+> plan: a label on the identifier, not an isolation boundary, and used against
+> the production deployment it takes real money.
+>
+> Installing was already correct and is left alone, with the version bumped by
+> item 10.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force` and `pnpm build`
+> pass; formatting checked on the staged bytes.
 
 The guide is SDK-first and an integrator who does not want the dependency
 currently has to reverse-engineer the client's source.
@@ -674,7 +1056,83 @@ machine as of 2026-09-03.
 
 ---
 
-## ☐ 11. Signal the rotation overlap
+## ☑ 11. Signal the rotation overlap
+
+> **Done 2026-09-08.** The header, the callback, and the admin surface — plus
+> the column the admin surface needed, which was not in the plan.
+>
+> **`Softmato-Secret-Expires`** is set by `secretExpiryHeaders` in
+> `lib/api/respond.ts` and applied by both wrappers in `lib/api/route.ts`. A
+> boolean cannot say _when_, and "when" is the entire content of the warning,
+> so `AuthenticatedApplication` gained `previousSecretExpiresAt` alongside the
+> `usedPreviousSecret` that nothing had ever read.
+>
+> Two details that are decisions rather than details. It is set on a handler's
+> **own `Response`** too — the PDF endpoints — because the warning is about the
+> credential and not the content type, and an integrator whose only call is a
+> receipt download would otherwise never be told. And it is set **before** the
+> status check, so a `422` during the overlap still carries it: that request
+> authenticated with the old secret whether or not its body validated.
+>
+> There is no header for the healthy case. One that is always present is one
+> nobody reads.
+>
+> **The SDK takes `onWarning`, never a throw.** The call succeeded — that is
+> what the overlap is _for_ — so failing it would break a working integration
+> in order to warn it that it is about to break. An unparseable date is dropped
+> rather than guessed at, because the integrator plans a deploy around the date
+> and a wrong one is worse than none. A callback that throws is swallowed: a
+> failing logger must not take a payment down with it. `SoftmatoWarning` is
+> exported.
+>
+> **The admin surface needed a column, and this is the part not in the plan.**
+> The item asks to show the overlap "so the founder can see whether the
+> integrator has actually redeployed" — and "the old secret still works until
+> Tuesday" cannot answer that. It is a fact about our schedule. Whether anyone
+> is _still calling_ with the old secret is the fact that says whether Tuesday
+> is a quiet day or a support call. So migration `0010` adds
+> `previous_secret_last_used_at`, written by `authenticateApplication` when the
+> superseded secret is the one that matched.
+>
+> That write is **deliberately not awaited and cannot fail the request**.
+> Authentication is the hot path on every `/v1` call and this is bookkeeping
+> for a human reading a screen later; a database hiccup must not turn a good
+> request into a `500`. It only runs during the overlap, so it is a handful of
+> writes over 24 hours rather than one per request.
+>
+> The panel reports silence as silence: "no call has used it since the
+> rotation" may mean they redeployed immediately or that nothing has called at
+> all, and those are indistinguishable from here. Saying "they have switched"
+> would be inventing the difference.
+>
+> **Verified as the item asks — a shortened overlap, not a day's wait.**
+> `packages/db/tests/secret-overlap.test.ts`, five cases against real Postgres,
+> writes `previous_secret_expires_at` directly: the same column `rotateSecret`
+> writes and `matchSecret` reads. Nothing is mocked, because the boundary under
+> test is "does an expired overlap stop authenticating" and a fake clock would
+> move that boundary somewhere the production code never goes.
+>
+>     old secret, window open      authenticates, expiry returned
+>     its use is recorded          previous_secret_last_used_at set
+>     new secret, window open      authenticates, no expiry
+>     old secret, window passed    refused
+>     new secret, window passed    authenticates
+>
+> Five more in `packages/sdk/tests/client.test.ts` cover the callback: fired
+> once with the parsed date, silent with no header, silent on an unparseable
+> one, fired on a `422` before the throw, and harmless when it throws.
+>
+> **A trap for whoever writes the next test here.** A fixture client id must
+> satisfy `clientIdFromSecret`'s `(live|test)_[a-z0-9-]+_[a-z0-9]+` — the last
+> segment takes **no hyphen**. A `Date.now()` marker joined with a dash is
+> rejected before a single query runs, and the suite then fails for a reason
+> that has nothing to do with what it is testing.
+>
+> `docs/API.md` §2 and `docs/INTEGRATION.md` §6.6 both document the header, and
+> §6.6 carries the `onWarning` snippet.
+>
+> `0010` is applied to **`softmato-dev` only**, like `0007`, `0008` and `0009`.
+> Production still runs the old schema.
 
 `authenticateApplication` already computes `usedPreviousSecret` — it knows on
 every request whether the caller is still presenting the superseded secret —
@@ -717,7 +1175,44 @@ rather than waiting a day.
 
 ---
 
-## Open, and needs the founder — not a guess
+## Decided 2026-09-08, by the founder
+
+**What should a Sandbox credential actually do? — Nothing more than it does.**
+
+The question below was put to the founder with three options. The answer was
+that **Softmato builds every integrating SaaS itself**, so there is no outside
+team that needs to test against the production deployment. That closes it by
+construction: the isolation is the deployment, which is the only thing that
+ever isolated anything, and each product points at a non-production base URL
+while it is being built.
+
+So option A — deployment separation — is the standing answer, at no code cost.
+Per-credential `PAYMENT_MODE` and a segregated set of accounts are **not being
+built**, and should not be attempted until an outside integrator exists to
+force them. Until then the honest description is the one the UI already
+carries: Sandbox is isolated in identity, destination and lifecycle, and not in
+money or books.
+
+**What a Sandbox credential does enforce, and it is not nothing:** its own
+domain allowlist — `assertRegisteredHost` takes a credential id and runs on
+`return_url` at checkout and on `webhook_url` — its own webhook destination and
+signing secret, and its own rotation and revocation. It is a blast-radius
+control on where customers and webhooks go. It is not a statement about whether
+the payment is real.
+
+**The one live consequence, still outstanding.** QuestionCall's
+`app_test_questioncall_f3kv9zgz` was minted in the **production** database, so
+calls against `softmato.com` with it write real rows and post real journal
+entries. Production runs `PAYMENT_MODE=sandbox` today, so those calls reach the
+providers' sandbox hosts and no real money moves — but `sandbox` and `live`
+both register the _real_ adapters, and only `mock` talks to nothing. The day
+that variable changes, that credential takes real money with no other change
+anywhere. Moving it to a non-production deployment is now safe to do, because
+`0009` made revocation survivable.
+
+---
+
+## Superseded — the question above, as it was originally put
 
 **What should a Sandbox credential actually do?**
 

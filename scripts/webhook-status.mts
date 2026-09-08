@@ -19,35 +19,58 @@
  * client secret instead of the webhook secret. The secret itself is printed
  * only under --reveal, which you need once to start the receiver.
  */
-import { closeDb, db, applications, webhookDeliveries } from '@softmato/db';
-import { desc, inArray } from 'drizzle-orm';
+import {
+  applicationCredentials,
+  applications,
+  closeDb,
+  db,
+  webhookDeliveries,
+} from '@softmato/db';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 
 const argv = process.argv.slice(2);
 const all = argv.includes('--all');
 const reveal = argv.includes('--reveal');
 
-const apps = await db
+/*
+ * Listed per credential, not per application. Sandbox and Production deliver
+ * to different endpoints and sign with different keys, so one line per
+ * application would be an average of two different answers.
+ */
+const creds = await db
   .select({
-    clientId: applications.clientId,
+    clientId: applicationCredentials.clientId,
+    mode: applicationCredentials.mode,
+    revokedAt: applicationCredentials.revokedAt,
+    webhookUrl: applicationCredentials.webhookUrl,
+    webhookSecret: applicationCredentials.webhookSecret,
     name: applications.name,
     isActive: applications.isActive,
-    webhookUrl: applications.webhookUrl,
-    webhookSecret: applications.webhookSecret,
   })
-  .from(applications);
+  .from(applicationCredentials)
+  .innerJoin(
+    applications,
+    eq(applications.id, applicationCredentials.applicationId),
+  )
+  .orderBy(asc(applications.name), asc(applicationCredentials.mode));
 
-console.log('APPLICATIONS\n');
+console.log('CREDENTIALS\n');
 
-for (const app of apps) {
+for (const app of creds) {
   const secret = app.webhookSecret
     ? reveal
       ? app.webhookSecret
       : `set (${app.webhookSecret.length} chars, --reveal to print)`
     : 'MISSING — nothing can be signed, deliveries will be abandoned';
 
-  console.log(
-    `  ${app.clientId}  ${app.isActive ? '' : '(inactive) '}${app.name}`,
-  );
+  const label = app.mode === 'live' ? 'Production' : 'Sandbox';
+  const state = app.revokedAt
+    ? '(revoked) '
+    : app.isActive
+      ? ''
+      : '(inactive) ';
+
+  console.log(`  ${app.clientId}  ${state}${app.name} — ${label}`);
   console.log(
     `    webhook_url    : ${app.webhookUrl ?? 'MISSING — nothing to deliver to'}`,
   );

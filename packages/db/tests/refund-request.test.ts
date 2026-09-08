@@ -25,7 +25,7 @@ import { eq, inArray, like } from 'drizzle-orm';
 
 import { db } from '../client';
 import { accounts } from '../schema/accounts';
-import { applications } from '../schema/applications';
+import { applicationCredentials, applications } from '../schema/applications';
 import { customers } from '../schema/customers';
 import { fiscalPeriods } from '../schema/fiscal';
 import { invoices } from '../schema/invoices';
@@ -40,6 +40,7 @@ import {
 import type { AuthenticatedApplication } from '../../payment-core/applications/authenticate';
 import type { AuditRecord } from '../../payment-core/audit';
 import type { Receipt } from '../../payment-core/receipts/receipt';
+import { nextSequenceNo } from './unique-sequence';
 
 const PRODUCT = 'hostelhub';
 const PROVIDER = 'fonepay';
@@ -101,11 +102,30 @@ beforeAll(async () => {
 
   const rows = await db
     .insert(applications)
-    .values([row(`app_test_${marker}_ours`), row(`app_test_${marker}_theirs`)])
-    .returning({ id: applications.id, clientId: applications.clientId });
+    .values([row('ours'), row('theirs')])
+    .returning({ id: applications.id, name: applications.name });
 
-  ours = authenticated(rows.find((r) => r.clientId.endsWith('_ours'))!);
-  theirs = authenticated(rows.find((r) => r.clientId.endsWith('_theirs'))!);
+  const made = await db
+    .insert(applicationCredentials)
+    .values(
+      rows.map((r) => ({
+        applicationId: r.id,
+        mode: 'test' as const,
+        clientId: `app_test_${marker}_${r.name.split(' ').pop()}`,
+        // Nothing here authenticates; `requestRefund` is given the *result* of
+        // authentication, not a credential to verify.
+        secretHash: `$argon2id$not-a-real-hash$${r.id}`,
+        secretLast4: 'zzzz',
+      })),
+    )
+    .returning({
+      id: applicationCredentials.id,
+      applicationId: applicationCredentials.applicationId,
+      clientId: applicationCredentials.clientId,
+    });
+
+  ours = authenticated(made.find((c) => c.clientId.endsWith('ours'))!);
+  theirs = authenticated(made.find((c) => c.clientId.endsWith('theirs'))!);
 });
 
 afterAll(sweepFixtures);
@@ -117,7 +137,7 @@ async function sweepFixtures() {
   const stale = await db
     .select({ id: applications.id })
     .from(applications)
-    .where(like(applications.clientId, 'app_test_rfdtest-%'));
+    .where(like(applications.name, 'Refund fixture rfdtest-%'));
 
   if (stale.length === 0) return;
 
@@ -142,38 +162,36 @@ async function sweepFixtures() {
   await db.delete(applications).where(inArray(applications.id, ids));
 }
 
-function row(clientId: string) {
+function row(role: string) {
   return {
     productId: PRODUCT,
-    name: `Refund fixture ${clientId}`,
-    clientId,
-    // Nothing here authenticates; `requestRefund` is given the result of
-    // authentication, not a credential.
-    secretHash: `$argon2id$not-a-real-hash$${clientId}`,
-    secretLast4: 'zzzz',
+    name: `Refund fixture ${marker} ${role}`,
     scopes: ['refund:request' as const, 'payment:read' as const],
   };
 }
 
-function authenticated(app: {
+function authenticated(c: {
   id: number;
+  applicationId: number;
   clientId: string;
 }): AuthenticatedApplication {
   return {
-    id: app.id,
-    clientId: app.clientId,
+    id: c.applicationId,
+    credentialId: c.id,
+    clientId: c.clientId,
     productId: PRODUCT,
-    name: app.clientId,
-    isLive: false,
+    name: c.clientId,
+    mode: 'test',
     scopes: ['refund:request', 'payment:read'],
     webhookUrl: null,
     usedPreviousSecret: false,
+    previousSecretExpiresAt: null,
   };
 }
 
 /** A payment owned by `applicationId`, settled unless `settle` is false. */
 async function payment(applicationId: number, settle = true) {
-  const unique = Date.now() + Math.floor(Math.random() * 100_000);
+  const unique = nextSequenceNo();
 
   const [invoice] = await db
     .insert(invoices)
@@ -194,7 +212,7 @@ async function payment(applicationId: number, settle = true) {
   const [session] = await db
     .insert(paymentSessions)
     .values({
-      id: generateSessionId(false),
+      id: generateSessionId('test'),
       invoiceId: invoice!.id,
       applicationId,
       productId: PRODUCT,

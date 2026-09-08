@@ -28,7 +28,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { products } from './accounts';
-import { applications } from './applications';
+import { applicationCredentials, applications } from './applications';
 import { customers } from './customers';
 import { invoices } from './invoices';
 import { journalEntries } from './ledger';
@@ -55,6 +55,21 @@ export const paymentSessions = pgTable(
       .references(() => invoices.id),
     applicationId: bigint('application_id', { mode: 'number' }).references(
       () => applications.id,
+    ),
+    /**
+     * Which credential opened this session.
+     *
+     * The application is the ledger dimension; the credential is the thing
+     * with a webhook address and a signing key. Sandbox and Production deliver
+     * to different endpoints, so "who do we notify about this payment" has
+     * exactly one honest answer and it is this column. Deriving it later from
+     * the `cs_test_` prefix would be a guess dressed as a lookup.
+     *
+     * Null for a session created in the admin panel, which has no credential
+     * behind it and nobody to notify.
+     */
+    credentialId: bigint('credential_id', { mode: 'number' }).references(
+      () => applicationCredentials.id,
     ),
     productId: text('product_id')
       .notNull()
@@ -125,6 +140,10 @@ export const transactions = pgTable(
       .references(() => invoices.id),
     applicationId: bigint('application_id', { mode: 'number' }).references(
       () => applications.id,
+    ),
+    /** Carried down from the session. See the note there. */
+    credentialId: bigint('credential_id', { mode: 'number' }).references(
+      () => applicationCredentials.id,
     ),
     productId: text('product_id')
       .notNull()
@@ -357,6 +376,17 @@ export const webhookDeliveries = pgTable(
     applicationId: bigint('application_id', { mode: 'number' })
       .notNull()
       .references(() => applications.id),
+    /**
+     * The credential whose signing secret produced `signature`, and whose
+     * `webhook_url` this is bound for.
+     *
+     * Kept on the delivery rather than looked up at send time: a rotation
+     * between enqueue and delivery must not change which key a queued row was
+     * signed with, and a retry three hours later has to reach the same place.
+     */
+    credentialId: bigint('credential_id', { mode: 'number' }).references(
+      () => applicationCredentials.id,
+    ),
     eventType: text('event_type').notNull(), // 'payment.success'
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     signature: text('signature').notNull(),

@@ -3,18 +3,24 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { APPLICATION_SCOPES, type ApplicationScope } from '@softmato/db';
 import {
+  APPLICATION_SCOPES,
+  type ApplicationScope,
+  type CredentialMode,
+} from '@softmato/db';
+import {
+  addCredential,
   registerApplication,
   revealWebhookSecret,
-  revokeApplication,
+  revokeCredential,
   rotateSecret,
   rotateWebhookSecret,
+  setCredentialWebhookUrl,
   updateApplication,
 } from '@softmato/payment-core';
 
 import { recordAudit } from '@/lib/audit';
-import { credentialGate } from '@/lib/applications/queries';
+import { applicationGate, credentialGate } from '@/lib/applications/queries';
 
 import { requireAdmin } from '../cms/actions/shared';
 import { reauthenticate } from '../security/reauth';
@@ -28,6 +34,14 @@ import { failure, type CredentialResult } from './result';
  * is no endpoint that can produce it again — a lost client secret is rotated,
  * not recovered.
  *
+ * ## What these act on
+ *
+ * An application holds up to two credential sets, Sandbox and Production, and
+ * almost everything here addresses a **credential**: rotating, revoking,
+ * revealing a signing key, setting a webhook URL. Only the name and the scopes
+ * belong to the application, because those describe what the integration is
+ * rather than how it authenticates.
+ *
  * ## Why some of these re-authenticate
  *
  * `requireAdmin` settles "is there a session". Acting on a **Production**
@@ -40,13 +54,13 @@ import { failure, type CredentialResult } from './result';
  *
  * It did not always. Revealing a **Sandbox** signing secret cost a password
  * and a TOTP code, while rotating a client secret — which kills a live
- * integration in 24 hours — and revoking an application — which kills one
- * instantly and permanently — cost nothing at all. The CLI was stricter than
- * this screen: `scripts/app-secret.mts` refuses to rotate a live application
- * without an explicit `--yes-live`, precisely so a mistyped id cannot take
- * down production, and the admin panel did it in one click.
+ * integration in 24 hours — and revoking one — which kills it instantly and
+ * permanently — cost nothing at all. The CLI was stricter than this screen:
+ * `scripts/app-secret.mts` refuses to rotate a live credential without an
+ * explicit `--yes-live`, precisely so a mistyped id cannot take down
+ * production, and the admin panel did it in one click.
  *
- * So the rule now is one sentence:
+ * So the rule is one sentence:
  *
  *   * **Sandbox** — nothing is gated. Reveal, rotate, revoke, edit. The admin
  *     signed in and passed TOTP to get here; asking again to reveal a test key
@@ -54,17 +68,17 @@ import { failure, type CredentialResult } from './result';
  *     reading the screen.
  *   * **Production** — password and TOTP for everything that can move or break
  *     real money: minting, revealing the signing secret, rotating either
- *     secret, revoking, and changing the scopes or the webhook URL.
+ *     secret, revoking, changing the webhook URL, and changing the scopes.
  *
- * The mode is read from the database on the request that enforces it, by
- * `confirmIfProduction` below. It is never taken from the form — a gate whose
- * condition the caller supplies is not a gate.
+ * The mode is read from the database on the request that enforces it. It is
+ * never taken from the form — a gate whose condition the caller supplies is
+ * not a gate.
  */
 
 const registerSchema = z.object({
   productId: z.string().min(1, 'Pick a product'),
   name: z.string().min(2, 'Give it a name').max(80),
-  isLive: z.boolean(),
+  mode: z.enum(['test', 'live']),
   webhookUrl: z
     .string()
     .url('Must be an absolute https URL')
@@ -91,6 +105,11 @@ function readDomains(form: FormData): { hostname: string }[] {
     .map((hostname) => ({ hostname }));
 }
 
+function readId(form: FormData, field: string): number | null {
+  const id = Number(form.get(field));
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 /**
  * Password plus a live authenticator code, for the acts on a Production
  * credential.
@@ -101,16 +120,11 @@ function readDomains(form: FormData): { hostname: string }[] {
  * a script makes, and a wrong password is the shape a person makes. The one
  * worth seeing in the log was the one not being written. Same `action` for
  * both, so one query finds them; `reason` tells them apart.
- *
- * `applicationId` is optional only because registration has no row yet — the
- * credential is what this call is about to mint. Everywhere else it is passed,
- * because "somebody failed re-authentication" is not much use without "on
- * what".
  */
 async function confirmIdentity(
   adminId: string,
   form: FormData,
-  applicationId?: number,
+  resourceId?: number,
 ): Promise<CredentialResult | null> {
   const password = String(form.get('password') ?? '');
   const code = String(form.get('code') ?? '');
@@ -124,7 +138,7 @@ async function confirmIdentity(
       actorId: adminId,
       action: 'application.reauth_failed',
       resourceType: 'application',
-      resourceId: applicationId === undefined ? null : String(applicationId),
+      resourceId: resourceId === undefined ? null : String(resourceId),
       afterState: { reason },
     });
 
@@ -159,25 +173,25 @@ async function confirmIdentity(
  * The gate, in one place: **Production re-authenticates, Sandbox does not.**
  *
  * Reads the mode from the row rather than from `form`. Every action here is
- * reachable by anyone who can post to it, so a hidden `isLive` field would let
- * a caller declare their own credential a sandbox one and skip the check. The
+ * reachable by anyone who can post to it, so a hidden mode field would let a
+ * caller declare their own credential a sandbox one and skip the check. The
  * extra query is the price of the guarantee.
  *
  * Returns `null` to mean "proceed" and a `CredentialResult` to mean "stop and
  * show this", matching `confirmIdentity`, so a call site is one `if`.
  */
 async function confirmIfProduction(
-  applicationId: number,
+  credentialId: number,
   adminId: string,
   form: FormData,
 ): Promise<CredentialResult | null> {
-  const gate = await credentialGate(applicationId);
+  const gate = await credentialGate(credentialId);
 
-  if (!gate) return { ok: false, message: 'Bad application id.' };
+  if (!gate) return { ok: false, message: 'Bad credential id.' };
 
   if (!gate.isLive) return null;
 
-  return confirmIdentity(adminId, form, applicationId);
+  return confirmIdentity(adminId, form, credentialId);
 }
 
 /**
@@ -185,10 +199,10 @@ async function confirmIfProduction(
  *
  * This is **not** a second factor and is not a substitute for one — it proves
  * nothing about who is at the keyboard. It guards a different failure: the
- * right person revoking the wrong application. Revocation is immediate and
- * cannot be undone by re-enabling; the integration needs a whole new
- * registration and a new client id. A name that has to be read off the screen
- * and typed makes a misclick on the wrong row visible before it is fatal.
+ * right person revoking the wrong credential. Revocation is immediate and
+ * cannot be undone; the integration needs a whole new credential and a new
+ * client id. A name that has to be read off the screen and typed makes a
+ * misclick on the wrong row visible before it is fatal.
  *
  * So it applies to Sandbox as well as Production. "Sandbox is not gated" is
  * about re-authentication, and this is not that.
@@ -216,10 +230,21 @@ export async function registerApplicationAction(
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
 
+  /*
+   * The mode is not read from the form, and there is no field to read.
+   * Registration mints Sandbox; Production is minted from the application's
+   * own page, where `confirmIfProduction` asks for a password and a code.
+   *
+   * Hard-coded rather than defaulted, deliberately. A default is something a
+   * caller can override, and this endpoint is reachable by anyone who can
+   * post to it — a `mode=live` field on a form that no longer draws one
+   * would be a way to mint a production credential with no re-authentication
+   * at all.
+   */
   const parsed = registerSchema.safeParse({
     productId: String(form.get('productId') ?? ''),
     name: String(form.get('name') ?? '').trim(),
-    isLive: form.get('isLive') === 'true',
+    mode: 'test',
     webhookUrl: String(form.get('webhookUrl') ?? '').trim(),
   });
 
@@ -254,24 +279,19 @@ export async function registerApplicationAction(
       message: 'Nothing was created.',
       fieldErrors: {
         domains:
-          'List at least one domain. Until one exists the application cannot be given a return URL or a webhook address, so it could not be used anyway.',
+          'List at least one domain. Until one exists the credential cannot be given a return URL or a webhook address, so it could not be used anyway.',
       },
     };
   }
 
-  if (parsed.data.isLive) {
-    const refused = await confirmIdentity(adminId, form);
-    if (refused) return refused;
-  }
-
   try {
-    const { application, secret } = await registerApplication(
+    const { application, credential, secret } = await registerApplication(
       {
         productId: parsed.data.productId,
         name: parsed.data.name,
         scopes,
         webhookUrl: parsed.data.webhookUrl ?? null,
-        isLive: parsed.data.isLive,
+        mode: parsed.data.mode,
         domains,
       },
       { type: 'admin', id: adminId },
@@ -284,9 +304,9 @@ export async function registerApplicationAction(
      * through the same audited path — a reveal is a reveal even on the day the
      * application was made.
      */
-    const webhookSecret = application.webhookUrl
+    const webhookSecret = credential.webhookUrl
       ? await revealWebhookSecret(
-          application.id,
+          credential.id,
           { type: 'admin', id: adminId },
           recordAudit,
         )
@@ -297,11 +317,62 @@ export async function registerApplicationAction(
 
     return {
       ok: true,
-      message: 'Registered. Copy both secrets now — neither is shown again.',
+      message:
+        'Registered with a Sandbox credential. Copy both secrets now — neither is shown again.',
       secret,
-      clientId: application.clientId,
+      clientId: credential.clientId,
       applicationId: application.id,
+      credentialId: credential.id,
       ...(webhookSecret !== undefined ? { webhookSecret } : {}),
+    };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/**
+ * The second credential set, minted from the application's own page.
+ *
+ * This is what the split is for: register once, get a Sandbox credential, add
+ * Production when the integration is ready. Minting Production costs a
+ * password and a code; minting Sandbox does not.
+ */
+export async function addCredentialAction(
+  _previous: CredentialResult | undefined,
+  form: FormData,
+): Promise<CredentialResult> {
+  const adminId = await requireAdmin();
+  const applicationId = readId(form, 'applicationId');
+
+  if (applicationId === null) {
+    return { ok: false, message: 'Bad application id.' };
+  }
+
+  const mode: CredentialMode = form.get('mode') === 'live' ? 'live' : 'test';
+
+  if (mode === 'live') {
+    const refused = await confirmIdentity(adminId, form, applicationId);
+    if (refused) return refused;
+  }
+
+  try {
+    const { credential, secret } = await addCredential(
+      applicationId,
+      mode,
+      { type: 'admin', id: adminId },
+      recordAudit,
+    );
+
+    revalidatePath('/admin/applications');
+
+    return {
+      ok: true,
+      message:
+        'Created. Copy the secret now — it is not shown again. Add this credential’s domains before it can be used.',
+      secret,
+      clientId: credential.clientId,
+      applicationId,
+      credentialId: credential.id,
     };
   } catch (error) {
     return failure(error);
@@ -313,10 +384,10 @@ export async function rotateSecretAction(
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
-  const applicationId = Number(form.get('applicationId'));
+  const credentialId = readId(form, 'credentialId');
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
-    return { ok: false, message: 'Bad application id.' };
+  if (credentialId === null) {
+    return { ok: false, message: 'Bad credential id.' };
   }
 
   /*
@@ -324,12 +395,12 @@ export async function rotateSecretAction(
    * working for the overlap and then stops. On Production that is the second
    * most destructive thing on this screen and it used to cost nothing.
    */
-  const refused = await confirmIfProduction(applicationId, adminId, form);
+  const refused = await confirmIfProduction(credentialId, adminId, form);
   if (refused) return refused;
 
   try {
     const result = await rotateSecret(
-      applicationId,
+      credentialId,
       { type: 'admin', id: adminId },
       recordAudit,
     );
@@ -340,7 +411,8 @@ export async function rotateSecretAction(
       ok: true,
       message: 'Rotated. The old secret keeps working for 24 hours.',
       secret: result.secret,
-      clientId: result.application.clientId,
+      clientId: result.credential.clientId,
+      credentialId,
       previousSecretExpiresAt: result.previousSecretExpiresAt.toISOString(),
     };
   } catch (error) {
@@ -348,37 +420,37 @@ export async function rotateSecretAction(
   }
 }
 
-export async function revokeApplicationAction(
+export async function revokeCredentialAction(
   _previous: CredentialResult | undefined,
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
-  const applicationId = Number(form.get('applicationId'));
+  const credentialId = readId(form, 'credentialId');
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
-    return { ok: false, message: 'Bad application id.' };
+  if (credentialId === null) {
+    return { ok: false, message: 'Bad credential id.' };
   }
 
-  const gate = await credentialGate(applicationId);
+  const gate = await credentialGate(credentialId);
 
-  if (!gate) return { ok: false, message: 'Bad application id.' };
+  if (!gate) return { ok: false, message: 'Bad credential id.' };
 
   /*
    * The name first, then the identity check. Both are refusals that change
    * nothing, and asking for a password before telling the admin they are on
    * the wrong row wastes a TOTP code on a mistake.
    */
-  const mistyped = confirmName(form, gate.name);
+  const mistyped = confirmName(form, gate.applicationName);
   if (mistyped) return mistyped;
 
   if (gate.isLive) {
-    const refused = await confirmIdentity(adminId, form, applicationId);
+    const refused = await confirmIdentity(adminId, form, credentialId);
     if (refused) return refused;
   }
 
   try {
-    await revokeApplication(
-      applicationId,
+    await revokeCredential(
+      credentialId,
       { type: 'admin', id: adminId },
       recordAudit,
     );
@@ -388,21 +460,27 @@ export async function revokeApplicationAction(
 
     return {
       ok: true,
-      message: 'Revoked. Every secret for it stopped working.',
+      message:
+        'Revoked. This credential stopped working; the other one is untouched.',
     };
   } catch (error) {
     return failure(error);
   }
 }
 
+/**
+ * The application's own fields. Scopes are shared by both credentials, which
+ * is why narrowing them on an application that has a Production credential is
+ * gated even though this form never mentions a mode.
+ */
 export async function updateApplicationAction(
   _previous: CredentialResult | undefined,
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
-  const applicationId = Number(form.get('applicationId'));
+  const applicationId = readId(form, 'applicationId');
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
+  if (applicationId === null) {
     return { ok: false, message: 'Bad application id.' };
   }
 
@@ -416,28 +494,58 @@ export async function updateApplicationAction(
     };
   }
 
-  /*
-   * Editing looks harmless beside rotating and revoking, and is not: this form
-   * can narrow the scopes an integration depends on, or point its webhook at a
-   * different registered host. Both are silent — nothing fails until the next
-   * call or the next delivery.
-   */
-  const refused = await confirmIfProduction(applicationId, adminId, form);
+  const gate = await applicationGate(applicationId);
+
+  if (!gate) return { ok: false, message: 'Bad application id.' };
+
+  if (gate.hasProduction) {
+    const refused = await confirmIdentity(adminId, form, applicationId);
+    if (refused) return refused;
+  }
+
+  try {
+    await updateApplication(
+      applicationId,
+      { scopes },
+      { type: 'admin', id: adminId },
+      recordAudit,
+    );
+
+    revalidatePath('/admin/applications');
+
+    return { ok: true, message: 'Saved.' };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/**
+ * Where this credential's webhooks are delivered.
+ *
+ * The https and registered-host checks are not repeated here.
+ * `setCredentialWebhookUrl` runs `assertRegisteredHost` inside its
+ * transaction, which is the one place that decides what an acceptable
+ * destination is — a second opinion in this file is a second thing to forget
+ * to update.
+ */
+export async function setWebhookUrlAction(
+  _previous: CredentialResult | undefined,
+  form: FormData,
+): Promise<CredentialResult> {
+  const adminId = await requireAdmin();
+  const credentialId = readId(form, 'credentialId');
+
+  if (credentialId === null) {
+    return { ok: false, message: 'Bad credential id.' };
+  }
+
+  const refused = await confirmIfProduction(credentialId, adminId, form);
   if (refused) return refused;
 
   try {
-    /*
-     * The https and registered-host checks are not repeated here.
-     * `updateApplication` runs `assertRegisteredHost` inside its transaction,
-     * which is the one place that decides what an acceptable destination is —
-     * a second opinion in this file is a second thing to forget to update.
-     */
-    await updateApplication(
-      applicationId,
-      {
-        scopes,
-        webhookUrl: String(form.get('webhookUrl') ?? '').trim() || null,
-      },
+    await setCredentialWebhookUrl(
+      credentialId,
+      String(form.get('webhookUrl') ?? '').trim() || null,
       { type: 'admin', id: adminId },
       recordAudit,
     );
@@ -452,26 +560,26 @@ export async function updateApplicationAction(
 
 /**
  * Reading a Production signing key is an audited act behind re-authentication.
- * Reading a Sandbox one is a lookup, and is now treated as one — the audit
- * entry is written either way.
+ * Reading a Sandbox one is a lookup, and is treated as one — the audit entry is
+ * written either way.
  */
 export async function revealWebhookSecretAction(
   _previous: CredentialResult | undefined,
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
-  const applicationId = Number(form.get('applicationId'));
+  const credentialId = readId(form, 'credentialId');
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
-    return { ok: false, message: 'Bad application id.' };
+  if (credentialId === null) {
+    return { ok: false, message: 'Bad credential id.' };
   }
 
-  const refused = await confirmIfProduction(applicationId, adminId, form);
+  const refused = await confirmIfProduction(credentialId, adminId, form);
   if (refused) return refused;
 
   try {
     const webhookSecret = await revealWebhookSecret(
-      applicationId,
+      credentialId,
       { type: 'admin', id: adminId },
       recordAudit,
     );
@@ -491,18 +599,18 @@ export async function rotateWebhookSecretAction(
   form: FormData,
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
-  const applicationId = Number(form.get('applicationId'));
+  const credentialId = readId(form, 'credentialId');
 
-  if (!Number.isInteger(applicationId) || applicationId <= 0) {
-    return { ok: false, message: 'Bad application id.' };
+  if (credentialId === null) {
+    return { ok: false, message: 'Bad credential id.' };
   }
 
-  const refused = await confirmIfProduction(applicationId, adminId, form);
+  const refused = await confirmIfProduction(credentialId, adminId, form);
   if (refused) return refused;
 
   try {
     const webhookSecret = await rotateWebhookSecret(
-      applicationId,
+      credentialId,
       { type: 'admin', id: adminId },
       recordAudit,
     );

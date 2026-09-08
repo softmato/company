@@ -90,7 +90,7 @@ async function makeSession(options: {
   const [session] = await db
     .insert(paymentSessions)
     .values({
-      id: generateSessionId(false),
+      id: generateSessionId('test'),
       invoiceId,
       productId: PRODUCT,
       customerId,
@@ -220,7 +220,7 @@ describe('loadSession', () => {
 
   it('reports a well-formed id that does not exist as not found', async () => {
     await expect(
-      loadSession(db, generateSessionId(false)),
+      loadSession(db, generateSessionId('test')),
     ).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' });
   });
 });

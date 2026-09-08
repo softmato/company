@@ -1,0 +1,1 @@
+ALTER TABLE "application_credentials" ADD COLUMN "previous_secret_last_used_at" timestamp with time zone;
