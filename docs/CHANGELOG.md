@@ -35,6 +35,10 @@ this file tracks what was delivered.
   right, instead of once per row. Before this an application holding both
   credentials rendered six password-and-code pairs at the same time.
 
+- **`@softmato/sdk@0.1.2`** — `onWarning`, and the `SoftmatoWarning` type. Not
+  published yet: it is tagged after this branch is deployed, so that every
+  feature it exposes is one the live API actually has.
+
 ### Fixed
 
 - **Revoking a credential is no longer terminal for its mode.** The uniqueness
