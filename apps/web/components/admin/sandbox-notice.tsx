@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CredentialMode } from '@softmato/db';
 
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
@@ -36,8 +36,16 @@ export function AdminSandboxNotice({ mode }: { mode: CredentialMode }) {
    * instance. React must not rewrite the inline height when `mode` changes —
    * doing so would snap the strip open a frame before GSAP could animate it,
    * and GSAP would then read the finished height as its starting point.
+   *
+   * `useState` rather than `useRef`, because this value is read *during*
+   * render and a ref read during render is a lint error and a real hazard:
+   * refs are not part of the render contract, so a future concurrent render
+   * could see a value the committed tree never had. A state initialiser runs
+   * exactly once and is legal to read, which is the same guarantee stated
+   * where React can enforce it. It is never set again — the setter is dropped
+   * on purpose.
    */
-  const openOnLoad = useRef(open);
+  const [openOnLoad] = useState(open);
 
   useEffect(() => {
     const el = shell.current;
@@ -99,7 +107,7 @@ export function AdminSandboxNotice({ mode }: { mode: CredentialMode }) {
       ref={shell}
       inert={!open}
       className="overflow-hidden"
-      style={openOnLoad.current ? undefined : { height: 0 }}
+      style={openOnLoad ? undefined : { height: 0 }}
     >
       <p
         ref={body}
