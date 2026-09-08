@@ -1,3 +1,5 @@
+import type { CredentialMode } from '@softmato/db';
+
 /**
  * Shared dashboard contract.
  *
@@ -53,6 +55,12 @@ export interface DashboardMethod {
 
 export interface DashboardSnapshot {
   generatedAt: string;
+  /**
+   * Which population these figures describe. Carried on the snapshot rather
+   * than held only by the page, so a refresh cannot come back in a different
+   * mode than the one being looked at.
+   */
+  mode: CredentialMode;
   ledger: {
     unbalancedCount: number;
   };

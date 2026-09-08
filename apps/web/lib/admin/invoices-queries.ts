@@ -8,6 +8,8 @@
  */
 import 'server-only';
 
+import type { CredentialMode } from '@softmato/db';
+
 import { and, asc, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 
 import { customers, db, invoices, products } from '@softmato/db';
@@ -49,8 +51,12 @@ interface InvoiceFilter {
   limit?: number;
 }
 
-function whereFor(filter: InvoiceFilter): SQL | undefined {
-  const clauses: SQL[] = [];
+function whereFor(
+  filter: InvoiceFilter,
+  mode: CredentialMode,
+): SQL | undefined {
+  // First and unconditional; every other clause narrows within one mode.
+  const clauses: SQL[] = [eq(invoices.mode, mode)];
 
   if (
     filter.status &&
@@ -77,6 +83,7 @@ function whereFor(filter: InvoiceFilter): SQL | undefined {
 }
 
 export async function listInvoices(
+  mode: CredentialMode,
   filter: InvoiceFilter = {},
   now = new Date(),
 ): Promise<InvoiceRow[]> {
@@ -97,7 +104,7 @@ export async function listInvoices(
     .from(invoices)
     .innerJoin(customers, eq(customers.id, invoices.customerId))
     .innerJoin(products, eq(products.id, invoices.productId))
-    .where(whereFor(filter))
+    .where(whereFor(filter, mode))
     // Numbering is gapless per fiscal year, so newest first is the sequence
     // reversed rather than a date sort that could tie.
     .orderBy(desc(invoices.fiscalYear), desc(invoices.sequenceNo))
@@ -113,7 +120,10 @@ export async function listInvoices(
   }));
 }
 
-export async function invoiceTotals(now = new Date()): Promise<InvoiceTotals> {
+export async function invoiceTotals(
+  mode: CredentialMode,
+  now = new Date(),
+): Promise<InvoiceTotals> {
   const [row] = await db
     .select({
       /*
@@ -126,7 +136,8 @@ export async function invoiceTotals(now = new Date()): Promise<InvoiceTotals> {
       pastDue: sql<number>`COUNT(*) FILTER (WHERE ${invoices.status} IN ('issued','partially_paid') AND ${invoices.dueAt} < ${now})::int`,
       draft: sql<number>`COUNT(*) FILTER (WHERE ${invoices.status} = 'draft')::int`,
     })
-    .from(invoices);
+    .from(invoices)
+    .where(eq(invoices.mode, mode));
 
   return {
     outstandingMinor: BigInt(row?.outstanding ?? '0'),
@@ -145,23 +156,35 @@ export async function invoiceTotals(now = new Date()): Promise<InvoiceTotals> {
  * than leaving it to be discovered at year end.
  */
 export async function numberingGaps(): Promise<
-  { fiscalYear: string; expected: number; actual: number }[]
+  { fiscalYear: string; expected: string; actual: string }[]
 > {
   const rows = await db
     .select({
       fiscalYear: invoices.fiscalYear,
-      max: sql<number>`MAX(${invoices.sequenceNo})::int`,
-      count: sql<number>`COUNT(*)::int`,
+      /*
+       * `::text`, not `::int`.
+       *
+       * `sequence_no` is a bigint, and casting its maximum to a 4-byte int
+       * throws `integer out of range` the moment any row exceeds 2147483647 —
+       * which took down this whole page, because the test fixtures allocate
+       * sequence numbers from `Date.now() * 1000`, around 1.8e15. Those rows
+       * are in production as well as development.
+       *
+       * Read as text and compared as `bigint`, so the width of the column is
+       * the only thing that decides what fits.
+       */
+      max: sql<string>`MAX(${invoices.sequenceNo})::text`,
+      count: sql<string>`COUNT(*)::text`,
     })
     .from(invoices)
     .groupBy(invoices.fiscalYear)
     .orderBy(asc(invoices.fiscalYear));
 
   return rows
-    .filter((row) => row.max !== row.count)
+    .filter((row) => BigInt(row.max ?? '0') !== BigInt(row.count ?? '0'))
     .map((row) => ({
       fiscalYear: row.fiscalYear,
-      expected: row.max,
-      actual: row.count,
+      expected: row.max ?? '0',
+      actual: row.count ?? '0',
     }));
 }

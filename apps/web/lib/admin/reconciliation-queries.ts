@@ -16,7 +16,9 @@
  */
 import 'server-only';
 
-import { desc, eq, sql } from 'drizzle-orm';
+import type { CredentialMode } from '@softmato/db';
+
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 import {
   customers,
@@ -62,7 +64,10 @@ export interface RunItem {
  * auto-resolution RULES.md §2.8 forbids. The provider's figure lives in
  * `provider_events`, where reading it is a deliberate act.
  */
-export async function heldPayments(limit = 100): Promise<HeldPayment[]> {
+export async function heldPayments(
+  mode: CredentialMode,
+  limit = 100,
+): Promise<HeldPayment[]> {
   return db
     .select({
       id: transactions.id,
@@ -79,7 +84,12 @@ export async function heldPayments(limit = 100): Promise<HeldPayment[]> {
     .from(transactions)
     .innerJoin(invoices, eq(invoices.id, transactions.invoiceId))
     .innerJoin(customers, eq(customers.id, transactions.customerId))
-    .where(eq(transactions.status, 'reconciliation_required'))
+    .where(
+      and(
+        eq(transactions.status, 'reconciliation_required'),
+        eq(transactions.mode, mode),
+      ),
+    )
     .orderBy(desc(transactions.updatedAt))
     .limit(limit);
 }

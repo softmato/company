@@ -1,6 +1,6 @@
 import 'server-only';
 import { sql } from 'drizzle-orm';
-import { auditLogs, db } from '@softmato/db';
+import { auditLogs, db, type CredentialMode } from '@softmato/db';
 import { desc } from 'drizzle-orm';
 
 import type {
@@ -25,6 +25,17 @@ export type {
  * The read model is deliberately explicit. Each metric maps to a database
  * fact, and the dashboard never fills an unavailable feature with a made-up
  * zero.
+ *
+ * ## Every money read is scoped to one mode
+ *
+ * Sandbox activity is a product in development exercising the API, and it
+ * lands in the same tables as real business. Mixed into one figure it does not
+ * read as noise — it reads as revenue. So each query below filters on `mode`,
+ * and the default is Production: the page a person opens without asking for
+ * anything shows money that actually moved.
+ *
+ * `unbalancedJournalCount` is deliberately *not* filtered. It asks whether the
+ * books balance, and books that balance only in one mode do not balance.
  */
 
 /**
@@ -69,7 +80,9 @@ export async function recentActivity(limit = 8): Promise<ActivityEntry[]> {
  * All dashboard reads in one place. The page and its refresh API consume the
  * same read model so a refresh cannot quietly disagree with the first render.
  */
-export async function dashboardSnapshot(): Promise<DashboardSnapshot> {
+export async function dashboardSnapshot(
+  mode: CredentialMode = 'live',
+): Promise<DashboardSnapshot> {
   const [
     unbalancedCount,
     metrics,
@@ -81,17 +94,18 @@ export async function dashboardSnapshot(): Promise<DashboardSnapshot> {
     activity,
   ] = await Promise.all([
     unbalancedJournalCount(),
-    dashboardMetrics(),
-    dashboardRevenue(),
-    dashboardPaymentMethods(),
-    dashboardPayments(),
-    dashboardAttentionPayments(),
-    dashboardOverdueInvoices(),
+    dashboardMetrics(mode),
+    dashboardRevenue(mode),
+    dashboardPaymentMethods(mode),
+    dashboardPayments(mode),
+    dashboardAttentionPayments(mode),
+    dashboardOverdueInvoices(mode),
     recentActivity(),
   ]);
 
   return {
     generatedAt: new Date().toISOString(),
+    mode,
     ledger: { unbalancedCount },
     metrics,
     revenueByMonth,
@@ -106,7 +120,9 @@ export async function dashboardSnapshot(): Promise<DashboardSnapshot> {
   };
 }
 
-async function dashboardMetrics(): Promise<DashboardSnapshot['metrics']> {
+async function dashboardMetrics(
+  mode: CredentialMode,
+): Promise<DashboardSnapshot['metrics']> {
   const [paymentRows, invoiceRows] = await Promise.all([
     db.execute<{
       collected_minor: string;
@@ -125,12 +141,14 @@ async function dashboardMetrics(): Promise<DashboardSnapshot['metrics']> {
         COUNT(*) FILTER (WHERE t.status = 'reconciliation_required')::text
           AS reconciliation_required
       FROM transactions t
+      WHERE t.mode = ${mode}::credential_mode
     `),
     db.execute<{ overdue_invoices: string }>(sql`
       SELECT COUNT(*)::text AS overdue_invoices
       FROM invoices i
       WHERE i.due_at < CURRENT_TIMESTAMP
         AND i.status NOT IN ('paid', 'void', 'written_off')
+        AND i.mode = ${mode}::credential_mode
     `),
   ]);
 
@@ -145,7 +163,9 @@ async function dashboardMetrics(): Promise<DashboardSnapshot['metrics']> {
   };
 }
 
-async function dashboardRevenue(): Promise<DashboardMonth[]> {
+async function dashboardRevenue(
+  mode: CredentialMode,
+): Promise<DashboardMonth[]> {
   const result = await db.execute<{
     month_key: string;
     month_label: string;
@@ -164,6 +184,7 @@ async function dashboardRevenue(): Promise<DashboardMonth[]> {
       ON t.succeeded_at >= months.month_start
       AND t.succeeded_at < months.month_start + interval '1 month'
       AND t.status IN ('succeeded', 'partially_refunded', 'refunded')
+      AND t.mode = ${mode}::credential_mode
     GROUP BY month_start
     ORDER BY month_start
   `);
@@ -175,7 +196,9 @@ async function dashboardRevenue(): Promise<DashboardMonth[]> {
   }));
 }
 
-async function dashboardPaymentMethods(): Promise<DashboardMethod[]> {
+async function dashboardPaymentMethods(
+  mode: CredentialMode,
+): Promise<DashboardMethod[]> {
   const result = await db.execute<{
     provider: string;
     provider_name: string;
@@ -191,6 +214,7 @@ async function dashboardPaymentMethods(): Promise<DashboardMethod[]> {
     INNER JOIN payment_providers p ON p.id = t.provider_id
     WHERE t.succeeded_at >= date_trunc('month', CURRENT_TIMESTAMP)
       AND t.status IN ('succeeded', 'partially_refunded', 'refunded')
+      AND t.mode = ${mode}::credential_mode
     GROUP BY t.provider_id, p.display_name
     ORDER BY SUM(t.gross_amount_minor) DESC, provider
   `);
@@ -203,7 +227,9 @@ async function dashboardPaymentMethods(): Promise<DashboardMethod[]> {
   }));
 }
 
-async function dashboardPayments(): Promise<DashboardPayment[]> {
+async function dashboardPayments(
+  mode: CredentialMode,
+): Promise<DashboardPayment[]> {
   const result = await db.execute<{
     id: number;
     txn_no: string;
@@ -226,6 +252,7 @@ async function dashboardPayments(): Promise<DashboardPayment[]> {
     FROM transactions t
     INNER JOIN customers c ON c.id = t.customer_id
     INNER JOIN payment_providers p ON p.id = t.provider_id
+    WHERE t.mode = ${mode}::credential_mode
     ORDER BY t.created_at DESC
     LIMIT 8
   `);
@@ -247,7 +274,9 @@ async function dashboardPayments(): Promise<DashboardPayment[]> {
  * normal recent-payments window. An operational alert must lead to the actual
  * record that needs a person, not an empty filtered table.
  */
-async function dashboardAttentionPayments(): Promise<DashboardPayment[]> {
+async function dashboardAttentionPayments(
+  mode: CredentialMode,
+): Promise<DashboardPayment[]> {
   const result = await db.execute<{
     id: number;
     txn_no: string;
@@ -271,6 +300,7 @@ async function dashboardAttentionPayments(): Promise<DashboardPayment[]> {
     INNER JOIN customers c ON c.id = t.customer_id
     INNER JOIN payment_providers p ON p.id = t.provider_id
     WHERE t.status = 'reconciliation_required'
+      AND t.mode = ${mode}::credential_mode
     ORDER BY t.created_at DESC
     LIMIT 20
   `);
@@ -287,7 +317,9 @@ async function dashboardAttentionPayments(): Promise<DashboardPayment[]> {
   }));
 }
 
-async function dashboardOverdueInvoices(): Promise<DashboardInvoice[]> {
+async function dashboardOverdueInvoices(
+  mode: CredentialMode,
+): Promise<DashboardInvoice[]> {
   const result = await db.execute<{
     id: number;
     invoice_no: string;
@@ -307,6 +339,7 @@ async function dashboardOverdueInvoices(): Promise<DashboardInvoice[]> {
     INNER JOIN customers c ON c.id = i.customer_id
     WHERE i.due_at < CURRENT_TIMESTAMP
       AND i.status NOT IN ('paid', 'void', 'written_off')
+      AND i.mode = ${mode}::credential_mode
     ORDER BY i.due_at ASC
     LIMIT 20
   `);

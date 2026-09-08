@@ -196,6 +196,7 @@ async function payment(applicationId: number, settle = true) {
   const [invoice] = await db
     .insert(invoices)
     .values({
+      mode: 'test',
       invoiceNo: `INV-${FY}-R${unique}`,
       fiscalYear: FY,
       sequenceNo: unique,

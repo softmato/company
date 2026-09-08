@@ -71,7 +71,10 @@ const MODES: readonly CredentialMode[] = ['test', 'live'];
  * on. This function is not that case. It is the single declared owner of
  * registration asking whether it has already done its own work.
  */
-function registerIfAbsent(adapter: ProviderAdapter, mode: CredentialMode): void {
+function registerIfAbsent(
+  adapter: ProviderAdapter,
+  mode: CredentialMode,
+): void {
   if (hasProvider(adapter.id, mode)) return;
 
   registerProvider(adapter, mode);

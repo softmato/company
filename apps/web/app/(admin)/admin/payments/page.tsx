@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/admin/status-badge';
 import { TableFilters } from '@/components/admin/table-filters';
 import { formatAdDateTime } from '@/lib/format/date';
 import { formatNpr, formatPaisa } from '@/lib/format/money';
+import { adminMode } from '@/lib/admin/mode';
 import {
   PAYMENT_STATUSES,
   listPayments,
@@ -26,12 +27,14 @@ export default async function AdminPaymentsPage({
 }: PageProps<'/admin/payments'>) {
   const { status, q } = await searchParams;
 
+  const mode = await adminMode();
+
   const [payments, totals] = await Promise.all([
-    listPayments({
+    listPayments(mode, {
       status: typeof status === 'string' ? status : undefined,
       query: typeof q === 'string' ? q : undefined,
     }),
-    paymentTotals(),
+    paymentTotals(mode),
   ]);
 
   return (

@@ -121,6 +121,7 @@ beforeAll(async () => {
   const [invoice] = await db
     .insert(invoices)
     .values({
+      mode: 'test',
       invoiceNo: `INV-${FY}-${unique}`,
       fiscalYear: FY,
       sequenceNo: unique,

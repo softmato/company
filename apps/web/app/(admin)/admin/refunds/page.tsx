@@ -14,6 +14,7 @@ import type { Metadata } from 'next';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { formatAdDateTime } from '@/lib/format/date';
 import { formatPaisa } from '@/lib/format/money';
+import { adminMode } from '@/lib/admin/mode';
 import { listRefunds } from '@/lib/admin/refunds-queries';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,8 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Refunds' };
 
 export default async function AdminRefundsPage() {
-  const rows = await listRefunds();
+  const mode = await adminMode();
+  const rows = await listRefunds(mode);
 
   return (
     <div className="space-y-6">

@@ -116,6 +116,7 @@ async function makePayable(total = GROSS) {
   const [invoice] = await db
     .insert(invoices)
     .values({
+      mode: 'test',
       invoiceNo: `INV-${FY}-D${unique}`,
       fiscalYear: FY,
       sequenceNo: unique,

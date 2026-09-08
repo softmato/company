@@ -216,6 +216,7 @@ export async function createInvoice(
     const [invoice] = await tx
       .insert(invoices)
       .values({
+        mode: application.mode,
         invoiceNo: documentNo,
         fiscalYear,
         sequenceNo: sequence,

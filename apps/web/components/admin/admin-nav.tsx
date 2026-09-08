@@ -79,7 +79,7 @@ export function AdminNav() {
   return (
     <nav
       aria-label="Admin sections"
-      className="fixed inset-y-0 left-0 z-40 h-dvh w-56 overflow-y-auto overscroll-contain border-r border-sidebar-border bg-sidebar px-3 py-5"
+      className="no-scrollbar fixed inset-y-0 left-0 z-40 h-dvh w-64 overflow-y-auto overscroll-contain border-r border-sidebar-border bg-sidebar px-4 py-5"
     >
       {SECTIONS.map((section) => (
         <div key={section.title} className="mb-5">

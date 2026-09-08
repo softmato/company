@@ -18,6 +18,7 @@ import { StatusBadge } from '@/components/admin/status-badge';
 import { TableFilters } from '@/components/admin/table-filters';
 import { formatAd } from '@/lib/format/date';
 import { formatNpr, formatPaisa } from '@/lib/format/money';
+import { adminMode } from '@/lib/admin/mode';
 import {
   INVOICE_STATUSES,
   invoiceTotals,
@@ -34,12 +35,14 @@ export default async function AdminInvoicesPage({
 }: PageProps<'/admin/invoices'>) {
   const { status, q } = await searchParams;
 
+  const mode = await adminMode();
+
   const [rows, totals, gaps] = await Promise.all([
-    listInvoices({
+    listInvoices(mode, {
       status: typeof status === 'string' ? status : undefined,
       query: typeof q === 'string' ? q : undefined,
     }),
-    invoiceTotals(),
+    invoiceTotals(mode),
     numberingGaps(),
   ]);
 

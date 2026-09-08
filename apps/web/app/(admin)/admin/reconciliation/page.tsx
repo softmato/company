@@ -22,6 +22,7 @@ import type { Metadata } from 'next';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { formatAdDateTime } from '@/lib/format/date';
 import { formatPaisa } from '@/lib/format/money';
+import { adminMode } from '@/lib/admin/mode';
 import {
   hasEverRun,
   heldPayments,
@@ -33,8 +34,10 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Reconciliation' };
 
 export default async function AdminReconciliationPage() {
+  const mode = await adminMode();
+
   const [held, runItems, everRun] = await Promise.all([
-    heldPayments(),
+    heldPayments(mode),
     openRunItems(),
     hasEverRun(),
   ]);

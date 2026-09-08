@@ -22,7 +22,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { accounts, products } from './accounts';
-import { applications } from './applications';
+import { applications, credentialMode } from './applications';
 import { customers } from './customers';
 
 export const invoiceStatus = pgEnum('invoice_status', [
@@ -49,6 +49,15 @@ export const invoices = pgTable(
     applicationId: bigint('application_id', { mode: 'number' }).references(
       () => applications.id,
     ),
+    /**
+     * Sandbox or Production, from the credential that created this invoice.
+     *
+     * An invoice is the start of the activity a payment finishes, so it
+     * carries the same mark: a dashboard that separated payments but not the
+     * invoices behind them would report a Production figure for money owed
+     * and a Sandbox one for money taken.
+     */
+    mode: credentialMode('mode').notNull(),
     customerId: bigint('customer_id', { mode: 'number' })
       .notNull()
       .references(() => customers.id),

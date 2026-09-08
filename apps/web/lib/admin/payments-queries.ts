@@ -8,6 +8,8 @@
  */
 import 'server-only';
 
+import type { CredentialMode } from '@softmato/db';
+
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm';
 
 import {
@@ -59,8 +61,13 @@ interface PaymentFilter {
   limit?: number;
 }
 
-function whereFor(filter: PaymentFilter): SQL | undefined {
-  const clauses: SQL[] = [];
+function whereFor(
+  filter: PaymentFilter,
+  mode: CredentialMode,
+): SQL | undefined {
+  // First and unconditional. Every other clause narrows within one mode; this
+  // one decides which set of books is being read at all.
+  const clauses: SQL[] = [eq(transactions.mode, mode)];
 
   // Anything not in the offered list is ignored rather than passed to the
   // database — the value comes from a query string.
@@ -91,6 +98,7 @@ function whereFor(filter: PaymentFilter): SQL | undefined {
 }
 
 export async function listPayments(
+  mode: CredentialMode,
   filter: PaymentFilter = {},
 ): Promise<PaymentRow[]> {
   return (
@@ -119,7 +127,7 @@ export async function listPayments(
       // still appear — a pending payment vanishing from the list because it has
       // not been booked yet is the opposite of useful.
       .leftJoin(journalEntries, eq(journalEntries.id, transactions.journalId))
-      .where(whereFor(filter))
+      .where(whereFor(filter, mode))
       .orderBy(desc(transactions.createdAt))
       .limit(filter.limit ?? 100)
   );
@@ -132,7 +140,9 @@ export async function listPayments(
  * to stay true while you are looking at the succeeded tab, because it is the
  * number that tells you to go and look.
  */
-export async function paymentTotals(): Promise<PaymentTotals> {
+export async function paymentTotals(
+  mode: CredentialMode,
+): Promise<PaymentTotals> {
   const [row] = await db
     .select({
       settledGross: sql<string>`COALESCE(SUM(${transactions.grossAmountMinor}) FILTER (WHERE ${transactions.status} = 'succeeded'), 0)::text`,
@@ -141,7 +151,8 @@ export async function paymentTotals(): Promise<PaymentTotals> {
       pending: sql<number>`COUNT(*) FILTER (WHERE ${transactions.status} IN ('created','pending'))::int`,
       flagged: sql<number>`COUNT(*) FILTER (WHERE ${transactions.status} = 'reconciliation_required')::int`,
     })
-    .from(transactions);
+    .from(transactions)
+    .where(eq(transactions.mode, mode));
 
   return {
     // Read back as text and parsed to `bigint`: `SUM` of a bigint column comes

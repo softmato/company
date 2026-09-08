@@ -17,6 +17,8 @@
  */
 import 'server-only';
 
+import type { CredentialMode } from '@softmato/db';
+
 import { desc, eq } from 'drizzle-orm';
 
 import { customers, db, refunds, transactions } from '@softmato/db';
@@ -36,25 +38,33 @@ export interface RefundRow {
   completedAt: Date | null;
 }
 
-export async function listRefunds(limit = 100): Promise<RefundRow[]> {
-  return db
-    .select({
-      id: refunds.id,
-      refundNo: refunds.refundNo,
-      txnNo: transactions.txnNo,
-      customerName: customers.name,
-      providerId: transactions.providerId,
-      amountMinor: refunds.amountMinor,
-      currency: refunds.currency,
-      reason: refunds.reason,
-      status: refunds.status,
-      providerRefundId: refunds.providerRefundId,
-      requestedAt: refunds.requestedAt,
-      completedAt: refunds.completedAt,
-    })
-    .from(refunds)
-    .innerJoin(transactions, eq(transactions.id, refunds.transactionId))
-    .innerJoin(customers, eq(customers.id, transactions.customerId))
-    .orderBy(desc(refunds.requestedAt))
-    .limit(limit);
+export async function listRefunds(
+  mode: CredentialMode,
+  limit = 100,
+): Promise<RefundRow[]> {
+  return (
+    db
+      .select({
+        id: refunds.id,
+        refundNo: refunds.refundNo,
+        txnNo: transactions.txnNo,
+        customerName: customers.name,
+        providerId: transactions.providerId,
+        amountMinor: refunds.amountMinor,
+        currency: refunds.currency,
+        reason: refunds.reason,
+        status: refunds.status,
+        providerRefundId: refunds.providerRefundId,
+        requestedAt: refunds.requestedAt,
+        completedAt: refunds.completedAt,
+      })
+      .from(refunds)
+      .innerJoin(transactions, eq(transactions.id, refunds.transactionId))
+      .innerJoin(customers, eq(customers.id, transactions.customerId))
+      // A refund has no mode of its own; it inherits the payment's, which is the
+      // only honest answer — you cannot refund a Sandbox payment with real money.
+      .where(eq(transactions.mode, mode))
+      .orderBy(desc(refunds.requestedAt))
+      .limit(limit)
+  );
 }

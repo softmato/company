@@ -117,6 +117,7 @@ async function makeSession(
   const [invoice] = await db
     .insert(invoices)
     .values({
+      mode: 'test',
       invoiceNo: `INV-${FY}-J${unique}`,
       fiscalYear: FY,
       sequenceNo: unique,

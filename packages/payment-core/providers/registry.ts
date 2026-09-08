@@ -96,7 +96,9 @@ export function providerAdapter(
 }
 
 export function hasProvider(providerId: string, mode: CredentialMode): boolean {
-  return isProviderId(providerId) && REGISTRY.has(registryKey(providerId, mode));
+  return (
+    isProviderId(providerId) && REGISTRY.has(registryKey(providerId, mode))
+  );
 }
 
 /**

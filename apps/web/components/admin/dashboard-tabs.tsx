@@ -32,9 +32,15 @@ export function DashboardTabs({
     setRefreshError(null);
 
     try {
-      const response = await fetch('/api/internal/dashboard', {
-        cache: 'no-store',
-      });
+      /*
+       * Refreshed in the mode currently on screen. Without the parameter the
+       * endpoint defaults to Production, so refreshing while looking at
+       * Sandbox would silently swap the figures underneath the reader.
+       */
+      const response = await fetch(
+        `/api/internal/dashboard?mode=${data.mode}`,
+        { cache: 'no-store' },
+      );
       if (!response.ok) {
         throw new Error(
           response.status === 401
