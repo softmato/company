@@ -10,6 +10,48 @@ is lost — fill in the rest as you build.
 
 ## Current status
 
+**Session 16 (2026-09-08) closed
+`docs/handoff/INTEGRATION_SURFACE_PLAN.md`. All eleven items are `☑`.** On
+`feat/application-credentials`, **eight commits ahead of `main`, nothing
+pushed.** 676 tests, `typecheck`, `lint`, `build` and `legal:check` all green.
+
+Items 6, 7, 8, 9 and 11 landed this session, one commit each. What is worth
+knowing that is not in the plan's own Done notes:
+
+- **Four migrations are applied to `softmato-dev` only.** `0007` and `0008`
+  from last session, plus **`0009`** (the credential slot frees on revoke) and
+  **`0010`** (`previous_secret_last_used_at`). **Production still runs the old
+  schema.** Applying them is the founder's decision, and `0007`'s pre-flight
+  read in item 5's note has to be run there first.
+- **A `500` shipped inside this branch with every gate green.**
+  `credential-panel.tsx` is a client component, and importing a _value_ from
+  `@softmato/db` pulls `pg` — and `dns`, `net`, `tls`, `fs` — into the browser
+  bundle. `tsc`, ESLint and the whole suite pass; only loading the page shows
+  it, and every admin page needs a password and a TOTP code to load.
+  `apps/web/tests/client-boundary.test.ts` guards it now. **Run `pnpm build`
+  on any UI change** — it is the only gate that exercises the client graph.
+- **Revoking a Production credential used to be terminal**, found by the
+  founder revoking one. The uniqueness counted revoked rows, so the mode's slot
+  was held by a dead row for good. `0009` makes the index partial.
+- **Application 1 (`HostelHub sandbox`) on `softmato-dev` now carries a revoked
+  Production credential.** It cannot show the Sandbox-only panel state again; a
+  fresh application is needed for that screenshot.
+- **Rotate the `softmato-dev` Sandbox signing secret.** It was legible in a
+  screenshot shared into a chat, as was the replacement it was rotated to.
+- **Chrome ignores `autocomplete="off"` on a password input**, decides the form
+  is a sign-in, and fills the account email into the nearest text input above.
+  It was writing `sidd@softmato.com` into the webhook URL field.
+  `autocomplete="new-password"` stops it — **not yet confirmed in a browser**.
+
+**Open, and the founder's:** whether a Sandbox credential should mean anything
+(per-credential `PAYMENT_MODE`, and where test money sits in the accounts —
+see the plan's last section); whether Sandbox client secrets should be readable,
+which would mean storing them reversibly rather than as argon2id and is a change
+to how the payment API authenticates; and QuestionCall's remaining production
+hostnames.
+
+---
+
 **Session 15 (2026-09-04) shipped items 1-4 of
 `docs/handoff/INTEGRATION_SURFACE_PLAN.md` to production.** Merged to `main`
 (`de1c5ad`) and deployed. `GET /v1/transactions/{txn_no}` and
@@ -36,7 +78,7 @@ ten acceptance criteria met, two real sandbox payments settled end to end
 (`todo.md` §9.6). No **live** payment path is open: that is §7 of `todo.md` and
 it waits on the founder's merchant credentials.
 **Softmato AI Company Assistant System Core Built & Verified.**
-**Last session:** 2026-09-03 (session 14 — closed the security hardening plan)
+**Last session:** 2026-09-08 (session 16 — closed the integration surface plan)
 
 **The security hardening plan is finished.** All nine items of
 `docs/handoff/SECURITY_HARDENING_PLAN.md` are `☑` as of 2026-09-03. Previews

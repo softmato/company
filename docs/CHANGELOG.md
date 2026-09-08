@@ -14,6 +14,52 @@ this file tracks what was delivered.
 
 ### Added
 
+- **The rotation overlap now says something.** Any authenticated response whose
+  caller is still presenting the superseded client secret carries
+  `Softmato-Secret-Expires`, naming the moment it stops working. The SDK
+  surfaces it through an `onWarning` callback — never a throw, because the call
+  succeeded and that is the whole point of the overlap. The admin panel shows
+  whether the old secret is still being used, so the founder can tell a
+  redeployed integrator from one that has not moved. `authenticateApplication`
+  had computed `usedPreviousSecret` since rotation shipped and nothing had ever
+  read it, so the 24 hours passed in silence and the integration simply began
+  failing at the end of them.
+- **`docs/INTEGRATION.md` no longer requires the SDK.** Every call is shown
+  twice — the client method and the `curl` under it — including a
+  from-scratch webhook verification. A new §6.7 states the three things the
+  SDK does quietly, along with what it cannot do at all (no credential
+  provisioning, no rotation) and what Sandbox actually means.
+- **The application detail page is a page rather than a column of forms.** Each
+  credential set is Keys, Delivery, Domains and Danger, with every act closed
+  behind its own button; what each key is _for_ is said once, in a rail at the
+  right, instead of once per row. Before this an application holding both
+  credentials rendered six password-and-code pairs at the same time.
+
+### Fixed
+
+- **Revoking a credential is no longer terminal for its mode.** The uniqueness
+  on `(application_id, mode)` counted revoked rows, so a revoked Production
+  credential held the slot for good: no button, no API, and the only routes
+  back were a whole new application or an `UPDATE` by hand. Migration `0009`
+  makes the index partial. Dead rows stay — payments and webhook deliveries
+  reference them.
+- **The browser stopped filling the admin's email into the webhook URL.**
+  Chrome ignores `autocomplete="off"` on a password input, decides any form
+  containing one is a sign-in form, and fills the account email into the
+  nearest text input above it. On the credential panel that was the webhook
+  URL, and the field where an application's name has to be typed to confirm a
+  revocation.
+- **Registering an application always mints a Sandbox credential.** The Live
+  credential checkbox is gone, and the mode is no longer read from the request
+  at all — a forged `isLive=true` would have minted a production credential
+  through the one path that asks for no password and no code.
+
+### Changed
+
+- **Sandbox and Production, in every string a person reads.** `test` and `live`
+  survive only inside `client_id`, `cs_…` session ids and the `mode` column.
+  One lookup decides the word, so the rule cannot be half-applied.
+
 - **The two endpoints the SDK was already calling now exist.**
   `GET /v1/transactions/{txn_no}` answers "is this payment settled?" without a
   consumer having to trust a return URL's query parameters, and
