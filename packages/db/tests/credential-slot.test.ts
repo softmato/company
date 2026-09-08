@@ -27,8 +27,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { and, eq, inArray, isNull, like } from 'drizzle-orm';
 
-import { applicationCredentials, applications, db } from '../index';
-import type { CredentialMode } from '../schema/applications';
+import { db } from '../client';
+import {
+  applicationCredentials,
+  applications,
+  type CredentialMode,
+} from '../schema/applications';
 
 const PRODUCT = 'hostelhub';
 const marker = `slottest-${Date.now()}`;

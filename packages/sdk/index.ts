@@ -34,7 +34,11 @@
  *
  * Zero runtime dependencies: `fetch` and `node:crypto`.
  */
-export { SoftmatoClient, type SoftmatoOptions } from './client.js';
+export {
+  SoftmatoClient,
+  type SoftmatoOptions,
+  type SoftmatoWarning,
+} from './client.js';
 
 export {
   API_ERROR_CODES,

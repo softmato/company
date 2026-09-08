@@ -20,12 +20,44 @@ import { PaymentError, isPaymentError } from '@softmato/payment-core';
 
 export function apiJson(
   body: unknown,
-  { status = 200, requestId }: { status?: number; requestId: string },
+  {
+    status = 200,
+    requestId,
+    headers,
+  }: { status?: number; requestId: string; headers?: HeadersInit },
 ): Response {
   return Response.json(body, {
     status,
-    headers: { 'x-request-id': requestId },
+    headers: {
+      ...Object.fromEntries(new Headers(headers)),
+      'x-request-id': requestId,
+    },
   });
+}
+
+/**
+ * `Softmato-Secret-Expires` — the one warning this API sends in a header.
+ *
+ * Set on any authenticated response whose caller presented the **superseded**
+ * secret while its 24-hour overlap is still open. The value is when that
+ * secret stops working, so the integrator has both the fact and the deadline
+ * without having to ask us.
+ *
+ * It is a header rather than a body field because it applies to every
+ * endpoint, including the ones that return a PDF, and because a warning that
+ * changed the shape of a success body would be a breaking change to every
+ * consumer that already parses one.
+ *
+ * Absent means nothing is wrong. There is deliberately no "you are on the
+ * current secret" header: a header that is always present is a header nobody
+ * reads.
+ */
+export function secretExpiryHeaders(
+  expiresAt: Date | null,
+): Record<string, string> {
+  return expiresAt
+    ? { 'softmato-secret-expires': expiresAt.toISOString() }
+    : {};
 }
 
 export function apiError(error: unknown, requestId: string): Response {

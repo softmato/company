@@ -47,6 +47,30 @@ export interface SoftmatoOptions {
   /** Attempts for retryable failures, including the first. Default 3. */
   maxAttempts?: number;
   fetch?: typeof globalThis.fetch;
+  /**
+   * Called when the API says this client is still presenting a **superseded**
+   * secret, and when the old one stops working.
+   *
+   * After a rotation the previous secret keeps authenticating for 24 hours so
+   * you can deploy without a window of `401`s. Every response during that
+   * window carries `Softmato-Secret-Expires`; this is that header, parsed.
+   *
+   * **It is a callback and never a throw.** The call succeeded — the whole
+   * point of the overlap is that it does — so failing it here would break a
+   * working integration to warn it that it is about to break. Log it, page
+   * someone, whatever you like; the request has already returned normally.
+   *
+   * Anything this throws is swallowed. A logger that fails must not take a
+   * payment down with it.
+   */
+  onWarning?: (warning: SoftmatoWarning) => void;
+}
+
+export interface SoftmatoWarning {
+  code: 'SECRET_EXPIRING';
+  /** When the secret currently in use stops authenticating. */
+  expiresAt: Date;
+  message: string;
 }
 
 const DEFAULT_BASE_URL = 'https://softmato.com/api/v1';
@@ -62,6 +86,7 @@ export class SoftmatoClient {
   private readonly timeoutMs: number;
   private readonly maxAttempts: number;
   private readonly doFetch: typeof globalThis.fetch;
+  private readonly onWarning: ((warning: SoftmatoWarning) => void) | undefined;
 
   constructor(options: SoftmatoOptions) {
     if (!options.secret?.trim()) {
@@ -73,6 +98,37 @@ export class SoftmatoClient {
     this.timeoutMs = options.timeoutMs ?? 15_000;
     this.maxAttempts = Math.max(1, options.maxAttempts ?? 3);
     this.doFetch = options.fetch ?? globalThis.fetch;
+    this.onWarning = options.onWarning;
+  }
+
+  /**
+   * Reads `Softmato-Secret-Expires` off a response and reports it once.
+   *
+   * Absence is the normal case and means nothing is wrong, so there is no
+   * "all clear" callback. An unparseable value is dropped rather than
+   * guessed at: a warning with the wrong date is worse than no warning,
+   * because the integrator plans around the date.
+   */
+  private warnIfExpiring(response: Response): void {
+    if (!this.onWarning) return;
+
+    const header = response.headers.get('softmato-secret-expires');
+    if (!header) return;
+
+    const expiresAt = new Date(header);
+    if (Number.isNaN(expiresAt.getTime())) return;
+
+    try {
+      this.onWarning({
+        code: 'SECRET_EXPIRING',
+        expiresAt,
+        message:
+          'This client is using a superseded client secret. It stops working at ' +
+          `${expiresAt.toISOString()}. Deploy the new secret before then.`,
+      });
+    } catch {
+      // A failing logger must not fail the payment it was logging.
+    }
   }
 
   /**
@@ -248,6 +304,8 @@ export class SoftmatoClient {
         );
       }
 
+      this.warnIfExpiring(response);
+
       const contentType =
         response.headers.get('content-type')?.split(';')[0]?.trim() ??
         'application/octet-stream';
@@ -342,6 +400,14 @@ export class SoftmatoClient {
         error,
       );
     }
+
+    /*
+     * Before the status check, deliberately. A `422` during the overlap is
+     * still a request that authenticated with the old secret, and the
+     * expiring credential is worth knowing about whether or not the body
+     * validated.
+     */
+    this.warnIfExpiring(response);
 
     const payload = await readJson(response);
 

@@ -484,6 +484,32 @@ Rotating a client secret issues a new one and keeps the old one working for
 **24 hours**, so you can deploy without a window of `401`s. Deploy inside that
 window; the old secret stops at the end of it whether or not you did.
 
+**You will be told, on every call.** While you are still presenting the
+superseded secret, every response carries a header naming the moment it stops:
+
+    Softmato-Secret-Expires: 2026-09-09T07:00:45Z
+
+No header means you are on the current secret. There is no "all clear" header —
+one that is always present is one nobody reads.
+
+The SDK surfaces it as a callback rather than an error, because the call
+succeeded and failing it would break a working integration to warn it that it
+is about to break:
+
+```ts
+const softmato = new SoftmatoClient({
+  secret: process.env.SOFTMATO_SECRET!,
+  onWarning: (warning) => {
+    // warning.code === 'SECRET_EXPIRING'
+    logger.error(warning.message, { expiresAt: warning.expiresAt });
+  },
+});
+```
+
+Anything the callback throws is swallowed: a failing logger must not take a
+payment down with it. If you are not using the SDK, read the header yourself —
+it is the only warning you get before the `401`s start.
+
 Rotating a **webhook signing secret** has no overlap — two valid signing keys
 would mean your consumer accepting a signature from the key we meant to
 retire. Deliveries fail until you redeploy, and the retry job replays them once

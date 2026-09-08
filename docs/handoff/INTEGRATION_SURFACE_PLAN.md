@@ -905,7 +905,83 @@ machine as of 2026-09-03.
 
 ---
 
-## ☐ 11. Signal the rotation overlap
+## ☑ 11. Signal the rotation overlap
+
+> **Done 2026-09-08.** The header, the callback, and the admin surface — plus
+> the column the admin surface needed, which was not in the plan.
+>
+> **`Softmato-Secret-Expires`** is set by `secretExpiryHeaders` in
+> `lib/api/respond.ts` and applied by both wrappers in `lib/api/route.ts`. A
+> boolean cannot say _when_, and "when" is the entire content of the warning,
+> so `AuthenticatedApplication` gained `previousSecretExpiresAt` alongside the
+> `usedPreviousSecret` that nothing had ever read.
+>
+> Two details that are decisions rather than details. It is set on a handler's
+> **own `Response`** too — the PDF endpoints — because the warning is about the
+> credential and not the content type, and an integrator whose only call is a
+> receipt download would otherwise never be told. And it is set **before** the
+> status check, so a `422` during the overlap still carries it: that request
+> authenticated with the old secret whether or not its body validated.
+>
+> There is no header for the healthy case. One that is always present is one
+> nobody reads.
+>
+> **The SDK takes `onWarning`, never a throw.** The call succeeded — that is
+> what the overlap is _for_ — so failing it would break a working integration
+> in order to warn it that it is about to break. An unparseable date is dropped
+> rather than guessed at, because the integrator plans a deploy around the date
+> and a wrong one is worse than none. A callback that throws is swallowed: a
+> failing logger must not take a payment down with it. `SoftmatoWarning` is
+> exported.
+>
+> **The admin surface needed a column, and this is the part not in the plan.**
+> The item asks to show the overlap "so the founder can see whether the
+> integrator has actually redeployed" — and "the old secret still works until
+> Tuesday" cannot answer that. It is a fact about our schedule. Whether anyone
+> is _still calling_ with the old secret is the fact that says whether Tuesday
+> is a quiet day or a support call. So migration `0010` adds
+> `previous_secret_last_used_at`, written by `authenticateApplication` when the
+> superseded secret is the one that matched.
+>
+> That write is **deliberately not awaited and cannot fail the request**.
+> Authentication is the hot path on every `/v1` call and this is bookkeeping
+> for a human reading a screen later; a database hiccup must not turn a good
+> request into a `500`. It only runs during the overlap, so it is a handful of
+> writes over 24 hours rather than one per request.
+>
+> The panel reports silence as silence: "no call has used it since the
+> rotation" may mean they redeployed immediately or that nothing has called at
+> all, and those are indistinguishable from here. Saying "they have switched"
+> would be inventing the difference.
+>
+> **Verified as the item asks — a shortened overlap, not a day's wait.**
+> `packages/db/tests/secret-overlap.test.ts`, five cases against real Postgres,
+> writes `previous_secret_expires_at` directly: the same column `rotateSecret`
+> writes and `matchSecret` reads. Nothing is mocked, because the boundary under
+> test is "does an expired overlap stop authenticating" and a fake clock would
+> move that boundary somewhere the production code never goes.
+>
+>     old secret, window open      authenticates, expiry returned
+>     its use is recorded          previous_secret_last_used_at set
+>     new secret, window open      authenticates, no expiry
+>     old secret, window passed    refused
+>     new secret, window passed    authenticates
+>
+> Five more in `packages/sdk/tests/client.test.ts` cover the callback: fired
+> once with the parsed date, silent with no header, silent on an unparseable
+> one, fired on a `422` before the throw, and harmless when it throws.
+>
+> **A trap for whoever writes the next test here.** A fixture client id must
+> satisfy `clientIdFromSecret`'s `(live|test)_[a-z0-9-]+_[a-z0-9]+` — the last
+> segment takes **no hyphen**. A `Date.now()` marker joined with a dash is
+> rejected before a single query runs, and the suite then fails for a reason
+> that has nothing to do with what it is testing.
+>
+> `docs/API.md` §2 and `docs/INTEGRATION.md` §6.6 both document the header, and
+> §6.6 carries the `onWarning` snippet.
+>
+> `0010` is applied to **`softmato-dev` only**, like `0007`, `0008` and `0009`.
+> Production still runs the old schema.
 
 `authenticateApplication` already computes `usedPreviousSecret` — it knows on
 every request whether the caller is still presenting the superseded secret —

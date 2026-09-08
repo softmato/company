@@ -184,6 +184,7 @@ function authenticated(c: {
     scopes: ['refund:request', 'payment:read'],
     webhookUrl: null,
     usedPreviousSecret: false,
+    previousSecretExpiresAt: null,
   };
 }
 

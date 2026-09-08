@@ -38,6 +38,7 @@ export interface CredentialSummary {
   secretLast4: string;
   previousSecretLast4: string | null;
   previousSecretExpiresAt: Date | null;
+  previousSecretLastUsedAt: Date | null;
   webhookUrl: string | null;
   hasWebhookSecret: boolean;
   domainCount: number;
@@ -84,6 +85,7 @@ const credentialColumns = {
   secretLast4: applicationCredentials.secretLast4,
   previousSecretLast4: applicationCredentials.previousSecretLast4,
   previousSecretExpiresAt: applicationCredentials.previousSecretExpiresAt,
+  previousSecretLastUsedAt: applicationCredentials.previousSecretLastUsedAt,
   webhookUrl: applicationCredentials.webhookUrl,
   /*
    * Safe as a template: one column, one table in the FROM, nothing to
@@ -274,6 +276,7 @@ function stripApplicationId(
     secretLast4: row.secretLast4,
     previousSecretLast4: row.previousSecretLast4,
     previousSecretExpiresAt: row.previousSecretExpiresAt,
+    previousSecretLastUsedAt: row.previousSecretLastUsedAt,
     webhookUrl: row.webhookUrl,
     hasWebhookSecret: row.hasWebhookSecret,
     domainCount,

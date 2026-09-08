@@ -62,6 +62,23 @@ reads, provider configuration, admin anything.
 Rotation issues a new secret with a 24-hour overlap. Revocation is immediate
 and applies to one credential set, not to the application.
 
+### `Softmato-Secret-Expires`
+
+Set on any authenticated response whose caller presented the **superseded**
+secret while its overlap is still open. The value is an ISO-8601 instant: the
+moment that secret stops authenticating.
+
+    Softmato-Secret-Expires: 2026-09-09T07:00:45.000Z
+
+Absence means the current secret was used. There is deliberately no header for
+that case. It is set on every endpoint including the ones returning a PDF, and
+on error responses too — a `422` during the overlap still authenticated with
+the old secret, and the expiry is worth knowing either way.
+
+`authenticateApplication` has always known this (`usedPreviousSecret`); until
+2026-09-08 nothing read it, so the overlap passed in silence and the
+integration simply began failing at hour 24.
+
 ### Sandbox and Production
 
 An application holds up to two credential sets. **Sandbox** is minted when the

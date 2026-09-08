@@ -195,6 +195,20 @@ export const applicationCredentials = pgTable(
     previousSecretExpiresAt: timestamp('previous_secret_expires_at', {
       withTimezone: true,
     }),
+    /**
+     * The last time a request authenticated with the *superseded* secret.
+     *
+     * Written only during the overlap, and only when the old secret is the one
+     * that matched, so it is a handful of writes over 24 hours rather than one
+     * per request. It is the difference between the admin panel saying "the
+     * old secret still works until Tuesday" — which is a fact about our
+     * schedule — and "they were still using it four minutes ago", which is a
+     * fact about whether the integrator has actually redeployed. Only the
+     * second one tells you whether to expect a support call on Tuesday.
+     */
+    previousSecretLastUsedAt: timestamp('previous_secret_last_used_at', {
+      withTimezone: true,
+    }),
     /** Signs outbound events. Never reaches a client bundle. */
     webhookSecret: text('webhook_secret'),
     webhookUrl: text('webhook_url'),

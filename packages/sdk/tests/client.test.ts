@@ -217,3 +217,138 @@ describe('retries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
+
+/**
+ * `Softmato-Secret-Expires` — the rotation warning, reaching the integrator.
+ *
+ * The server sets this header on any authenticated response whose caller is
+ * still presenting the superseded secret during its 24-hour overlap. Before
+ * item 11 there was no header and no callback, so the 24 hours passed in
+ * silence and the integration began returning `401` with no prior signal.
+ *
+ * The rule that shapes every case here: **the call still succeeds**. That is
+ * what the overlap is for. A warning that threw, or that swallowed the
+ * response, would break a working integration in order to tell it that it is
+ * about to break.
+ */
+describe('the rotation warning', () => {
+  const EXPIRES = '2026-09-09T07:00:45.000Z';
+
+  function withHeader(headers: Record<string, string>): Response {
+    return new Response(JSON.stringify({ invoice_id: 'inv_1' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...headers },
+    });
+  }
+
+  it('reports the expiry, and still returns the response', async () => {
+    const onWarning = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(withHeader({ 'Softmato-Secret-Expires': EXPIRES }));
+
+    const client = new SoftmatoClient({
+      secret: 'sk_test_123',
+      baseUrl: 'https://api.test/v1',
+      fetch: fetchMock,
+      onWarning,
+    });
+
+    const result = await client.createInvoice(INVOICE);
+
+    expect(result).toMatchObject({ invoice_id: 'inv_1' });
+    expect(onWarning).toHaveBeenCalledTimes(1);
+
+    const warning = onWarning.mock.calls[0]![0];
+    expect(warning.code).toBe('SECRET_EXPIRING');
+    expect(warning.expiresAt.toISOString()).toBe(EXPIRES);
+    expect(warning.message).toContain(EXPIRES);
+  });
+
+  it('says nothing when the header is absent', async () => {
+    const onWarning = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(withHeader({}));
+
+    const client = new SoftmatoClient({
+      secret: 'sk_test_123',
+      baseUrl: 'https://api.test/v1',
+      fetch: fetchMock,
+      onWarning,
+    });
+
+    await client.createInvoice(INVOICE);
+
+    expect(onWarning).not.toHaveBeenCalled();
+  });
+
+  it('drops an unparseable date rather than guessing at one', async () => {
+    const onWarning = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(withHeader({ 'Softmato-Secret-Expires': 'soon' }));
+
+    const client = new SoftmatoClient({
+      secret: 'sk_test_123',
+      baseUrl: 'https://api.test/v1',
+      fetch: fetchMock,
+      onWarning,
+    });
+
+    await client.createInvoice(INVOICE);
+
+    // A warning carrying the wrong deadline is worse than no warning: the
+    // integrator plans their deploy around the date.
+    expect(onWarning).not.toHaveBeenCalled();
+  });
+
+  it('warns on a failed call too, then throws as usual', async () => {
+    const onWarning = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ error: { code: 'VALIDATION_FAILED', message: 'no' } }),
+        {
+          status: 422,
+          headers: {
+            'Content-Type': 'application/json',
+            'Softmato-Secret-Expires': EXPIRES,
+          },
+        },
+      ),
+    );
+
+    const client = new SoftmatoClient({
+      secret: 'sk_test_123',
+      baseUrl: 'https://api.test/v1',
+      fetch: fetchMock,
+      onWarning,
+    });
+
+    await expect(client.createInvoice(INVOICE)).rejects.toBeInstanceOf(
+      SoftmatoApiError,
+    );
+
+    // A 422 during the overlap still authenticated with the old secret.
+    expect(onWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('survives a callback that throws', async () => {
+    const onWarning = vi.fn(() => {
+      throw new Error('the logger is down');
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(withHeader({ 'Softmato-Secret-Expires': EXPIRES }));
+
+    const client = new SoftmatoClient({
+      secret: 'sk_test_123',
+      baseUrl: 'https://api.test/v1',
+      fetch: fetchMock,
+      onWarning,
+    });
+
+    // A failing logger must not fail the payment it was logging.
+    await expect(client.createInvoice(INVOICE)).resolves.toMatchObject({
+      invoice_id: 'inv_1',
+    });
+  });
+});

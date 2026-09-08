@@ -47,6 +47,17 @@ export interface AuthenticatedApplication {
   webhookUrl: string | null;
   /** True when the caller presented the superseded secret during its overlap. */
   usedPreviousSecret: boolean;
+  /**
+   * When the superseded secret stops working — set only when this request
+   * used it, `null` otherwise.
+   *
+   * The boolean above has existed since rotation shipped and nothing read
+   * it, so during the 24 hours an integrator had to notice, they were told
+   * nothing at all, and at hour 24 their integration simply began failing.
+   * A boolean cannot say *when*, and "when" is the entire content of the
+   * warning, so the timestamp comes out with it.
+   */
+  previousSecretExpiresAt: Date | null;
 }
 
 function unauthenticated(reason: string, context?: Record<string, unknown>) {
@@ -115,7 +126,7 @@ export async function authenticateApplication(
     );
   }
 
-  return {
+  const result: AuthenticatedApplication = {
     id: found.applicationId,
     credentialId: found.credential.id,
     clientId: found.credential.clientId,
@@ -125,7 +136,31 @@ export async function authenticateApplication(
     scopes: found.scopes,
     webhookUrl: found.credential.webhookUrl,
     usedPreviousSecret: match.previous,
+    previousSecretExpiresAt: match.previous
+      ? (found.credential.previousSecretExpiresAt ?? null)
+      : null,
   };
+
+  /*
+   * Record that the old secret was used, without making the caller wait for
+   * it and without letting it fail the request.
+   *
+   * Deliberately after the result is built and deliberately not awaited.
+   * Authentication is the hot path on every `/v1` call, and this write is
+   * bookkeeping for a human reading a screen later — a database hiccup here
+   * must not turn a good request into a `500`. It only runs during the
+   * overlap window, so it is a handful of writes over 24 hours, not one per
+   * request.
+   */
+  if (match.previous) {
+    void db
+      .update(applicationCredentials)
+      .set({ previousSecretLastUsedAt: new Date() })
+      .where(eq(applicationCredentials.id, found.credential.id))
+      .catch(() => {});
+  }
+
+  return result;
 }
 
 /**

@@ -228,12 +228,7 @@ function Keys({
           : null}
       </p>
 
-      {overlapOpen ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          The superseded client secret (…{credential.previousSecretLast4}) still
-          works until {credential.previousSecretExpiresAt?.toUTCString()}.
-        </p>
-      ) : null}
+      {overlapOpen ? <Overlap credential={credential} /> : null}
     </div>
   );
 }
@@ -245,6 +240,41 @@ function Keys({
  * per row and therefore twice per page. It lives in `KeyLegend` now — said
  * once, in the margin, where reference material goes.
  */
+/**
+ * The rotation overlap, while it is open.
+ *
+ * Two facts, and the second is the one worth having. "Still works until
+ * Tuesday" is a fact about our schedule and was already on the screen.
+ * Whether anyone is *still calling* with the old secret is a fact about
+ * whether the integrator has redeployed, and it is what says if Tuesday is
+ * going to be a quiet day or a support call.
+ *
+ * Silence is reported as silence rather than as success. No call on the old
+ * secret since the rotation may mean they redeployed immediately, or that
+ * nothing has called the API at all — those look identical from here, and
+ * saying "they have switched" would be inventing the difference.
+ */
+function Overlap({ credential }: { credential: CredentialSummary }) {
+  const lastUsed = credential.previousSecretLastUsedAt;
+
+  return (
+    <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs">
+      <p className="font-medium">Rotation in progress</p>
+      <p className="mt-1 text-muted-foreground">
+        The superseded client secret (…{credential.previousSecretLast4}) still
+        works until {credential.previousSecretExpiresAt?.toUTCString()}, then
+        stops. Every response to a call using it carries{' '}
+        <code className="font-mono">Softmato-Secret-Expires</code>.
+      </p>
+      <p className="mt-2 text-muted-foreground">
+        {lastUsed
+          ? `Still in use — last seen ${lastUsed.toUTCString()}. The integration has not finished redeploying.`
+          : 'No call has used it since the rotation. That may mean they have redeployed, or that nothing has called at all.'}
+      </p>
+    </div>
+  );
+}
+
 function KeyRow({ name, value }: { name: string; value: ReactNode }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 p-3 text-xs">
