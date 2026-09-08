@@ -7,7 +7,7 @@
  * into the audit log has not been audited, it has been published.
  */
 import { randomBytes } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
 import {
   applicationCredentials,
@@ -213,6 +213,13 @@ export async function addCredential(
       });
     }
 
+    /*
+     * A **revoked** credential does not hold the slot. It used to, because
+     * this read had no `revoked_at` filter and the unique constraint behind
+     * it had no `WHERE` clause, so revoking Production was terminal for that
+     * application: no button, no API, no way back short of a new application.
+     * Revocation is meant to kill a key, not a mode.
+     */
     const [existing] = await tx
       .select({ id: applicationCredentials.id })
       .from(applicationCredentials)
@@ -220,6 +227,7 @@ export async function addCredential(
         and(
           eq(applicationCredentials.applicationId, applicationId),
           eq(applicationCredentials.mode, mode),
+          isNull(applicationCredentials.revokedAt),
         ),
       )
       .limit(1);
@@ -227,7 +235,7 @@ export async function addCredential(
     if (existing) {
       throw new PaymentError(
         'INVALID_STATE',
-        `This application already has a ${CREDENTIAL_MODE_LABEL[mode]} credential. Rotate it rather than minting a second.`,
+        `This application already has a live ${CREDENTIAL_MODE_LABEL[mode]} credential. Rotate it rather than minting a second.`,
         { applicationId, mode },
       );
     }

@@ -61,6 +61,7 @@ export function CredentialPanel({
   mode,
   label,
   credential,
+  revoked,
   domains,
   signingSecret,
 }: {
@@ -68,7 +69,10 @@ export function CredentialPanel({
   applicationName: string;
   mode: CredentialMode;
   label: string;
+  /** The **live** credential for this mode, if there is one. */
   credential: CredentialSummary | undefined;
+  /** Dead ones, newest first. History, and the reason the slot is free. */
+  revoked: CredentialSummary[];
   domains: DomainRow[];
   /** Sandbox only, rendered inline. `null` on the Production panel. */
   signingSecret: string | null;
@@ -91,17 +95,15 @@ export function CredentialPanel({
        */}
       <div className="flex flex-wrap items-center gap-2">
         <h2 id={`credential-${mode}`} className="text-lg font-medium">
-          {label}
+          {label} credentials
         </h2>
 
-        {credential?.revokedAt ? (
+        {!credential && revoked.length > 0 ? (
           <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
             revoked
           </span>
         ) : null}
       </div>
-
-      {isLive ? null : <SandboxNote />}
 
       {credential ? (
         <>
@@ -111,28 +113,24 @@ export function CredentialPanel({
             signingSecret={signingSecret}
           />
 
-          {credential.revokedAt ? null : (
-            <>
-              <Delivery
-                credential={credential}
-                isLive={isLive}
-                hasDomains={domains.length > 0}
-              />
+          <Delivery
+            credential={credential}
+            isLive={isLive}
+            hasDomains={domains.length > 0}
+          />
 
-              <Domains
-                applicationId={applicationId}
-                credentialId={credential.id}
-                domains={domains}
-                label={label}
-              />
+          <Domains
+            applicationId={applicationId}
+            credentialId={credential.id}
+            domains={domains}
+            label={label}
+          />
 
-              <Danger
-                applicationName={applicationName}
-                credential={credential}
-                isLive={isLive}
-              />
-            </>
-          )}
+          <Danger
+            applicationName={applicationName}
+            credential={credential}
+            isLive={isLive}
+          />
         </>
       ) : (
         <CreateForm
@@ -140,35 +138,12 @@ export function CredentialPanel({
           mode={mode}
           label={label}
           isLive={isLive}
+          replacing={revoked.length > 0}
         />
       )}
-    </section>
-  );
-}
 
-/**
- * What a Sandbox credential actually is.
- *
- * `mode` picks the `app_test_` and `cs_test_` prefixes and nothing else. It
- * does not choose a payment provider, does not change which gateway is called,
- * and does not keep anything out of the ledger — `PAYMENT_MODE` decides that,
- * and it is deployment-wide.
- *
- * So this paragraph is not a disclaimer to be softened. A prominent Sandbox
- * badge above a credential that takes real money on the production deployment
- * is worse than no badge at all.
- */
-function SandboxNote() {
-  return (
-    <p className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-      A Sandbox credential is for use against a{' '}
-      <strong className="font-medium">non-production deployment</strong>. It is
-      a label on the identifier, not an isolation boundary: used against
-      production it reaches the real gateways, takes real money and posts real
-      journal entries. The preview deployment, with its own database and its own{' '}
-      <code className="font-mono">PAYMENT_MODE</code>, is the only thing that
-      actually keeps a payment from being real.
-    </p>
+      {revoked.length > 0 ? <Revoked credentials={revoked} /> : null}
+    </section>
   );
 }
 
@@ -218,7 +193,6 @@ function Keys({
       <dl className="mt-3 divide-y divide-border overflow-hidden rounded-md border border-border">
         <KeyRow
           name="Client id"
-          purpose="Public. Names this application in our logs and in a support thread. Not a secret — it is in every request already."
           value={
             <span className="font-mono break-all">{credential.clientId}</span>
           }
@@ -226,31 +200,16 @@ function Keys({
 
         <KeyRow
           name="Client secret"
-          purpose="Your server → us. Sent as a Bearer token on every API call, and it is the whole proof that the call is yours."
-          value={
-            <>
-              <span className="font-mono">…{credential.secretLast4}</span>
-              <span className="text-muted-foreground">
-                {' '}
-                — stored as an argon2id hash, so it cannot be shown again, here
-                or anywhere.{' '}
-                {isLive
-                  ? 'A lost one is rotated; the old one keeps working for 24 hours.'
-                  : 'A lost one is rotated, and a Sandbox rotation asks for nothing.'}
-              </span>
-            </>
-          }
+          value={<span className="font-mono">…{credential.secretLast4}</span>}
         />
 
         {credential.hasWebhookSecret ? (
           <KeyRow
             name="Signing secret"
-            purpose="Us → your server. We sign every webhook with it; your server checks the signature over the raw body before reading a field."
             value={
               isLive ? (
                 <span className="text-muted-foreground">
-                  Hidden. Production keys are revealed one at a time, under
-                  Danger, and the read is recorded.
+                  Hidden — reveal it under Danger.
                 </span>
               ) : (
                 <span className="font-mono break-all select-all">
@@ -280,32 +239,17 @@ function Keys({
 }
 
 /**
- * One key: what it is on the left, what it is for on the right.
+ * One key: its name and its value, and nothing else.
  *
- * The two columns are the point. A single column of prose is what the previous
- * screen had, and it made three unlike things — a public identifier, a secret
- * that cannot be read back, and a secret that can — look like three rows of
- * the same table.
+ * What each key is *for* used to sit in a second column here, printed once
+ * per row and therefore twice per page. It lives in `KeyLegend` now — said
+ * once, in the margin, where reference material goes.
  */
-function KeyRow({
-  name,
-  value,
-  purpose,
-}: {
-  name: string;
-  value: ReactNode;
-  purpose: string;
-}) {
+function KeyRow({ name, value }: { name: string; value: ReactNode }) {
   return (
-    <div className="grid gap-x-6 gap-y-1 p-3 text-xs sm:grid-cols-[1fr_minmax(0,15rem)]">
-      <div className="min-w-0">
-        <dt className="font-medium">{name}</dt>
-        <dd className="mt-1 break-all">{value}</dd>
-      </div>
-
-      <dd className="text-muted-foreground sm:border-l sm:border-border sm:pl-4">
-        {purpose}
-      </dd>
+    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 p-3 text-xs">
+      <dt className="font-medium">{name}</dt>
+      <dd className="min-w-0 break-all">{value}</dd>
     </div>
   );
 }
@@ -482,11 +426,13 @@ function CreateForm({
   mode,
   label,
   isLive,
+  replacing,
 }: {
   applicationId: number;
   mode: CredentialMode;
   label: string;
   isLive: boolean;
+  replacing: boolean;
 }) {
   const [state, action] = useActionState(addCredentialAction, undefined);
 
@@ -496,8 +442,9 @@ function CreateForm({
       <input type="hidden" name="mode" value={mode} />
 
       <p className="text-sm text-muted-foreground">
-        No {label} credential yet. Creating one issues a client id and a secret
-        of its own; the other credential is untouched.
+        {replacing
+          ? `No live ${label} credential. The revoked one cannot be brought back, but a replacement can be issued here — a new client id and a new secret. The other credential is untouched.`
+          : `No ${label} credential yet. Creating one issues a client id and a secret of its own; the other credential is untouched.`}
       </p>
 
       {isLive ? (
@@ -779,6 +726,43 @@ function Collapsible({
       {open ? (
         <div className="mt-4 border-t border-border/60 pt-4">{children}</div>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Credentials that were revoked, kept visible rather than swept away.
+ *
+ * A revoked row is not deleted: `transactions.credential_id` and
+ * `webhook_deliveries.credential_id` reference it, and it is the record of
+ * which key was live when a payment was taken. So the page has to account for
+ * it, or an admin is left wondering why the client id in an old log line
+ * matches nothing on this screen.
+ *
+ * It is a footnote and not a panel. There is nothing left to do to it.
+ */
+function Revoked({ credentials }: { credentials: CredentialSummary[] }) {
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <h3 className="text-sm font-medium">Revoked</h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Dead, and kept: old payments and webhook deliveries still point at
+        these.
+      </p>
+
+      <ul className="mt-3 space-y-1">
+        {credentials.map((credential) => (
+          <li
+            key={credential.id}
+            className="flex flex-wrap items-baseline justify-between gap-x-4 text-xs text-muted-foreground"
+          >
+            <code className="font-mono break-all">{credential.clientId}</code>
+            <span>
+              revoked {credential.revokedAt?.toISOString().slice(0, 10)}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

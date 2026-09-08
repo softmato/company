@@ -23,6 +23,7 @@ import { getApplicationDetail } from '@/lib/applications/queries';
 import { ApplicationHeader } from '@/components/admin/application-header';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
 import { CredentialPanel } from '@/components/admin/credential-panel';
+import { KeyLegend } from '@/components/admin/key-legend';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,67 +42,92 @@ export default async function ApplicationDetailPage({
 
   if (!application) notFound();
 
+  /*
+   * Two columns from `lg` up: the page, and a rail that explains the keys
+   * once instead of once per row. Below `lg` the rail hides itself rather
+   * than stacking under the content, because reference material after the
+   * thing it refers to is reference material nobody reads.
+   */
   return (
-    <div className="max-w-3xl">
-      <Breadcrumbs
-        trail={[{ label: 'Applications', href: '/admin/applications' }]}
-      >
-        {application.name}
-      </Breadcrumbs>
+    <div className="lg:grid lg:grid-cols-[minmax(0,48rem)_15rem] lg:gap-x-12">
+      <div className="max-w-3xl">
+        <Breadcrumbs
+          trail={[{ label: 'Applications', href: '/admin/applications' }]}
+        >
+          {application.name}
+        </Breadcrumbs>
 
-      <h1 className="headline mt-2 text-2xl">{application.name}</h1>
+        <h1 className="headline mt-2 text-2xl">{application.name}</h1>
 
-      <p className="mt-2 text-sm text-muted-foreground">
-        {application.productName}
-      </p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {application.productName}
+        </p>
 
-      <section className="mt-8">
-        <ApplicationHeader
-          application={application}
-          scopes={APPLICATION_SCOPES}
-        />
-      </section>
+        <section className="mt-8">
+          <ApplicationHeader
+            application={application}
+            scopes={APPLICATION_SCOPES}
+          />
+        </section>
 
-      <div className="mt-10 space-y-8">
-        {MODES.map((mode) => {
-          const credential = application.credentials.find(
-            (c) => c.mode === mode,
-          );
+        <div className="mt-10 space-y-8">
+          {MODES.map((mode) => {
+            /*
+             * The panel is about the *live* credential. A revoked one no longer
+             * holds the mode's slot — migration 0009 made the uniqueness
+             * partial — so a mode can hold one live credential and any number of
+             * dead ones, and the panel has to be able to offer a replacement
+             * while still showing what it replaces.
+             */
+            const forMode = application.credentials.filter(
+              (c) => c.mode === mode,
+            );
+            const credential = forMode.find((c) => c.revokedAt === null);
+            const revoked = forMode
+              .filter((c) => c.revokedAt !== null)
+              .sort(
+                (a, b) =>
+                  (b.revokedAt?.getTime() ?? 0) - (a.revokedAt?.getTime() ?? 0),
+              );
 
-          return (
-            <CredentialPanel
-              key={mode}
-              applicationId={application.id}
-              applicationName={application.name}
-              mode={mode}
-              label={CREDENTIAL_MODE_LABEL[mode]}
-              signingSecret={
-                mode === 'test' ? application.sandboxSigningSecret : null
-              }
-              credential={credential}
-              domains={(credential
-                ? (application.domainsByCredential[credential.id] ?? [])
-                : []
-              ).map((domain) => ({
-                id: domain.id,
-                hostname: domain.hostname,
-                note: domain.note,
-                createdBy: domain.createdBy,
-                createdAt: domain.createdAt.toISOString(),
-              }))}
-            />
-          );
-        })}
+            return (
+              <CredentialPanel
+                key={mode}
+                applicationId={application.id}
+                applicationName={application.name}
+                mode={mode}
+                label={CREDENTIAL_MODE_LABEL[mode]}
+                signingSecret={
+                  mode === 'test' ? application.sandboxSigningSecret : null
+                }
+                credential={credential}
+                revoked={revoked}
+                domains={(credential
+                  ? (application.domainsByCredential[credential.id] ?? [])
+                  : []
+                ).map((domain) => ({
+                  id: domain.id,
+                  hostname: domain.hostname,
+                  note: domain.note,
+                  createdBy: domain.createdBy,
+                  createdAt: domain.createdAt.toISOString(),
+                }))}
+              />
+            );
+          })}
+        </div>
+
+        <p className="mt-10 text-sm">
+          <Link
+            href="/admin/applications"
+            className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Back to applications
+          </Link>
+        </p>
       </div>
 
-      <p className="mt-10 text-sm">
-        <Link
-          href="/admin/applications"
-          className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          Back to applications
-        </Link>
-      </p>
+      <KeyLegend />
     </div>
   );
 }

@@ -31,7 +31,6 @@ import {
   pgTable,
   text,
   timestamp,
-  unique,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
@@ -148,11 +147,23 @@ export type Application = typeof applications.$inferSelect;
 /**
  * One application's credential for one mode.
  *
- * `UNIQUE (application_id, mode)` is what makes "an application has a Sandbox
- * credential and a Production credential" a fact the database enforces rather
- * than a convention the UI hopes for. Minting a second Production credential
- * for the same application is a constraint violation, not a duplicate row
- * somebody notices later.
+ * `UNIQUE (application_id, mode) WHERE revoked_at IS NULL` is what makes "an
+ * application has at most one live Sandbox credential and at most one live
+ * Production credential" a fact the database enforces rather than a
+ * convention the UI hopes for. Minting a second live Production credential is
+ * a constraint violation, not a duplicate row somebody notices later.
+ *
+ * **The `WHERE` clause is the whole point, and it was missing.** A plain
+ * `UNIQUE (application_id, mode)` counts revoked rows too, so revoking a
+ * Production credential left its slot occupied by a dead row and there was no
+ * way to issue another one — not through the panel, which has no button for a
+ * mode that already exists, and not through `addCredential`, which refused.
+ * The only routes back were a whole new application or an `UPDATE` by hand.
+ * That is not a lifecycle; revocation is supposed to be survivable.
+ *
+ * Revoked rows stay. They are the audit trail of which key was live when, and
+ * `webhook_deliveries.credential_id` and `transactions.credential_id` point
+ * at them.
  *
  * **Revocation is per credential.** `revoked_at` lives here, not on
  * `applications`, so killing a Sandbox credential leaves Production
@@ -194,7 +205,9 @@ export const applicationCredentials = pgTable(
       .defaultNow(),
   },
   (t) => [
-    unique('application_credentials_mode_key').on(t.applicationId, t.mode),
+    uniqueIndex('application_credentials_live_mode_key')
+      .on(t.applicationId, t.mode)
+      .where(sql`${t.revokedAt} IS NULL`),
     index('application_credentials_application_idx').on(t.applicationId),
     check(
       'previous_secret_complete',

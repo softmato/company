@@ -64,6 +64,13 @@
       "when": 1788529788083,
       "tag": "0008_credential_on_payments",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788876385958,
+      "tag": "0009_credential_slot_frees_on_revoke",
+      "breakpoints": true
     }
   ]
 }
