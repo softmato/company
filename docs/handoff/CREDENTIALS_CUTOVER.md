@@ -217,8 +217,11 @@ it lands:
    filterable at all, and without it nothing else here is possible.
 2. **The admin read model defaults to Production**, with Sandbox split out or
    behind a toggle rather than silently mixed into the totals.
-3. **A `test` credential always routes to the mock provider**, whatever
-   `PAYMENT_MODE` says. A `live` credential follows `PAYMENT_MODE` as now.
+3. **The credential's mode picks the gateway's keys.** A Sandbox credential
+   transacts against eSewa's and Khalti's *sandbox* credentials; a Production
+   credential against their live ones. Not a mock — the real gateway, in its
+   own test environment, so an integration in development is genuinely
+   exercised rather than simulated.
 
 **Point 3 is not optional, and it is the whole reason this design is safe.**
 Provider registration in `lib/payments/providers.ts` reads `PAYMENT_MODE` and
@@ -231,6 +234,31 @@ by construction.
 
 This is only latent today because production runs `PAYMENT_MODE=sandbox`. Point
 3 must land before that changes.
+
+#### What point 3 costs
+
+- `REGISTRY` in `providers/registry.ts` is a `Map<ProviderId, ProviderAdapter>`.
+  It has to be keyed by `(providerId, mode)` instead, and `providerAdapter()`
+  gains a mode argument.
+- A deployment holds **both** gateway credential sets at once — a sandbox pair
+  and a live pair per provider — rather than one pair plus an `*_ENV` saying
+  which host it points at. `ESEWA_ENV` / `KHALTI_ENV` then have nothing left to
+  decide: the credential's mode picks the host. The `*_ENV=live requires
+  PAYMENT_MODE=live` check is replaced by the mode routing itself.
+- `PAYMENT_MODE` narrows to one job: whether this deployment may serve Production
+  credentials at all. `mock` still forces mocks everywhere.
+
+**And this is what makes point 1 mandatory rather than cosmetic.**
+`providerAdapter()` is called from two places: `transactions/start.ts`, which
+has the authenticated credential in hand, and `transactions/confirm.ts`, which
+**does not** — confirmation arrives as a gateway callback with no
+`Authorization` header, and can only read what the transaction row carries. If
+the row does not record its mode, a confirmation cannot know which gateway to
+verify against, and a Sandbox payment would be confirmed against the live one.
+
+So `mode` on the payment row is doing two jobs at once — separating the
+dashboard, and routing the confirmation — and only the second one is
+unforgiving.
 
 Until all three exist, the existing note stands: there is no hurry while
 `PAYMENT_MODE=sandbox`, and a hurry the moment it changes.
