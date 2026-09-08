@@ -1,0 +1,139 @@
+# Taking the credential split to production
+
+A runbook for `feat/application-credentials` —
+[PR #3](https://github.com/softmato/company/pull/3), which closes
+`INTEGRATION_SURFACE_PLAN.md`.
+
+Everything in that plan is done and green on `softmato-dev`. This file is the
+part that is not done: getting it onto production without taking the site down.
+
+---
+
+## Why this is not "merge and go"
+
+**Migration `0007` is breaking in both directions.** It drops eleven columns
+from `applications` — `client_id`, `secret_hash`, `secret_last4`, `webhook_url`,
+`webhook_secret`, the three `previous_secret_*`, `is_live`, `rotated_at`,
+`revoked_at` — and moves them onto a new `application_credentials` table.
+
+So:
+
+- The **currently deployed** code selects `applications.client_id`. It cannot
+  run once `0007` has been applied.
+- The **new** code selects from `application_credentials`. It cannot run until
+  `0007` has been applied.
+
+There is no ordering that avoids a window; there is only a short one and a long
+one. Migrating first and then deploying leaves the old code broken for the whole
+build (~2–3 minutes). Deploying first and then migrating leaves the new code
+broken for as long as the migration takes (~seconds).
+
+**Take the second.** Have the deployment built and ready, apply the migrations,
+then promote.
+
+The window is cheap right now and will not stay cheap: production has one
+integrator, its `webhook_url` is empty so no delivery can go anywhere, and
+`PAYMENT_MODE=sandbox` means no real money is in flight. Do it before any of
+those three change.
+
+---
+
+## Before anything
+
+**Take a Neon backup branch of production.** `0007` is the only step here that
+cannot be undone by another migration, and a copy-on-write branch is instant and
+free. Everything after it is recoverable; this one is recoverable only from a
+restore point that has to exist beforehand.
+
+Production is `ep-flat-wildflower-azfujbu5`. Dev is `ep-spring-brook-azbbif7k`
+and is **not** the one being changed here.
+
+---
+
+## 1. The pre-flight read
+
+`0007` adds a `CHECK` that a client id's prefix agrees with its mode:
+
+```sql
+client_id LIKE 'app_' || mode || '\_%'
+```
+
+The data migration inserts every existing application as a credential, so a
+single row whose prefix disagrees with `is_live` **aborts the migration
+part-way**. Run this against production first. Every row must answer `t`:
+
+```sql
+SELECT client_id, is_live,
+       client_id LIKE 'app_' || (CASE WHEN is_live THEN 'live' ELSE 'test' END) || '\_%' AS ok
+FROM applications;
+```
+
+A row answering `f` has to be understood before going further — it means an
+application's prefix and its flag have disagreed since it was created, and
+deciding which of the two is true is a judgement about who holds that secret.
+
+> This session could not run the read: production database access is blocked
+> from the agent environment, which is the correct guardrail and was not worked
+> around. It is one query in the Neon console.
+
+---
+
+## 2. Merge and build
+
+```bash
+gh pr merge 3 --squash
+```
+
+Wait for Vercel to finish building `main`. **Do not promote it yet** if you have
+a promotion step; if the project auto-promotes, accept the short window and go
+straight to step 3 the moment the build starts.
+
+---
+
+## 3. Apply the migrations
+
+All four go together. `0007` and `0008` are one logical change — `0007` moves
+`webhook_url` and `webhook_secret` onto the credential, and without `0008`
+nothing records which credential made a payment, so webhook delivery breaks.
+
+```bash
+pnpm --filter @softmato/db exec drizzle-kit migrate
+```
+
+against the production connection string. What each one does:
+
+|        |                                                                                                                                                                                                 |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0007` | The split. New enum, new `application_credentials`, data migration, `application_domains.application_id` → `credential_id`, eleven columns dropped from `applications`.                         |
+| `0008` | Nullable `credential_id` on `payment_sessions`, `transactions`, `webhook_deliveries`, backfilled, foreign keys added. Nullable on purpose so rows with a null `application_id` do not abort it. |
+| `0009` | Swaps the `(application_id, mode)` unique constraint for a partial index, `WHERE revoked_at IS NULL`, so revoking a credential stops holding its mode's slot for good.                          |
+| `0010` | One nullable column, `previous_secret_last_used_at`.                                                                                                                                            |
+
+---
+
+## 4. Verify, in this order
+
+1. **QuestionCall's existing secret still authenticates.** This is the whole
+   guarantee. `0007` copies `secret_hash` verbatim and never rehashes, so it
+   should — but a `401` here means the migration failed, whatever else looks
+   fine. Ask them to make any authenticated call, or use a stored one.
+2. `/admin/applications` renders, and the application shows a Sandbox
+   credential with its original client id and `created_at`.
+3. Its domain list is intact and now hangs off the credential.
+
+If step 1 fails, restore the backup branch. Do not try to repair forward: a
+failed authentication after this migration is a failed migration.
+
+---
+
+## 5. Afterwards, and not urgently
+
+**QuestionCall's `app_test_questioncall_f3kv9zgz` lives in the production
+database.** Per the decision recorded at the end of
+`INTEGRATION_SURFACE_PLAN.md`, Sandbox credentials belong on a non-production
+deployment. Mint them one there, give them that base URL, and revoke the
+production one — which `0009` has just made survivable, so it is no longer a
+one-way door.
+
+There is no hurry while `PAYMENT_MODE=sandbox`. There is a hurry the moment that
+changes.

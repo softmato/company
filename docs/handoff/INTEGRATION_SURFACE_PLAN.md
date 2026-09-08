@@ -1175,7 +1175,44 @@ rather than waiting a day.
 
 ---
 
-## Open, and needs the founder — not a guess
+## Decided 2026-09-08, by the founder
+
+**What should a Sandbox credential actually do? — Nothing more than it does.**
+
+The question below was put to the founder with three options. The answer was
+that **Softmato builds every integrating SaaS itself**, so there is no outside
+team that needs to test against the production deployment. That closes it by
+construction: the isolation is the deployment, which is the only thing that
+ever isolated anything, and each product points at a non-production base URL
+while it is being built.
+
+So option A — deployment separation — is the standing answer, at no code cost.
+Per-credential `PAYMENT_MODE` and a segregated set of accounts are **not being
+built**, and should not be attempted until an outside integrator exists to
+force them. Until then the honest description is the one the UI already
+carries: Sandbox is isolated in identity, destination and lifecycle, and not in
+money or books.
+
+**What a Sandbox credential does enforce, and it is not nothing:** its own
+domain allowlist — `assertRegisteredHost` takes a credential id and runs on
+`return_url` at checkout and on `webhook_url` — its own webhook destination and
+signing secret, and its own rotation and revocation. It is a blast-radius
+control on where customers and webhooks go. It is not a statement about whether
+the payment is real.
+
+**The one live consequence, still outstanding.** QuestionCall's
+`app_test_questioncall_f3kv9zgz` was minted in the **production** database, so
+calls against `softmato.com` with it write real rows and post real journal
+entries. Production runs `PAYMENT_MODE=sandbox` today, so those calls reach the
+providers' sandbox hosts and no real money moves — but `sandbox` and `live`
+both register the _real_ adapters, and only `mock` talks to nothing. The day
+that variable changes, that credential takes real money with no other change
+anywhere. Moving it to a non-production deployment is now safe to do, because
+`0009` made revocation survivable.
+
+---
+
+## Superseded — the question above, as it was originally put
 
 **What should a Sandbox credential actually do?**
 

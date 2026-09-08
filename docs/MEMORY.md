@@ -43,12 +43,24 @@ knowing that is not in the plan's own Done notes:
   It was writing `sidd@softmato.com` into the webhook URL field.
   `autocomplete="new-password"` stops it — **not yet confirmed in a browser**.
 
-**Open, and the founder's:** whether a Sandbox credential should mean anything
-(per-credential `PAYMENT_MODE`, and where test money sits in the accounts —
-see the plan's last section); whether Sandbox client secrets should be readable,
-which would mean storing them reversibly rather than as argon2id and is a change
-to how the payment API authenticates; and QuestionCall's remaining production
-hostnames.
+**Decided 2026-09-08 by the founder: a Sandbox credential stays exactly what it
+is.** Softmato builds every integrating SaaS itself, so no outside team needs to
+test against the production deployment, and the isolation is the deployment.
+Per-credential `PAYMENT_MODE` and segregated test accounts are **not being
+built** until an outside integrator forces them.
+
+**Not done, and the reason it is not done:** the production cutover.
+`docs/handoff/CREDENTIALS_CUTOVER.md` is the runbook. `0007` is breaking in
+both directions — the deployed code cannot run on the new schema and the new
+code cannot run on the old one — so the migration has to be coordinated with
+the deploy, and **production database access is blocked from the agent
+environment**, correctly. PR is
+[#3](https://github.com/softmato/company/pull/3).
+
+**Still open and the founder's:** whether Sandbox client secrets should be
+readable, which would mean storing them reversibly rather than as argon2id and
+is a change to how the payment API authenticates; and QuestionCall's remaining
+production hostnames.
 
 ---
 
