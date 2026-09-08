@@ -27,7 +27,7 @@ next time.
   traffic is cut over, so the two can't drift apart; or
 - **Write migrations that don't need the two to be simultaneous** — add the new
   table, have the code read new-with-fallback-to-old, backfill, and only drop
-  the old columns in a *later* release. Three boring deploys, zero windows.
+  the old columns in a _later_ release. Three boring deploys, zero windows.
 
 The second is the standard answer (expand/migrate/contract) and is what any
 future column move should use. This one was done the fast way because the blast
@@ -208,7 +208,7 @@ company whose integrators are all its own products. It needs a second database,
 a reachable preview admin panel, and a host-routing fix, all to keep three
 sandbox rows out of a table.
 
-The chosen design instead makes Sandbox activity *visible and separable* where
+The chosen design instead makes Sandbox activity _visible and separable_ where
 it lands:
 
 1. **Write `mode` onto the payment row at creation.** It is already in hand —
@@ -218,7 +218,7 @@ it lands:
 2. **The admin read model defaults to Production**, with Sandbox split out or
    behind a toggle rather than silently mixed into the totals.
 3. **The credential's mode picks the gateway's keys.** A Sandbox credential
-   transacts against eSewa's and Khalti's *sandbox* credentials; a Production
+   transacts against eSewa's and Khalti's _sandbox_ credentials; a Production
    credential against their live ones. Not a mock — the real gateway, in its
    own test environment, so an integration in development is genuinely
    exercised rather than simulated.
@@ -226,8 +226,8 @@ it lands:
 **Point 3 is not optional, and it is the whole reason this design is safe.**
 Provider registration in `lib/payments/providers.ts` reads `PAYMENT_MODE` and
 nothing else — the credential's mode plays no part in it. So on a deployment
-with `PAYMENT_MODE=live`, a Sandbox credential gets the *real* eSewa adapter and
-moves *real money*, exactly as `authenticate.ts` warns. Labelling that row
+with `PAYMENT_MODE=live`, a Sandbox credential gets the _real_ eSewa adapter and
+moves _real money_, exactly as `authenticate.ts` warns. Labelling that row
 "sandbox" without the guard produces a label that lies, which is worse than no
 label. With the guard, sandbox activity cannot move money, and the label is true
 by construction.
@@ -244,7 +244,7 @@ This is only latent today because production runs `PAYMENT_MODE=sandbox`. Point
   and a live pair per provider — rather than one pair plus an `*_ENV` saying
   which host it points at. `ESEWA_ENV` / `KHALTI_ENV` then have nothing left to
   decide: the credential's mode picks the host. The `*_ENV=live requires
-  PAYMENT_MODE=live` check is replaced by the mode routing itself.
+PAYMENT_MODE=live` check is replaced by the mode routing itself.
 - `PAYMENT_MODE` narrows to one job: whether this deployment may serve Production
   credentials at all. `mock` still forces mocks everywhere.
 

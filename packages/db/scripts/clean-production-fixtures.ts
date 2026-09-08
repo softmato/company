@@ -180,7 +180,8 @@ async function runOnce(): Promise<boolean> {
     const host = (connectionString!.split('@')[1] ?? '').split('/')[0];
     console.log('target: ' + host);
     console.log(
-      'mode:   ' + (commit ? 'COMMIT — this will write' : 'DRY RUN — will roll back'),
+      'mode:   ' +
+        (commit ? 'COMMIT — this will write' : 'DRY RUN — will roll back'),
     );
 
     /*
@@ -203,7 +204,11 @@ async function runOnce(): Promise<boolean> {
     await client.query('BEGIN');
 
     try {
-      const run = async (label: string, sql: string, params: unknown[] = []) => {
+      const run = async (
+        label: string,
+        sql: string,
+        params: unknown[] = [],
+      ) => {
         const result = await client.query(sql, params);
         console.log(
           '  deleted ' + label.padEnd(24) + String(result.rowCount).padStart(6),
@@ -276,9 +281,11 @@ async function runOnce(): Promise<boolean> {
       );
 
       // invoice_lines is ON DELETE CASCADE, so this takes them with it.
-      await run('invoices', `delete from invoices where fiscal_year = any($1)`, [
-        FAKE_INVOICE_YEARS,
-      ]);
+      await run(
+        'invoices',
+        `delete from invoices where fiscal_year = any($1)`,
+        [FAKE_INVOICE_YEARS],
+      );
 
       // The ledger. Lines go before the journals they hang off.
       await run(
@@ -341,10 +348,19 @@ async function runOnce(): Promise<boolean> {
       const c = checks.rows[0]!;
       const guardOn = Number(c.guards_on) === GUARDS.length;
 
-      console.log('  unbalanced journals (must be 0)   ' + c.unbalanced.padStart(6));
-      console.log('  orphaned ledger rows (must be 0)  ' + c.orphan_ledger.padStart(6));
-      console.log('  orphaned transactions (must be 0) ' + c.orphan_txn.padStart(6));
-      console.log('  invoices left (expect 2)          ' + String(after.invoices).padStart(6));
+      console.log(
+        '  unbalanced journals (must be 0)   ' + c.unbalanced.padStart(6),
+      );
+      console.log(
+        '  orphaned ledger rows (must be 0)  ' + c.orphan_ledger.padStart(6),
+      );
+      console.log(
+        '  orphaned transactions (must be 0) ' + c.orphan_txn.padStart(6),
+      );
+      console.log(
+        '  invoices left (expect 2)          ' +
+          String(after.invoices).padStart(6),
+      );
       console.log(
         '  append-only guards back on        ' +
           (c.guards_on + ' of ' + GUARDS.length).padStart(6) +
@@ -383,14 +399,18 @@ async function runOnce(): Promise<boolean> {
         gaps.rows.every((r) => BigInt(r.mx) === BigInt(r.n));
 
       if (!safe) {
-        console.log('\nA verification check failed. Rolling back, changing nothing.');
+        console.log(
+          '\nA verification check failed. Rolling back, changing nothing.',
+        );
         await client.query('ROLLBACK');
       } else if (commit) {
         await client.query('COMMIT');
         console.log('\nCOMMITTED.');
       } else {
         await client.query('ROLLBACK');
-        console.log('\nDry run — rolled back. Re-run with CONFIRM=yes to apply.');
+        console.log(
+          '\nDry run — rolled back. Re-run with CONFIRM=yes to apply.',
+        );
       }
 
       return true;

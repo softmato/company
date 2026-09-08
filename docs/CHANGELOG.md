@@ -80,7 +80,7 @@ this file tracks what was delivered.
 
 - **`@softmato/sdk@0.1.2`** — `onWarning`, and the `SoftmatoWarning` type.
   Published to GitHub Packages on 2026-09-08 as `sdk-v0.1.2`, tagged only after
-  the branch was deployed *and* migrated, so that every feature it exposes is
+  the branch was deployed _and_ migrated, so that every feature it exposes is
   one the live API actually has.
 
 ### Fixed
