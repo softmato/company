@@ -14,7 +14,7 @@ describe('integrationDoc', () => {
 
   it('finds the file and strips the H1 that PageHeader renders', () => {
     expect(doc.title).toBe('Integrating with Softmato Payments');
-    expect(doc.body).not.toMatch(/^#\s/m);
+    expect(withoutCodeFences(doc.body)).not.toMatch(/^#\s/m);
     expect(doc.body.length).toBeGreaterThan(1000);
   });
 
@@ -112,3 +112,17 @@ describe('the "Connecting securely" section', () => {
     expect(body).toMatch(/24 hours/);
   });
 });
+
+/**
+ * Fenced blocks are not markdown and must not be read as it.
+ *
+ * The guide's `curl` examples carry shell comments, which begin with `#` in
+ * column zero and are indistinguishable from an H1 to a line-anchored regex.
+ * The assertion above is about the document's *headings* — the H1 belongs to
+ * `PageHeader` and a second one in the body would render twice — so the fences
+ * come out before it is applied rather than the examples being contorted to
+ * avoid a false positive.
+ */
+function withoutCodeFences(markdown: string): string {
+  return markdown.replace(/^```[\s\S]*?^```/gm, '');
+}

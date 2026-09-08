@@ -838,7 +838,43 @@ rule that an application with no scopes is refused.
 
 ---
 
-## ☐ 9. `docs/INTEGRATION.md` — make the SDK optional
+## ☑ 9. `docs/INTEGRATION.md` — make the SDK optional
+
+> **Done 2026-09-08.** Every call in §2 is shown twice, and the three things
+> the client does quietly are now a numbered section rather than a sentence.
+>
+> **§2.1, 2.2, 2.3 and 2.4 each carry a `curl` beside the SDK form** —
+> method, path, `Authorization: Bearer`, `Idempotency-Key` on the mutating
+> ones, the JSON body and the response. The transaction example keeps the
+> unescaped slash in `TXN-2083/84-00000008`, because that is what the
+> catch-all route actually accepts and an escaped one would not work.
+>
+> **The webhook section gained a from-scratch verification**, which is the part
+> an integrator genuinely cannot reverse-engineer from the docs: the signed
+> message is `${timestamp}.${raw body}`, HMAC-SHA256 under the signing secret,
+> hex, compared in constant time, with the five-minute age check. That was read
+> off `packages/sdk/webhooks.ts` — `signingBase`, `sign` and `MAX_AGE_SECONDS`
+> — and not written from memory. A wrong recipe here is worse than none: it
+> fails on genuine deliveries while a forged one nobody checked sails through.
+>
+> **New §6.7, "What you take on by not using the SDK"**, states the three in
+> the order they bite. The idempotency one says the part that is easy to miss:
+> the key must be generated **before the first attempt and stored with the
+> work**, because a key generated per attempt is not a key at all — and the
+> cost of getting it wrong is a second charge, not an error.
+>
+> **Two more sections the item asks for.** "What the SDK cannot do for you" —
+> no credential provisioning, no rotation, both admin-only, because a
+> credential that can mint another credential never has to be stolen twice.
+> And "What Sandbox means", carrying the honest position from the top of this
+> plan: a label on the identifier, not an isolation boundary, and used against
+> the production deployment it takes real money.
+>
+> Installing was already correct and is left alone, with the version bumped by
+> item 10.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force` and `pnpm build`
+> pass; formatting checked on the staged bytes.
 
 The guide is SDK-first and an integrator who does not want the dependency
 currently has to reverse-engineer the client's source.

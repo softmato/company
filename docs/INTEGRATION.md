@@ -80,12 +80,35 @@ actions and jobs; never in a component that reaches the client.
 
 ### If you would rather not install anything
 
-The SDK is a convenience, not a requirement — `/api/v1` is plain HTTP and
-`API.md` documents every field. But it does three things whose failure modes
-are expensive, and a hand-rolled client has to do all three: it generates an
-`Idempotency-Key` when you forget one (the cost of forgetting is a **second
-charge**, not an error), it retries only what is safe to retry, and it verifies
-webhook signatures against the raw body before parsing it.
+The SDK is a convenience, not a requirement. `/api/v1` is plain HTTP, every
+call in §2 is shown as a `curl` beside its SDK form, and `API.md` documents
+every field.
+
+What you take on by doing that is **§6.7**, and it is three things, not none.
+Read it before you start rather than after.
+
+### What the SDK cannot do for you
+
+It cannot provision a credential and it cannot rotate one. Both are admin
+acts, performed by Softmato from the admin panel behind a password and an
+authenticator code, and there is no API for either — a credential that could
+mint another credential is a credential that never has to be stolen twice.
+Ask us, and we do it.
+
+### What Sandbox means
+
+Your first credential is a **Sandbox** one. Read that word carefully, because
+it promises less than it sounds like it does.
+
+Sandbox is **a label on the identifier, not an isolation boundary.** It picks
+the `app_test_` and `cs_test_` prefixes and nothing else. It does not select a
+payment provider, does not change which gateway is called, and does not keep
+anything out of anyone's ledger. What decides whether real money moves is the
+deployment you are pointed at.
+
+So: **a Sandbox credential used against the production deployment takes real
+money through the real gateways.** Point `baseUrl` at a non-production
+deployment while you are building, and ask us which one.
 
 ---
 
@@ -133,6 +156,14 @@ import { SoftmatoClient, verifyWebhook } from '@softmato/sdk';
 const softmato = new SoftmatoClient({ secret: process.env.SOFTMATO_SECRET! });
 ```
 
+**Every call below is shown twice** — the SDK, and the request it makes. The
+second form is the whole API; the SDK is a convenience over it and you are not
+required to install it. If you go without, read §6.7 first: there are exactly
+three things the client does quietly, and all three fail expensively.
+
+In the `curl` examples, `$SECRET` is your client secret and the base URL is
+`https://softmato.com/api/v1`.
+
 ### 2.1 Raise an invoice
 
 ```ts
@@ -163,6 +194,31 @@ const invoice = await softmato.createInvoice({
 });
 ```
 
+Without the SDK:
+
+```bash
+curl -X POST https://softmato.com/api/v1/invoices \
+  -H "Authorization: Bearer $SECRET" \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "external_ref": "HH-2026-00123",
+    "customer": { "external_ref": "cust_88", "name": "Ram Sharma" },
+    "lines": [
+      {
+        "description": "Growth — 12 months",
+        "quantity": 1,
+        "unit_price_minor": 2000000
+      }
+    ],
+    "presentation": { "plan_name": "HostelHub Growth — Annual" }
+  }'
+```
+
+```json
+{ "invoice_id": 41, "invoice_no": "INV-2083/84-000010", "status": "open" }
+```
+
 `unit_price_minor` is **paisa**, always an integer. NPR 20,000 is `2000000`.
 There are no floats anywhere in this API, in either direction.
 
@@ -177,6 +233,27 @@ const { checkout_url } = await softmato.createCheckout({
   invoice_id: invoice.invoice_id,
   return_url: 'https://yourapp.com/billing/return',
 });
+```
+
+Without the SDK:
+
+```bash
+curl -X POST https://softmato.com/api/v1/checkout \
+  -H "Authorization: Bearer $SECRET" \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "invoice_id": 41,
+    "return_url": "https://yourapp.com/billing/return"
+  }'
+```
+
+```json
+{
+  "session_id": "cs_test_hostelhub_9f2k…",
+  "checkout_url": "https://softmato.com/pay/cs_test_hostelhub_9f2k…",
+  "expires_at": "2026-09-08T12:30:00.000Z"
+}
 ```
 
 **There is no amount parameter.** We read it from the invoice. A
@@ -225,12 +302,51 @@ request.text()`.
    five minutes is rejected, which is what stops a captured request being
    replayed. If you verify by hand, do the same.
 
+Verifying by hand, in any language: the signed message is the timestamp, a
+dot, and the **raw body bytes**; the signature is its HMAC-SHA256 under your
+webhook signing secret, hex-encoded. Compare in constant time.
+
+```ts
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+const raw = await request.text(); // bytes as sent — never re-serialised
+const timestamp = request.headers.get('x-softmato-timestamp');
+const signature = request.headers.get('x-softmato-signature');
+
+if (!timestamp || !signature) return new Response('invalid', { status: 400 });
+
+// Older than five minutes is a replay, not a delivery.
+if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) {
+  return new Response('stale', { status: 400 });
+}
+
+const expected = createHmac('sha256', process.env.SOFTMATO_WEBHOOK_SECRET!)
+  .update(`${timestamp}.${raw}`)
+  .digest('hex');
+
+const a = Buffer.from(expected);
+const b = Buffer.from(signature);
+
+if (a.length !== b.length || !timingSafeEqual(a, b)) {
+  return new Response('invalid', { status: 400 });
+}
+```
+
 **A server-side read** is the authority. Never decide from a return URL's query
 parameters — those are a claim made by whoever's browser made the request.
 
 ```ts
 const txn = await softmato.getTransaction('TXN-2083/84-00000008');
 ```
+
+```bash
+# The transaction number contains a slash, and it is not escaped.
+curl https://softmato.com/api/v1/transactions/TXN-2083/84-00000008 \
+  -H "Authorization: Bearer $SECRET"
+```
+
+A transaction belonging to another application answers `404`, identically to
+one that does not exist. There is no way to tell those apart, deliberately.
 
 ### 2.4 Show the customer their records
 
@@ -249,6 +365,23 @@ if (file.contentType !== 'application/pdf') {
   // Saving this as `.pdf` gives your customer a file that will not open.
   console.warn(file.pdfFallbackReason);
 }
+```
+
+Without the SDK:
+
+```bash
+curl https://softmato.com/api/v1/invoices/INV-2083/84-000010 \
+  -H "Authorization: Bearer $SECRET"
+
+curl https://softmato.com/api/v1/receipts/TXN-2083/84-00000008 \
+  -H "Authorization: Bearer $SECRET"
+
+# The document itself. Check the Content-Type before saving it as .pdf:
+# when the PDF engine is unavailable we send the HTML rendering instead,
+# and say why in X-Softmato-Pdf-Fallback.
+curl -D- -o invoice.pdf \
+  'https://softmato.com/api/v1/invoices/INV-2083/84-000010?format=pdf' \
+  -H "Authorization: Bearer $SECRET"
 ```
 
 `detail.presentation` is the plan copy you sent, echoed back — so your billing
@@ -477,6 +610,31 @@ Never on any of these:
 never reaches the API, so it is cheap for you to retry and cheap for us to
 deny. Back off rather than retrying immediately, and use one connection pool
 rather than a burst of parallel calls.
+
+### 6.7 What you take on by not using the SDK
+
+Three things, and all three fail expensively and quietly.
+
+**1. Generate an `Idempotency-Key` for every mutating call.** Forgetting one
+does not produce an error — it produces a **second charge** the first time a
+connection drops and your code retries. Any UUID will do; what matters is that
+the _retry_ sends the _same_ one, so it must be generated before the first
+attempt and stored with the work, not generated per attempt. Send the same key
+with the same body and you get the same response back and one row.
+
+**2. Retry transport failures only.** A timeout, a dropped connection, a `5xx`
+— those are safe to retry with the same idempotency key. A `422
+VALIDATION_FAILED` is not: the request was understood and refused, and
+retrying it unchanged will be refused identically forever while looking to you
+like an outage. A `401` is not either; check §6.6 for whether you are on a
+superseded secret.
+
+**3. Verify the webhook signature over the raw body bytes**, before parsing
+and before reading a single field. The code is in §2.3. The mistake that gets
+made is verifying a re-serialised body — `JSON.stringify` of whatever your
+framework parsed is a different string, and it fails for _genuine_ deliveries
+while a forged one you never checked sails through. Reject on failure and stop;
+do not log and continue.
 
 ### 6.6 Rotation
 
