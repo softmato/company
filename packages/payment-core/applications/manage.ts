@@ -16,6 +16,7 @@ import {
   db,
   type Application,
   type ApplicationCredential,
+  CREDENTIAL_MODE_LABEL,
   type ApplicationScope,
   type CredentialMode,
 } from '@softmato/db';
@@ -226,7 +227,7 @@ export async function addCredential(
     if (existing) {
       throw new PaymentError(
         'INVALID_STATE',
-        `This application already has a ${mode} credential. Rotate it rather than minting a second.`,
+        `This application already has a ${CREDENTIAL_MODE_LABEL[mode]} credential. Rotate it rather than minting a second.`,
         { applicationId, mode },
       );
     }

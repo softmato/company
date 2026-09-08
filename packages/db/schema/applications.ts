@@ -86,6 +86,20 @@ export const credentialMode = pgEnum('credential_mode', ['test', 'live']);
 
 export type CredentialMode = (typeof credentialMode.enumValues)[number];
 
+/**
+ * The only place that turns a mode into a word for a person.
+ *
+ * The rule above is easy to state and easy to drift from: four screens and
+ * two scripts each wrote their own `mode === 'live' ? … : …`, and a single one
+ * of them left saying "live" is how a vocabulary rots. A lookup cannot be
+ * half-applied — either a call site uses it or the reviewer can see that it
+ * does not.
+ */
+export const CREDENTIAL_MODE_LABEL: Record<CredentialMode, string> = {
+  test: 'Sandbox',
+  live: 'Production',
+};
+
 export const applications = pgTable(
   'applications',
   {

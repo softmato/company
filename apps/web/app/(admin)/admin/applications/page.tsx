@@ -7,6 +7,8 @@
  */
 import Link from 'next/link';
 
+import { CREDENTIAL_MODE_LABEL } from '@softmato/db';
+
 import { listApplications } from '@/lib/applications/queries';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
 
@@ -70,7 +72,7 @@ export default async function ApplicationsPage() {
                     const credential = application.credentials.find(
                       (c) => c.mode === mode,
                     );
-                    const label = mode === 'live' ? 'Production' : 'Sandbox';
+                    const label = CREDENTIAL_MODE_LABEL[mode];
 
                     return (
                       <li

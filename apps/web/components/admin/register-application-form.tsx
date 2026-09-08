@@ -139,9 +139,9 @@ export function RegisterApplicationForm({
           onChange={(event) => setIsLive(event.target.checked)}
           className="size-4 rounded-sm border-input"
         />
-        Live credential
+        Production credential
         <span className="text-xs font-normal text-muted-foreground">
-          leave off for a sandbox integration
+          leave off to mint a Sandbox credential
         </span>
       </label>
 

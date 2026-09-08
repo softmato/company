@@ -57,15 +57,15 @@ export function ApplicationHeader({
 
       <p className="mt-2 text-xs text-muted-foreground">
         Shared by both credentials. A scope should not differ between the
-        credential you tested with and the one you went live with.
+        Sandbox credential and the Production one.
       </p>
 
       {hasProduction ? (
         <>
           <p className="mt-4 text-xs text-muted-foreground">
             This application has a Production credential, so narrowing a scope
-            here can break a live integration — silently, until its next call.
-            Confirm it is you.
+            here can break a Production integration — silently, until its next
+            call. Confirm it is you.
           </p>
           <ReauthFields
             idPrefix={`app-${application.id}`}

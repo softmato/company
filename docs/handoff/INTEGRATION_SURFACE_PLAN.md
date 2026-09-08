@@ -669,7 +669,70 @@ secret is untouched, revoke one and confirm the other still authenticates.
 
 ---
 
-## ☐ 6. Sandbox and Production, everywhere a person reads
+## ☑ 6. Sandbox and Production, everywhere a person reads
+
+> **Done 2026-09-08.** Nine strings and one lookup.
+>
+> **A defect, not just wording.** `addCredential` interpolated the raw column
+> into its refusal — `This application already has a ${mode} credential` — and
+> `failure()` in `applications/result.ts` hands the panel
+> `error.publicDetail ?? error.message` unchanged. So the one sentence in this
+> flow that a person only ever sees when something has gone wrong was also the
+> one still saying "test". Fixed at the throw.
+>
+> **`CREDENTIAL_MODE_LABEL` now decides the word.** It lives in
+> `packages/db/schema/applications.ts`, beside the enum whose rule it enforces.
+> Four call sites had each written their own
+> `mode === 'live' ? 'Production' : 'Sandbox'`, and
+> a rule re-implemented four times is a rule that drifts on the fifth. The two
+> screens and the `payment-core` message go through the lookup now. The two
+> CLI scripts do not: `app-secret.mts` prints `PRODUCTION` in capitals on
+> purpose, which is the same word doing emphasis, and importing a label map to
+> lower-case it would be a worse trade than leaving two correct strings alone.
+>
+> **"Go live" was treated as a synonym and removed too.** `docs/INTEGRATION.md`
+> §7 "Going live" is now "Going to production", and `/developers`' related-links
+> panel reads "Before you go to production". This is a judgement call and worth
+> disagreeing with: "go live" is ordinary English for launching, not a name for
+> the credential. It went because both places are literally about being issued
+> a Production credential, and a reader who meets "go live" and "live
+> credential" on the same page has been handed the synonym this item exists to
+> delete.
+>
+> **`docs/API.md` §2 gained the section it never had**, and the section it did
+> have was stale: "Every application also has a registered domain list" has
+> been wrong since item 5 moved `application_domains` onto `credential_id`.
+> Both are fixed together, because a vocabulary paragraph sitting above a false
+> ownership claim is not an improvement. The new text states the honest
+> position from the top of this plan — Sandbox is a label on the identifier,
+> `PAYMENT_MODE` is what decides whether money is real — rather than implying
+> an isolation that does not exist.
+>
+> **The register form's checkbox was fixed, not skipped.** It now reads
+> "Production credential / leave off to mint a Sandbox credential". Item 8
+> deletes the whole control four commits from now, so this is two words with a
+> short life; they were changed anyway so that this item is true on its own and
+> the tree is never in a state where the plan says the vocabulary is done and a
+> screen disagrees.
+>
+> **Deliberately left alone.** `--yes-live` (a flag name, in the identifier
+> class with `app_live_` and the `mode` column); `isLive` locals and props;
+> code comments that discuss the wire values; and the dashboard's "Live" tab
+> and the CMS's "goes live on the public site", which are about publishing
+> content and have nothing to do with a credential.
+>
+> **What ran.** `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force`
+> — 667 tests, unchanged, across five packages — and `pnpm legal:check`, 8
+> documents, 0 blocking. Formatting was checked on the **staged bytes**
+> (`git show :<path> | prettier --check --stdin-filepath <path>`) because
+> `core.autocrlf=true` makes a plain `prettier --check` call every file dirty;
+> it caught one real reflow in `application-header.tsx`, which was fixed and
+> re-checked.
+>
+> **Not verified: the screens.** `/admin/applications` is behind a password and
+> a TOTP code, so what was confirmed is which strings the components contain,
+> not how they render. Item 7's verify covers that and requires the founder's
+> own session.
 
 One word for each idea, no synonyms.
 

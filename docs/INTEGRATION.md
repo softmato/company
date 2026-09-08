@@ -414,10 +414,15 @@ secret is **rotated**, not recovered.
 
 ### 6.2 Register your domains before you use them
 
-An application may only send customers to, and receive webhooks on, hostnames
+A credential may only send customers to, and receive webhooks on, hostnames
 that have been registered against it in advance. The list is set by Softmato,
 signed in — it is never taken from a request, because an allowlist a caller can
 add to is not an allowlist.
+
+Your Sandbox and Production credentials hold **separate lists**. Registering a
+host against one does not register it against the other, which is deliberate:
+a Sandbox credential that could send a customer to your production site is the
+confusion this list exists to prevent.
 
 - `return_url` on `POST /v1/checkout` must be **https** and on a registered
   hostname. Otherwise the call is refused with `422 VALIDATION_FAILED`, and the
@@ -484,21 +489,32 @@ would mean your consumer accepting a signature from the key we meant to
 retire. Deliveries fail until you redeploy, and the retry job replays them once
 you have.
 
-Revocation is immediate and cannot be undone. A revoked application needs a new
-one.
+Revocation is immediate and cannot be undone. It applies to one credential:
+revoking Sandbox leaves Production working, and the reverse. A revoked
+credential is replaced by a new one with a new client id, not reinstated.
 
 ---
 
-## 7. Going live
+## 7. Going to production
+
+You are issued a **Sandbox** credential when your application is registered. A
+**Production** credential is a second, separate set — its own client id, its
+own secrets, its own webhook URL and its own domain list — minted when you are
+ready. Your Sandbox credential keeps working afterwards.
 
 1. Send us **every production hostname** a customer can land on — apex, `www`,
    and any `app` or `api` subdomain — plus the host your webhook endpoint sits
-   on. They are registered against your application before it is issued (§6.2),
-   and until one is registered no `return_url` on it will be accepted.
-2. Test against sandbox credentials until the whole loop works — invoice,
-   checkout, a real sandbox payment, the webhook, the receipt.
+   on. They are registered against your Production credential before it is
+   issued (§6.2), and until one is registered no `return_url` on it will be
+   accepted.
+2. Work against your **Sandbox** credential until the whole loop works —
+   invoice, checkout, a payment, the webhook, the receipt. Do that against a
+   non-production deployment: Sandbox is a label on the identifier and not an
+   isolation boundary, so the same credential pointed at production would take
+   real money.
 3. Point `webhook_url` at your production endpoint and verify a delivery lands
    and verifies **before** you switch keys.
-4. Ask us for live credentials. Both secrets are issued once and shown once.
+4. Ask us for your **Production** credential. Both of its secrets are issued
+   once and shown once.
 5. Run one small real transaction end to end and check it against your own
    records before you send customers to it.

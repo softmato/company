@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 
-import type { CredentialMode } from '@softmato/db';
+import { CREDENTIAL_MODE_LABEL, type CredentialMode } from '@softmato/db';
 
 import {
   addCredentialAction,
@@ -55,7 +55,7 @@ export function CredentialPanel({
   domains: DomainRow[];
 }) {
   const isLive = mode === 'live';
-  const label = isLive ? 'Production' : 'Sandbox';
+  const label = CREDENTIAL_MODE_LABEL[mode];
 
   return (
     <section
@@ -140,8 +140,8 @@ function SandboxNote() {
       a label on the identifier, not an isolation boundary: used against
       production it reaches the real gateways, takes real money and posts real
       journal entries. The preview deployment, with its own database and its own{' '}
-      <code className="font-mono">PAYMENT_MODE</code>, is what actually
-      separates test money from real money.
+      <code className="font-mono">PAYMENT_MODE</code>, is the only thing that
+      actually keeps a payment from being real.
     </p>
   );
 }
