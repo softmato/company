@@ -121,6 +121,33 @@ KHALTI_BASE_URL=              # optional override; default follows KHALTI_ENV
                               # sandbox https://dev.khalti.com/api/v2
                               # live    https://khalti.com/api/v2
 
+# Per-mode gateway credentials.
+#
+# A deployment holds BOTH sets. Which one a payment uses is decided by the
+# credential that opened it -- a Sandbox credential transacts against the
+# sandbox pair, a Production credential against the live pair -- so a single
+# deployment serves integrations in development and integrations taking real
+# money without either reaching the other's gateway.
+#
+# The unprefixed variables above ARE the Sandbox set: they already hold sandbox
+# values on every deployment, so nothing had to be renamed and Vercel's
+# environment did not have to be edited before the next deploy could boot. The
+# *_SANDBOX_* names simply override them where present.
+#
+# *_LIVE_* has no fallback, deliberately. A missing live credential means this
+# deployment cannot take Production payments, which is the honest answer;
+# falling back to the sandbox key would sign real payments with a secret eSewa
+# publishes in its own documentation.
+#
+# ESEWA_ENV and KHALTI_ENV no longer choose a host. The mode does.
+ESEWA_SANDBOX_MERCHANT_CODE=  # optional; defaults to ESEWA_MERCHANT_CODE
+ESEWA_SANDBOX_SECRET_KEY=     # optional; defaults to ESEWA_SECRET_KEY
+ESEWA_LIVE_MERCHANT_CODE=     # set both, or neither
+ESEWA_LIVE_SECRET_KEY=
+
+KHALTI_SANDBOX_SECRET_KEY=    # optional; defaults to KHALTI_SECRET_KEY
+KHALTI_LIVE_SECRET_KEY=
+
 FONEPAY_MERCHANT_CODE=
 FONEPAY_SECRET_KEY=
 FONEPAY_PG_URL=

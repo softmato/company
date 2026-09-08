@@ -14,6 +14,29 @@ this file tracks what was delivered.
 
 ### Changed
 
+- **A credential's mode now picks the gateway it transacts against.** A Sandbox
+  credential goes to eSewa's and Khalti's sandbox credentials, a Production one
+  to their live credentials, on the same deployment. Provider registration read
+  `PAYMENT_MODE` and nothing else before this, so the mode chose a session-id
+  prefix and no more — and under `PAYMENT_MODE=live` a Sandbox integration
+  would have moved real money. The registry is keyed by `(provider, mode)`, the
+  mode is a required argument at every lookup, and a deployment holding only
+  one mode's credentials refuses the other rather than falling back.
+
+- **The admin section reads one set of books at a time.** A switch in the admin
+  header moves the dashboard, payments, invoices, refunds and reconciliation
+  between Sandbox and Production together. Production is the default, and so is
+  anything unrecognised: showing real money to someone expecting test data is a
+  surprise, and showing test data to someone expecting real money is a wrong
+  number they may act on. Held in a cookie rather than a query parameter,
+  because a parameter would have to be carried by every navigation link and the
+  one that forgot would switch modes silently.
+
+  `unbalancedJournalCount` and `numberingGaps` are deliberately not filtered.
+  Books that balance only in one mode do not balance, and `allocateSequence` is
+  scoped by `(kind, fiscalYear)` with no mode in it, so filtering the gap check
+  would report every Sandbox invoice's number as a missing one.
+
 - **The credential split is live on production.** Migrations `0007`–`0010` were
   applied to `ep-flat-wildflower-azfujbu5` on 2026-09-08, following
   `docs/handoff/CREDENTIALS_CUTOVER.md`. Every one of the three existing
@@ -61,6 +84,13 @@ this file tracks what was delivered.
   one the live API actually has.
 
 ### Fixed
+
+- **`/admin/invoices` returned `integer out of range` and rendered nothing.**
+  `numberingGaps` cast `MAX(sequence_no)` to a 4-byte int, and the test
+  fixtures allocate sequence numbers from `Date.now() * 1000` — around 1.8e15,
+  against an int4 ceiling of 2.1e9. Any database holding fixture rows had the
+  whole page down, production included, and it had been that way for as long as
+  the fixtures had been landing there. Read as text and compared as `bigint`.
 
 - **Revoking a credential is no longer terminal for its mode.** The uniqueness
   on `(application_id, mode)` counted revoked rows, so a revoked Production
