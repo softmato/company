@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState, type ReactNode } from 'react';
 
 import type { CredentialMode } from '@softmato/db';
 
@@ -28,10 +28,17 @@ import { SubmitButton } from '@/components/admin/submit-button';
  * irreversible destruction, with "Rotate secret" and "Revoke" side by side as
  * two grey buttons and no confirmation on either.
  *
- *   1. **Identity** — client id, the last four of the secret, dates.
- *   2. **Delivery** — webhook URL and signing secret.
+ *   1. **Keys** — every key, what it is worth, and what it is for.
+ *   2. **Delivery** — where webhooks go.
  *   3. **Domains** — this credential's own allowlist.
- *   4. **Danger** — rotate, revoke. Separated, and destructive-looking.
+ *   4. **Danger** — reveal, rotate, revoke. Every one of them closed
+ *      until it is asked for.
+ *
+ * Reading is separated from acting, which is the change that made this
+ * screen legible. Keys answers "what have I got" without a single form on
+ * screen; Danger holds the three acts that change a key, each behind its own
+ * button. Before that, every form was open at once and an application with
+ * both credentials rendered six password-and-code pairs simultaneously.
  *
  * Each is its own form with its own action state, so rotating a secret cannot
  * accidentally submit an edited webhook URL, and a revoke cannot ride along on
@@ -55,6 +62,7 @@ export function CredentialPanel({
   label,
   credential,
   domains,
+  signingSecret,
 }: {
   applicationId: number;
   applicationName: string;
@@ -62,6 +70,8 @@ export function CredentialPanel({
   label: string;
   credential: CredentialSummary | undefined;
   domains: DomainRow[];
+  /** Sandbox only, rendered inline. `null` on the Production panel. */
+  signingSecret: string | null;
 }) {
   const isLive = mode === 'live';
 
@@ -95,7 +105,11 @@ export function CredentialPanel({
 
       {credential ? (
         <>
-          <Identity credential={credential} />
+          <Keys
+            credential={credential}
+            isLive={isLive}
+            signingSecret={signingSecret}
+          />
 
           {credential.revokedAt ? null : (
             <>
@@ -158,58 +172,140 @@ function SandboxNote() {
   );
 }
 
-function Identity({ credential }: { credential: CredentialSummary }) {
+/**
+ * Every key this credential has, what it is worth, and what it is for.
+ *
+ * Asked for in these words: "we gotta list clean and clear how many keys we
+ * serve super clean, also mention on the right side which key is used for what
+ * in simple short."
+ *
+ * The count is stated rather than left to be inferred from the rows, because
+ * the question an admin actually arrives with is "how many secrets are live
+ * for this integration" and counting boxes on a screen is not an answer.
+ *
+ * **The direction of each key is the thing worth saying.** Two of the three
+ * are secrets, they are not interchangeable, and the mistake that gets made is
+ * sending one where the other belongs. So the right-hand column leads with who
+ * sends what to whom — *Your server → us*, *Us → your server* — before it says
+ * anything else. `webhook-secret.ts` calls that asymmetry "the thing most
+ * likely to be misunderstood by whoever is wiring up the integration"; this is
+ * that sentence, on the screen, next to the key it is about.
+ */
+function Keys({
+  credential,
+  isLive,
+  signingSecret,
+}: {
+  credential: CredentialSummary;
+  isLive: boolean;
+  signingSecret: string | null;
+}) {
   const overlapOpen =
     credential.previousSecretExpiresAt !== null &&
     credential.previousSecretExpiresAt > new Date();
 
+  const secrets = credential.hasWebhookSecret ? 2 : 1;
+
   return (
     <div className="mt-5 border-t border-border pt-4">
-      <h3 className="text-sm font-medium">Identity</h3>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-sm font-medium">Keys</h3>
+        <span className="text-xs text-muted-foreground">
+          {secrets === 2 ? 'two secrets' : 'one secret'} · one public id
+        </span>
+      </div>
 
-      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-muted-foreground">
-        <div className="col-span-2">
-          <dt className="inline">Client id </dt>
-          <dd className="inline font-mono text-foreground">
-            {credential.clientId}
-          </dd>
-        </div>
-        <div>
-          <dt className="inline">Secret ends </dt>
-          <dd className="inline font-mono">…{credential.secretLast4}</dd>
-        </div>
-        <div>
-          <dt className="inline">Created </dt>
-          <dd className="inline">
-            {credential.createdAt.toISOString().slice(0, 10)}
-          </dd>
-        </div>
-        {credential.rotatedAt ? (
-          <div>
-            <dt className="inline">Last rotated </dt>
-            <dd className="inline">
-              {credential.rotatedAt.toISOString().slice(0, 10)}
-            </dd>
-          </div>
+      <dl className="mt-3 divide-y divide-border overflow-hidden rounded-md border border-border">
+        <KeyRow
+          name="Client id"
+          purpose="Public. Names this application in our logs and in a support thread. Not a secret — it is in every request already."
+          value={
+            <span className="font-mono break-all">{credential.clientId}</span>
+          }
+        />
+
+        <KeyRow
+          name="Client secret"
+          purpose="Your server → us. Sent as a Bearer token on every API call, and it is the whole proof that the call is yours."
+          value={
+            <>
+              <span className="font-mono">…{credential.secretLast4}</span>
+              <span className="text-muted-foreground">
+                {' '}
+                — stored as an argon2id hash, so it cannot be shown again, here
+                or anywhere.{' '}
+                {isLive
+                  ? 'A lost one is rotated; the old one keeps working for 24 hours.'
+                  : 'A lost one is rotated, and a Sandbox rotation asks for nothing.'}
+              </span>
+            </>
+          }
+        />
+
+        {credential.hasWebhookSecret ? (
+          <KeyRow
+            name="Signing secret"
+            purpose="Us → your server. We sign every webhook with it; your server checks the signature over the raw body before reading a field."
+            value={
+              isLive ? (
+                <span className="text-muted-foreground">
+                  Hidden. Production keys are revealed one at a time, under
+                  Danger, and the read is recorded.
+                </span>
+              ) : (
+                <span className="font-mono break-all select-all">
+                  {signingSecret ?? '—'}
+                </span>
+              )
+            }
+          />
         ) : null}
       </dl>
 
-      {/*
-       * The sentence that did not exist anywhere on the old screen, and is the
-       * one an admin needs before they go looking for a secret they cannot
-       * find. `secret_hash` is argon2id: there is no query that produces the
-       * plaintext again.
-       */}
       <p className="mt-2 text-xs text-muted-foreground">
-        The client secret cannot be shown again. If it is lost, rotate it.
+        Created {credential.createdAt.toISOString().slice(0, 10)}
+        {credential.rotatedAt
+          ? ` · last rotated ${credential.rotatedAt.toISOString().slice(0, 10)}`
+          : null}
       </p>
 
       {overlapOpen ? (
         <p className="mt-2 text-xs text-muted-foreground">
-          The superseded secret (…{credential.previousSecretLast4}) still works
-          until {credential.previousSecretExpiresAt?.toUTCString()}.
+          The superseded client secret (…{credential.previousSecretLast4}) still
+          works until {credential.previousSecretExpiresAt?.toUTCString()}.
         </p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * One key: what it is on the left, what it is for on the right.
+ *
+ * The two columns are the point. A single column of prose is what the previous
+ * screen had, and it made three unlike things — a public identifier, a secret
+ * that cannot be read back, and a secret that can — look like three rows of
+ * the same table.
+ */
+function KeyRow({
+  name,
+  value,
+  purpose,
+}: {
+  name: string;
+  value: ReactNode;
+  purpose: string;
+}) {
+  return (
+    <div className="grid gap-x-6 gap-y-1 p-3 text-xs sm:grid-cols-[1fr_minmax(0,15rem)]">
+      <div className="min-w-0">
+        <dt className="font-medium">{name}</dt>
+        <dd className="mt-1 break-all">{value}</dd>
+      </div>
+
+      <dd className="text-muted-foreground sm:border-l sm:border-border sm:pl-4">
+        {purpose}
+      </dd>
     </div>
   );
 }
@@ -228,15 +324,9 @@ function Delivery({
   return (
     <div className="mt-5 border-t border-border pt-4">
       <h3 className="text-sm font-medium">Delivery</h3>
-      {/*
-       * Whether a signing secret exists is stated here rather than in
-       * Identity, where it also used to appear. It is a fact about delivery,
-       * and two places holding it meant two places to read a different
-       * answer from.
-       */}
       <p className="mt-1 text-xs text-muted-foreground">
-        Where signed payment events are posted, and the key they are signed
-        with.
+        Where signed payment events are posted. The key they are signed with is
+        under Keys.
       </p>
 
       <form action={action} className="mt-3">
@@ -252,6 +342,7 @@ function Delivery({
           id={`webhook-${credential.id}`}
           name="webhookUrl"
           type="url"
+          autoComplete="url"
           defaultValue={credential.webhookUrl ?? ''}
           aria-describedby={`webhook-help-${credential.id}`}
           className="mt-1 w-full rounded-md border border-input px-3 py-2 text-sm"
@@ -284,14 +375,9 @@ function Delivery({
         </div>
       </form>
 
-      {credential.hasWebhookSecret ? (
-        <div className="mt-4 space-y-3">
-          <RevealForm credentialId={credential.id} isLive={isLive} />
-          <RotateWebhookForm credentialId={credential.id} isLive={isLive} />
-        </div>
-      ) : (
+      {credential.hasWebhookSecret ? null : (
         <p className="mt-3 text-xs text-muted-foreground">
-          This credential has no signing secret.
+          This credential has no signing secret, so nothing can be delivered.
         </p>
       )}
     </div>
@@ -337,20 +423,56 @@ function Danger({
   credential: CredentialSummary;
   isLive: boolean;
 }) {
+  const hasWebhookSecret = credential.hasWebhookSecret;
+
   return (
     <div className="mt-8 space-y-3 border-t-2 border-destructive/30 pt-4">
       <h3 className="text-sm font-medium text-destructive">Danger</h3>
       <p className="text-xs text-muted-foreground">
-        Both of these are felt by the integrator within the hour, and the second
-        cannot be undone.
+        Every one of these is felt by the integrator, and the last cannot be
+        undone. Each opens on its own; nothing here is armed until it is.
       </p>
 
-      <RotateSecretForm credential={credential} isLive={isLive} />
-      <RevokeForm
-        applicationName={applicationName}
-        credential={credential}
-        isLive={isLive}
-      />
+      {isLive && hasWebhookSecret ? (
+        <Collapsible
+          title="Reveal the signing secret"
+          description="Production only — the Sandbox key is printed under Keys. Reading this one is recorded against your account."
+          action="Reveal"
+        >
+          <RevealForm credentialId={credential.id} isLive={isLive} />
+        </Collapsible>
+      ) : null}
+
+      {hasWebhookSecret ? (
+        <Collapsible
+          title="Rotate the signing secret"
+          description="No overlap period. Deliveries fail from the moment this returns until the consumer is redeployed with the new value."
+          action="Rotate"
+        >
+          <RotateWebhookForm credentialId={credential.id} isLive={isLive} />
+        </Collapsible>
+      ) : null}
+
+      <Collapsible
+        title="Rotate the client secret"
+        description="The superseded secret keeps working for 24 hours, then stops. The integration has that long to redeploy."
+        action="Rotate secret"
+      >
+        <RotateSecretForm credential={credential} isLive={isLive} />
+      </Collapsible>
+
+      <Collapsible
+        title="Revoke this credential"
+        description="Immediate, and it cannot be undone. This credential’s secrets stop working at once — there is no overlap — and bringing it back means a new credential with a new client id. The other credential is not affected."
+        action="Revoke"
+        tone="danger"
+      >
+        <RevokeForm
+          applicationName={applicationName}
+          credential={credential}
+          isLive={isLive}
+        />
+      </Collapsible>
     </div>
   );
 }
@@ -409,14 +531,8 @@ function RotateSecretForm({
   const [state, action] = useActionState(rotateSecretAction, undefined);
 
   return (
-    <form action={action} className="rounded-md border border-border p-4">
+    <form action={action}>
       <input type="hidden" name="credentialId" value={credential.id} />
-
-      <p className="text-sm font-medium">Rotate the client secret</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        The superseded secret keeps working for 24 hours, then stops. The
-        integration has that long to redeploy.
-      </p>
 
       {isLive ? (
         <ReauthFields
@@ -425,7 +541,7 @@ function RotateSecretForm({
         />
       ) : null}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton variant="secondary">Rotate secret</SubmitButton>
         <Status state={state} />
       </div>
@@ -466,23 +582,11 @@ function RevokeForm({
   const [state, action] = useActionState(revokeCredentialAction, undefined);
 
   return (
-    <form
-      action={action}
-      className="rounded-md border border-destructive/40 bg-destructive/5 p-4"
-    >
+    <form action={action}>
       <input type="hidden" name="credentialId" value={credential.id} />
 
-      <p className="text-sm font-medium text-destructive">
-        Revoke this credential
-      </p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Immediate, and it cannot be undone. This credential&rsquo;s secrets stop
-        working at once — there is no overlap — and bringing it back means a new
-        credential with a new client id. The other credential is not affected.
-      </p>
-
       <label
-        className="mt-3 block text-xs font-medium"
+        className="block text-xs font-medium"
         htmlFor={`revoke-name-${credential.id}`}
       >
         Type <span className="font-mono">{applicationName}</span> to confirm
@@ -534,15 +638,8 @@ function RevealForm({
   const [state, action] = useActionState(revealWebhookSecretAction, undefined);
 
   return (
-    <form action={action} className="rounded-md border border-border p-4">
+    <form action={action}>
       <input type="hidden" name="credentialId" value={credentialId} />
-
-      <p className="text-sm font-medium">Reveal the signing secret</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        The consumer verifies every delivery against this value before reading a
-        single field of the body. It is <strong>not</strong> the client secret.
-        Reading it is recorded against your account.
-      </p>
 
       {isLive ? (
         <ReauthFields
@@ -551,7 +648,7 @@ function RevealForm({
         />
       ) : null}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton variant="secondary">Reveal</SubmitButton>
         <Status state={state} />
       </div>
@@ -577,21 +674,15 @@ function RotateWebhookForm({
 }) {
   const [state, action] = useActionState(rotateWebhookSecretAction, undefined);
 
+  /*
+   * No overlap, unlike a client secret rotation: two valid keys would mean a
+   * consumer that accepts a signature from the key we meant to retire.
+   * Deliveries fail from the moment this returns until the consumer is
+   * redeployed. `Collapsible` carries that sentence now.
+   */
   return (
-    <form action={action} className="rounded-md border border-border p-4">
+    <form action={action}>
       <input type="hidden" name="credentialId" value={credentialId} />
-
-      <p className="text-sm font-medium">Rotate the signing secret</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {/*
-         * No overlap, unlike a client secret rotation: two valid keys would
-         * mean a consumer that accepts a signature from the key we meant to
-         * retire. Deliveries fail from the moment this returns until the
-         * consumer is redeployed.
-         */}
-        No overlap period. Deliveries fail until the consumer is redeployed with
-        the new value.
-      </p>
 
       {isLive ? (
         <ReauthFields
@@ -600,7 +691,7 @@ function RotateWebhookForm({
         />
       ) : null}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <SubmitButton variant="secondary">Rotate</SubmitButton>
         <Status state={state} />
       </div>
@@ -614,6 +705,81 @@ function RotateWebhookForm({
         </dl>
       ) : null}
     </form>
+  );
+}
+
+/**
+ * One action, closed until it is wanted.
+ *
+ * The screen this replaces rendered every form expanded at once. On an
+ * application holding both credentials that was about ten forms in one
+ * column and — because each Production action carries its own password and
+ * authenticator fields — **six** "Your password / Authenticator code" pairs
+ * visible simultaneously, which reads as six different passwords rather than
+ * one asked for six times. The founder's word for the result was
+ * "confusing", and it was the accurate one.
+ *
+ * Closed, an action is a sentence and a button. Open, it is the same form as
+ * before. At most one password pair is on screen at a time in normal use.
+ *
+ * **It never closes itself.** A rotation's one-time secret and a reveal's key
+ * are rendered by the form inside, so auto-closing on success would throw
+ * away the only copy the admin will ever see. Cancel is the only thing that
+ * unmounts it — which doubles as the way to clear a revealed secret off the
+ * screen.
+ */
+function Collapsible({
+  title,
+  description,
+  action,
+  tone = 'neutral',
+  children,
+}: {
+  title: string;
+  description: string;
+  action: string;
+  tone?: 'neutral' | 'danger';
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const danger = tone === 'danger';
+
+  return (
+    <div
+      className={`rounded-md border p-4 ${
+        danger
+          ? 'border-destructive/40 bg-destructive/5'
+          : 'border-border bg-background'
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-sm font-medium ${danger ? 'text-destructive' : ''}`}
+          >
+            {title}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          className={`shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium ${
+            danger
+              ? 'border-destructive/50 text-destructive hover:bg-destructive/10'
+              : 'border-input hover:bg-muted'
+          }`}
+        >
+          {open ? 'Cancel' : action}
+        </button>
+      </div>
+
+      {open ? (
+        <div className="mt-4 border-t border-border/60 pt-4">{children}</div>
+      ) : null}
+    </div>
   );
 }
 

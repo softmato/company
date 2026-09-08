@@ -1,5 +1,5 @@
 import 'server-only';
-import { asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import {
   applicationCredentials,
@@ -61,6 +61,12 @@ export interface ApplicationSummary {
 export interface ApplicationDetail extends ApplicationSummary {
   /** Keyed by credential id — domains are per credential, not per application. */
   domainsByCredential: Record<number, ApplicationDomain[]>;
+  /**
+   * Rendered inline on the Sandbox panel, because a Sandbox signing secret is
+   * not worth a click. `null` when there is no live Sandbox credential.
+   * Production's is never in here — see `sandboxSigningSecret`.
+   */
+  sandboxSigningSecret: string | null;
 }
 
 /**
@@ -164,6 +170,46 @@ export async function listApplications(): Promise<ApplicationSummary[]> {
   }));
 }
 
+/**
+ * The Sandbox signing secret, for rendering directly on the detail page.
+ *
+ * **Deliberately not part of `credentialColumns`.** That object exists so a
+ * `select()` cannot start leaking a secret the day a column is added, and
+ * widening it to carry this one would give every caller of every list query
+ * a signing key it did not ask for. This is a second, named read that says
+ * in its own signature what it hands back and refuses to do it for anything
+ * but a Sandbox credential.
+ *
+ * The `mode` check is in the `WHERE` clause rather than in the caller. A
+ * guard the caller has to remember is a guard that is eventually forgotten,
+ * and the failure mode here is a Production signing key rendered into HTML.
+ *
+ * **This read is not audited, and that is the trade being made.**
+ * `revealWebhookSecret` writes an audit row because handing over a live
+ * signing key is an event; a page render is not, and auditing it would put a
+ * row in the log every time the screen is opened or revalidated, which
+ * destroys the log's usefulness for the Production reads that still matter.
+ * Production is unchanged: still behind Reveal, still re-authenticated,
+ * still recorded.
+ */
+async function sandboxSigningSecret(
+  applicationId: number,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ webhookSecret: applicationCredentials.webhookSecret })
+    .from(applicationCredentials)
+    .where(
+      and(
+        eq(applicationCredentials.applicationId, applicationId),
+        eq(applicationCredentials.mode, 'test'),
+        isNull(applicationCredentials.revokedAt),
+      ),
+    )
+    .limit(1);
+
+  return row?.webhookSecret ?? null;
+}
+
 export async function getApplicationDetail(
   id: number,
 ): Promise<ApplicationDetail | undefined> {
@@ -208,6 +254,7 @@ export async function getApplicationDetail(
       .map((c) => stripApplicationId(c, counts.get(c.id) ?? 0))
       .sort(byMode),
     domainsByCredential,
+    sandboxSigningSecret: await sandboxSigningSecret(id),
   };
 }
 

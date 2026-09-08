@@ -75,6 +75,9 @@ export default async function ApplicationDetailPage({
               applicationName={application.name}
               mode={mode}
               label={CREDENTIAL_MODE_LABEL[mode]}
+              signingSecret={
+                mode === 'test' ? application.sandboxSigningSecret : null
+              }
               credential={credential}
               domains={(credential
                 ? (application.domainsByCredential[credential.id] ?? [])
