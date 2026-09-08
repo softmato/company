@@ -179,3 +179,38 @@ one-way door.
 
 There is no hurry while `PAYMENT_MODE=sandbox`. There is a hurry the moment that
 changes.
+
+### Why this matters more than "tidiness"
+
+A Sandbox credential on production does not just look untidy — its rows are
+**indistinguishable from real ones** in every report the company reads.
+
+- `mode` isolates nothing. `sessions/id.ts` says it outright: it picks the
+  `cs_test_` prefix and nothing else. What gates real money is `PAYMENT_MODE`,
+  which is per-deployment.
+- **No payment table carries a mode of its own** — not `payment_sessions`,
+  `transactions`, `invoices`, or `journal_entries`. The only route to it is a
+  join through `credential_id` to `application_credentials.mode`.
+- **Nothing performs that join.** `lib/admin/dashboard-queries.ts` has no mode
+  filter, and neither do the payments, invoices or reconciliation pages.
+- `credential_id` is nullable, and 443 of production's 444 sessions have it
+  null. For those rows the information does not exist to filter on, so this
+  cannot be fixed by adding a `WHERE` clause later.
+
+It has already begun: `cs_test_f32mV1rz...`, NPR 12,000, `status=created`,
+opened 2026-08-15 by `app_test_hostelhub_2d90d3bq`, sits in the production
+database and is counted among its 444 sessions.
+
+So the rule is not a preference. **Production holds Production credentials
+only.** A product in development points at a deployment with its own database,
+and isolation comes from the deployment rather than from the key.
+
+The blocker to doing that today is host routing: `admin.<preview>` redirects
+back to `admin.softmato.com`, so a preview deployment's admin panel cannot be
+reached to mint credentials there. That routing fix is the real prerequisite,
+and it is what should be picked up before any SaaS starts integrating.
+
+The alternative — if test data should ever be *visible* in production, the way
+Stripe does it — is to write `mode` onto every payment row at creation and
+default every admin query to `live` behind a toggle. That is a product decision
+and a much larger change; it is not required for the rule above.
