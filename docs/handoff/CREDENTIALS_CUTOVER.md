@@ -201,16 +201,36 @@ It has already begun: `cs_test_f32mV1rz...`, NPR 12,000, `status=created`,
 opened 2026-08-15 by `app_test_hostelhub_2d90d3bq`, sits in the production
 database and is counted among its 444 sessions.
 
-So the rule is not a preference. **Production holds Production credentials
-only.** A product in development points at a deployment with its own database,
-and isolation comes from the deployment rather than from the key.
+### The decision: label it, do not exile it (2026-09-08)
 
-The blocker to doing that today is host routing: `admin.<preview>` redirects
-back to `admin.softmato.com`, so a preview deployment's admin panel cannot be
-reached to mint credentials there. That routing fix is the real prerequisite,
-and it is what should be picked up before any SaaS starts integrating.
+Deployment isolation was considered and **rejected as too complex** for a
+company whose integrators are all its own products. It needs a second database,
+a reachable preview admin panel, and a host-routing fix, all to keep three
+sandbox rows out of a table.
 
-The alternative — if test data should ever be *visible* in production, the way
-Stripe does it — is to write `mode` onto every payment row at creation and
-default every admin query to `live` behind a toggle. That is a product decision
-and a much larger change; it is not required for the rule above.
+The chosen design instead makes Sandbox activity *visible and separable* where
+it lands:
+
+1. **Write `mode` onto the payment row at creation.** It is already in hand —
+   `AuthenticatedApplication.mode` comes out of authentication, and
+   `generateSessionId` already takes it. This is the piece that makes the data
+   filterable at all, and without it nothing else here is possible.
+2. **The admin read model defaults to Production**, with Sandbox split out or
+   behind a toggle rather than silently mixed into the totals.
+3. **A `test` credential always routes to the mock provider**, whatever
+   `PAYMENT_MODE` says. A `live` credential follows `PAYMENT_MODE` as now.
+
+**Point 3 is not optional, and it is the whole reason this design is safe.**
+Provider registration in `lib/payments/providers.ts` reads `PAYMENT_MODE` and
+nothing else — the credential's mode plays no part in it. So on a deployment
+with `PAYMENT_MODE=live`, a Sandbox credential gets the *real* eSewa adapter and
+moves *real money*, exactly as `authenticate.ts` warns. Labelling that row
+"sandbox" without the guard produces a label that lies, which is worse than no
+label. With the guard, sandbox activity cannot move money, and the label is true
+by construction.
+
+This is only latent today because production runs `PAYMENT_MODE=sandbox`. Point
+3 must land before that changes.
+
+Until all three exist, the existing note stands: there is no hurry while
+`PAYMENT_MODE=sandbox`, and a hurry the moment it changes.
