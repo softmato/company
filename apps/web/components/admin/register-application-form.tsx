@@ -1,12 +1,11 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState } from 'react';
 
 import type { ApplicationScope } from '@softmato/db';
 
 import { registerApplicationAction } from '@/app/(admin)/admin/applications/actions';
 import { CredentialHandover } from '@/components/admin/credential-handover';
-import { ReauthFields } from '@/components/admin/reauth-fields';
 import { ScopeCheckboxes } from '@/components/admin/scope-checkboxes';
 import { SubmitButton } from '@/components/admin/submit-button';
 
@@ -33,7 +32,6 @@ export function RegisterApplicationForm({
   defaultScopes: readonly ApplicationScope[];
 }) {
   const [state, action] = useActionState(registerApplicationAction, undefined);
-  const [isLive, setIsLive] = useState(false);
 
   if (state?.ok && state.secret) {
     return (
@@ -126,43 +124,16 @@ export function RegisterApplicationForm({
       />
 
       {/*
-       * Hidden 'false' first, same reason as the settings form: an unchecked
-       * box sends nothing, and "nothing" must not read as "live".
+       * No mode is chosen here any more. Registration mints Sandbox, always,
+       * and Production is minted afterwards from the application's own page
+       * with a password and a code.
+       *
+       * The checkbox that used to sit here was the one-row model showing
+       * through — an application *was* a mode. It is also the safer default
+       * gone missing: a box on a form being filled in for the first time is
+       * the easiest way to create a production credential by accident, and
+       * the hardest place to notice you have.
        */}
-      <input type="hidden" name="isLive" value="false" />
-      <label className="mt-6 flex items-center gap-2 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="isLive"
-          value="true"
-          checked={isLive}
-          onChange={(event) => setIsLive(event.target.checked)}
-          className="size-4 rounded-sm border-input"
-        />
-        Production credential
-        <span className="text-xs font-normal text-muted-foreground">
-          leave off to mint a Sandbox credential
-        </span>
-      </label>
-
-      {/*
-       * Only for a live credential. A sandbox one touches no real money and is
-       * deliberately cheap to make; minting one that can move money is in the
-       * same class as changing an admin password.
-       */}
-      {isLive ? (
-        <div className="mt-4 rounded-md border border-border p-4">
-          <p className="text-sm font-medium">Confirm it is you</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            This credential can collect real payments. A session alone is not
-            enough to mint one.
-          </p>
-          <ReauthFields
-            idPrefix="register"
-            error={state?.fieldErrors?.password}
-          />
-        </div>
-      ) : null}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <SubmitButton>Register application</SubmitButton>

@@ -68,6 +68,7 @@ vi.mock('@/app/(admin)/admin/security/reauth', () => ({
 
 const {
   addCredentialAction,
+  registerApplicationAction,
   revealWebhookSecretAction,
   revokeCredentialAction,
   rotateSecretAction,
@@ -427,5 +428,77 @@ describe('revoking asks for the name, whatever the mode', () => {
     expect(result.ok).toBe(true);
     expect(reauthOk).toHaveBeenCalledOnce();
     expect((await row(production)).revokedAt).not.toBeNull();
+  });
+});
+
+/**
+ * Registration mints Sandbox. There is no way to ask it for anything else.
+ *
+ * The form no longer draws a mode control, which is the visible half of item
+ * 8. The half worth a test is the other one: this action is reachable by
+ * anyone who can post to it, so "the form does not send it" is not a
+ * guarantee. If the mode were read from the request at all — even with a
+ * sensible default — a hand-rolled `isLive=true` would mint a Production
+ * credential through the one path that asks for no password and no code.
+ *
+ * So the assertion is on the row, not on the response: whatever the form
+ * says, what lands in the database is `test`.
+ */
+describe('registration mints a Sandbox credential', () => {
+  it('ignores isLive=true and mints test anyway', async () => {
+    const name = `Gate fixture ${marker} register`;
+
+    const result = await registerApplicationAction(
+      undefined,
+      form({
+        productId: PRODUCT,
+        name,
+        domains: 'sandbox.example.com',
+        scopes: 'payment:read',
+        // The field the old form sent, forged by hand.
+        isLive: 'true',
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+
+    const [row] = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(eq(applications.name, name))
+      .limit(1);
+
+    expect(row).toBeDefined();
+
+    const creds = await db
+      .select({
+        mode: applicationCredentials.mode,
+        clientId: applicationCredentials.clientId,
+      })
+      .from(applicationCredentials)
+      .where(eq(applicationCredentials.applicationId, row!.id));
+
+    expect(creds).toHaveLength(1);
+    expect(creds[0]!.mode).toBe('test');
+    expect(creds[0]!.clientId.startsWith('app_test_')).toBe(true);
+  });
+
+  it('asks for no password or code, so no reauth is attempted', async () => {
+    reauthOk.mockClear();
+
+    const name = `Gate fixture ${marker} register2`;
+
+    const result = await registerApplicationAction(
+      undefined,
+      form({
+        productId: PRODUCT,
+        name,
+        domains: 'sandbox2.example.com',
+        scopes: 'payment:read',
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(reauthOk).not.toHaveBeenCalled();
   });
 });

@@ -792,7 +792,35 @@ with their own admin session. Do not claim a browser check that was not done.
 
 ---
 
-## ☐ 8. Registration mints the Sandbox credential
+## ☑ 8. Registration mints the Sandbox credential
+
+> **Done 2026-09-08.** The checkbox is gone, and so is the re-authentication
+> block it used to reveal.
+>
+> **The mode is no longer read from the request at all.** It would have been
+> enough to delete the control and default `mode` to `test`, and that would
+> have been wrong: `registerApplicationAction` is reachable by anyone who can
+> post to it, so a default is something a caller overrides. A hand-rolled
+> `isLive=true` against the old code would have minted a Production credential
+> through the one path in this file that asks for no password and no code. It
+> is now the literal `'test'`, and there is no field to send.
+>
+> **Two cases in `apps/web/tests/application-gate.test.ts`**, which already
+> holds the mocks this needs. The first posts `isLive=true` by hand and asserts
+> on the **row** — one credential, `mode` `test`, client id prefixed
+> `app_test_` — rather than on the returned message, because a response saying
+> "Registered" over a `live` row is exactly the bug. The second asserts
+> `reauthenticate` is never called, which is the other half of the item: a
+> Sandbox credential is not worth a TOTP prompt. Against the old code the first
+> case fails twice over — it would mint `live`, and the empty form would be
+> refused by the gate.
+>
+> Scopes and the domain rule are untouched: `DEFAULT_APPLICATION_SCOPES` still
+> seeds the form, an application with no scopes is still refused, and so is one
+> with no domains.
+>
+> `pnpm typecheck`, `pnpm lint`, `pnpm turbo run test --force` and `pnpm build`
+> all pass — 19 cases in the gate file, 676 across the repo.
 
 The register form currently offers a "Live credential" checkbox, which is the
 old one-row model showing through.

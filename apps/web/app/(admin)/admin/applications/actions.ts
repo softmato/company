@@ -230,10 +230,21 @@ export async function registerApplicationAction(
 ): Promise<CredentialResult> {
   const adminId = await requireAdmin();
 
+  /*
+   * The mode is not read from the form, and there is no field to read.
+   * Registration mints Sandbox; Production is minted from the application's
+   * own page, where `confirmIfProduction` asks for a password and a code.
+   *
+   * Hard-coded rather than defaulted, deliberately. A default is something a
+   * caller can override, and this endpoint is reachable by anyone who can
+   * post to it — a `mode=live` field on a form that no longer draws one
+   * would be a way to mint a production credential with no re-authentication
+   * at all.
+   */
   const parsed = registerSchema.safeParse({
     productId: String(form.get('productId') ?? ''),
     name: String(form.get('name') ?? '').trim(),
-    mode: form.get('isLive') === 'true' ? 'live' : 'test',
+    mode: 'test',
     webhookUrl: String(form.get('webhookUrl') ?? '').trim(),
   });
 
@@ -273,11 +284,6 @@ export async function registerApplicationAction(
     };
   }
 
-  if (parsed.data.mode === 'live') {
-    const refused = await confirmIdentity(adminId, form);
-    if (refused) return refused;
-  }
-
   try {
     const { application, credential, secret } = await registerApplication(
       {
@@ -311,7 +317,8 @@ export async function registerApplicationAction(
 
     return {
       ok: true,
-      message: 'Registered. Copy both secrets now — neither is shown again.',
+      message:
+        'Registered with a Sandbox credential. Copy both secrets now — neither is shown again.',
       secret,
       clientId: credential.clientId,
       applicationId: application.id,

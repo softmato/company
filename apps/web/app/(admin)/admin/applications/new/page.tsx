@@ -28,8 +28,14 @@ export default async function NewApplicationPage() {
       <h1 className="headline mt-2 text-2xl">Register an application</h1>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        Two secrets are generated and shown once, on the next screen. They are
-        different credentials and neither works in the other&rsquo;s place.
+        This mints the application&rsquo;s <strong>Sandbox</strong> credential.
+        Its two secrets are generated and shown once, on the next screen — they
+        are different credentials and neither works in the other&rsquo;s place.
+      </p>
+
+      <p className="mt-2 text-sm text-muted-foreground">
+        The Production credential is minted later, from this application&rsquo;s
+        own page, and costs a password and an authenticator code.
       </p>
 
       <RegisterApplicationForm
