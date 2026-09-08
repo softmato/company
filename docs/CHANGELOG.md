@@ -12,6 +12,26 @@ this file tracks what was delivered.
 
 ## [Unreleased]
 
+### Changed
+
+- **The credential split is live on production.** Migrations `0007`–`0010` were
+  applied to `ep-flat-wildflower-azfujbu5` on 2026-09-08, following
+  `docs/handoff/CREDENTIALS_CUTOVER.md`. Every one of the three existing
+  applications kept its `secret_hash` byte-for-byte, so no integrator had to
+  rotate anything; `client_id`, `created_at`, `secret_last4`, mode and domains
+  all carried across, and no row was lost. The backfill left nothing behind:
+  every payment row that had an `application_id` got a `credential_id`, and the
+  620 rows that ended up unlinked had already been unlinked beforehand.
+
+  The order the runbook chose — deploy, then migrate — meant production served
+  new code against the old schema for the gap between the two. That gap was not
+  minutes: the merge auto-deployed and the migration was a manual step nobody
+  had run yet, so every authenticated `/api/v1` call returned `500` from the
+  merge until the cutover. Public pages, the admin panel and unauthenticated
+  rejects were unaffected throughout, no real money was in flight
+  (`PAYMENT_MODE=sandbox`), and no integrator traffic arrived during the window.
+  See `docs/handoff/CREDENTIALS_CUTOVER.md` §0 for what this costs next time.
+
 ### Added
 
 - **The rotation overlap now says something.** Any authenticated response whose
@@ -35,9 +55,10 @@ this file tracks what was delivered.
   right, instead of once per row. Before this an application holding both
   credentials rendered six password-and-code pairs at the same time.
 
-- **`@softmato/sdk@0.1.2`** — `onWarning`, and the `SoftmatoWarning` type. Not
-  published yet: it is tagged after this branch is deployed, so that every
-  feature it exposes is one the live API actually has.
+- **`@softmato/sdk@0.1.2`** — `onWarning`, and the `SoftmatoWarning` type.
+  Published to GitHub Packages on 2026-09-08 as `sdk-v0.1.2`, tagged only after
+  the branch was deployed *and* migrated, so that every feature it exposes is
+  one the live API actually has.
 
 ### Fixed
 

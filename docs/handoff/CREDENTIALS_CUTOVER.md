@@ -1,5 +1,41 @@
 # Taking the credential split to production
 
+> **EXECUTED 2026-09-08.** Migrations `0007`–`0010` are applied to production
+> and verified: all three secret hashes copied byte-for-byte, no rows lost, no
+> backfill misses, API recovered. `sdk-v0.1.2` is tagged and published. What
+> follows is kept as the record of what was done, with §0 added afterwards.
+> Nothing below needs running again.
+
+---
+
+## 0. What this cost, and how to not pay it twice
+
+The plan said "deploy, then migrate, and accept a window of seconds". The window
+was **five days**, because the two steps have different triggers: merging a PR
+deploys by itself, and migrating does not. Nobody forgot — the runbook simply
+assumed the person merging would immediately run step 3, and merging is a thing
+you can do from a phone.
+
+For the whole of that window, every authenticated `/api/v1` call returned `500`.
+It was survivable only by luck of timing: no integrator called during it, and
+`PAYMENT_MODE=sandbox` meant no real money could move. Neither will be true
+next time.
+
+**The fix is not "remember harder".** Either:
+
+- **Make the migration part of the deploy** — a release step that runs before
+  traffic is cut over, so the two can't drift apart; or
+- **Write migrations that don't need the two to be simultaneous** — add the new
+  table, have the code read new-with-fallback-to-old, backfill, and only drop
+  the old columns in a *later* release. Three boring deploys, zero windows.
+
+The second is the standard answer (expand/migrate/contract) and is what any
+future column move should use. This one was done the fast way because the blast
+radius was three sandbox applications and no money; that will not be true of the
+next one.
+
+---
+
 A runbook for `feat/application-credentials` —
 [PR #3](https://github.com/softmato/company/pull/3), which closes
 `INTEGRATION_SURFACE_PLAN.md`.
@@ -31,8 +67,9 @@ broken for as long as the migration takes (~seconds).
 **Take the second.** Have the deployment built and ready, apply the migrations,
 then promote.
 
-The window is cheap right now and will not stay cheap: production has one
-integrator, its `webhook_url` is empty so no delivery can go anywhere, and
+The window is cheap right now and will not stay cheap: production has three
+applications (two `hostelhub`, one `questioncall`, all Sandbox), every
+`webhook_url` is empty so no delivery can go anywhere, and
 `PAYMENT_MODE=sandbox` means no real money is in flight. Do it before any of
 those three change.
 
@@ -97,10 +134,15 @@ All four go together. `0007` and `0008` are one logical change — `0007` moves
 nothing records which credential made a payment, so webhook delivery breaks.
 
 ```bash
-pnpm --filter @softmato/db exec drizzle-kit migrate
+pnpm --filter @softmato/db exec tsx --env-file=D:/company/.env.prod ./migrate.ts
 ```
 
-against the production connection string. What each one does:
+**The env path must be absolute.** `node` resolves `--env-file` against the
+shell's directory while `pnpm --filter` runs the script from `packages/db`, so a
+relative `../../.env.prod` climbs one level too far and dies with
+`.env.prod: not found`. The `drizzle-kit migrate` form this file used to give
+never loads an env file at all and fails with `url: undefined`; and the
+package's own `migrate` script hardcodes `.env.local`, which is **dev**. What each one does:
 
 |        |                                                                                                                                                                                                 |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
