@@ -92,6 +92,13 @@
       "when": 1788887999185,
       "tag": "0012_invoice_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788959782007,
+      "tag": "0013_activate_wallet_providers",
+      "breakpoints": true
     }
   ]
 }

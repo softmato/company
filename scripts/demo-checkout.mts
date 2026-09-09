@@ -34,6 +34,17 @@ import { db, platformSettings } from '../packages/db/index.ts';
  */
 import { sellerFromSettings } from '../apps/web/lib/documents/seller.ts';
 import { resolve } from '../apps/web/lib/settings/registry.ts';
+/*
+ * The app's own provider policy, for the same reason. `createSession` now
+ * refuses to issue a session for a provider this deployment has no adapter
+ * for, and the answer is passed in rather than read from the registry: a
+ * script resolves `payment-core` to a different module instance than the app
+ * does, so the registry this process would consult is not the one this import
+ * writes to. Computing the list here and handing it over crosses that boundary
+ * safely — and it is the *app's* policy being run, not a second spelling of
+ * it, which is what keeps a demo link honest about what the server will accept.
+ */
+import { availableFor } from '../apps/web/lib/payments/providers.core.ts';
 import {
   createInvoice,
   createSession,
@@ -195,6 +206,7 @@ async function main(): Promise<void> {
       { invoiceId: invoice.invoiceNo },
       checkoutBase,
       audit,
+      availableFor(process.env, application.mode),
     );
 
     return { invoice, session };

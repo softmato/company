@@ -24,6 +24,7 @@ import {
 import type { AuditRecorder } from '../audit';
 import type { AuthenticatedApplication } from '../applications/authenticate';
 import { PaymentError } from '../errors';
+import { registeredProviders } from '../providers/registry';
 import { SESSION_TTL_MS } from './expiry';
 import { generateSessionId } from './id';
 
@@ -45,6 +46,19 @@ export async function createSession(
   input: CreateSessionInput,
   checkoutBaseUrl: string,
   audit: AuditRecorder,
+  /**
+   * Which providers this deployment can actually put a customer in front of,
+   * for this credential's mode.
+   *
+   * Defaulted from the registry, which is what the API route wants and is
+   * evaluated per call rather than at import. It is a *parameter* because the
+   * registry is process-global state, and a caller that lives outside the
+   * app's module graph — `scripts/demo-checkout.mts` — provably resolves
+   * `payment-core` to a different instance and would read an empty Map that
+   * nobody wrote to. A capability this important should be passed where it can
+   * be passed, not inferred from a global that may not be the same global.
+   */
+  serviceable: readonly string[] = registeredProviders(application.mode),
 ): Promise<CreatedSession> {
   const invoice = await ownedInvoice(tx, application, input.invoiceId);
 
@@ -68,15 +82,47 @@ export async function createSession(
     );
   }
 
-  const allowedProviders = await providersForAmount(tx, amountMinor);
+  const byAmount = await providersForAmount(tx, amountMinor);
 
-  if (allowedProviders.length === 0) {
+  if (byAmount.length === 0) {
     // Better a clear failure now than a customer choosing a wallet that
     // rejects the amount halfway through paying (docs/API.md §8).
     throw new PaymentError(
       'PROVIDER_UNAVAILABLE',
       'No active provider accepts an amount of this size',
       { amountMinor: amountMinor.toString() },
+    );
+  }
+
+  /*
+   * And of those, the ones this deployment can actually put a customer in
+   * front of.
+   *
+   * The amount filter asks the database a question about business rules; this
+   * asks the process a question about wiring, and both have to be true before
+   * a URL is worth handing out. Without it, a deployment missing a credential
+   * answered `POST /v1/checkout` with `201` and a checkout link whose only
+   * possible outcome was a page reading "No payment method is available" — the
+   * integrator was told everything was fine, and their customer found out
+   * otherwise. A 502 naming the mode reaches somebody who can fix it.
+   *
+   * The mode is the credential's, never the deployment's: a Sandbox key must
+   * be refused when only live adapters are registered, however healthy the
+   * deployment looks from the outside.
+   */
+  const registered = new Set<string>(serviceable);
+  const allowedProviders = byAmount.filter((id) => registered.has(id));
+
+  if (allowedProviders.length === 0) {
+    throw new PaymentError(
+      'PROVIDER_UNAVAILABLE',
+      `No provider is available for a ${application.mode} session on this deployment`,
+      {
+        amountMinor: amountMinor.toString(),
+        mode: application.mode,
+        activeForAmount: byAmount,
+        registeredForMode: [...registered],
+      },
     );
   }
 

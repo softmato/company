@@ -170,7 +170,12 @@ async function summarise(session: PaymentSession): Promise<Summary | null> {
 async function offerable(session: PaymentSession): Promise<CheckoutProvider[]> {
   const allowed = session.allowedProviders;
 
-  if (allowed.length === 0) return [];
+  if (allowed.length === 0) {
+    // `createSession` refuses to write an empty list, so a session carrying one
+    // predates that rule or was written by hand. Worth a line either way.
+    explainEmpty(session, allowed, 0);
+    return [];
+  }
 
   /*
    * The session's own mode, not the deployment's. A Sandbox session may only
@@ -194,7 +199,43 @@ async function offerable(session: PaymentSession): Promise<CheckoutProvider[]> {
     )
     .orderBy(asc(paymentProviders.sortOrder));
 
-  return rows
+  const offered = rows
     .filter((row) => registered.has(row.id))
     .map((row) => ({ id: row.id as ProviderId, displayName: row.displayName }));
+
+  if (offered.length === 0) explainEmpty(session, allowed, rows.length);
+
+  return offered;
+}
+
+/**
+ * Why the customer is looking at "No payment method is available".
+ *
+ * Three independent lists have to overlap for a button to be drawn, and an
+ * empty overlap rendered the same sentence whichever of them was the empty
+ * one — a page that is honest with the customer and silent with us. Each cause
+ * has a completely different fix, and none of them is discoverable from the
+ * page: `allowed_providers` is frozen on the session row, `is_active` lives in
+ * the database, and registration lives in the environment.
+ *
+ * So the page keeps its one calm sentence and the server says which list it
+ * was. Logged at the moment of the decision rather than reconstructed later,
+ * because the session id is what ties this line to the customer who wrote in.
+ */
+function explainEmpty(
+  session: PaymentSession,
+  allowed: string[],
+  activeRows: number,
+): void {
+  const where =
+    activeRows === 0
+      ? `none of [${allowed.join(', ')}] is active in payment_providers`
+      : `${activeRows} active provider(s) matched, but no adapter is ` +
+        `registered for mode ${session.mode}`;
+
+  console.warn(
+    `[checkout] ${session.id} has no payable provider — ${where}. ` +
+      'The session already carries allowed_providers, so this is a ' +
+      'deployment or database state problem, not the customer’s.',
+  );
 }

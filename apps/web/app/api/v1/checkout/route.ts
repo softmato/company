@@ -13,6 +13,7 @@ import { recordAudit } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { mutatingEndpoint } from '@/lib/api/route';
 import { serializeSession } from '@/lib/api/serialize';
+import { ensureProvidersRegistered } from '@/lib/payments/providers';
 
 const schema = z.object({
   /** The `invoice_id` returned by `POST /v1/invoices` — its `invoice_no`. */
@@ -32,6 +33,16 @@ export const POST = mutatingEndpoint(
   'POST /v1/checkout',
   async ({ application, body, tx }) => {
     const input = schema.parse(body);
+
+    /*
+     * Before `createSession`, which now refuses to issue a session for a
+     * provider this deployment has no adapter for. The registry is per
+     * process and this route is its own serverless function, so it may never
+     * have run the composition root — without this call the registry is empty
+     * here even on a deployment whose checkout page is serving payments
+     * perfectly, and every session would be refused.
+     */
+    ensureProvidersRegistered();
 
     /*
      * Before `createSession`, so an unregistered host costs the caller a 422

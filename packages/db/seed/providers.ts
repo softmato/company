@@ -9,12 +9,23 @@
  * `manual_qr` was removed on 2026-08-16. Every payment now goes through a
  * gateway; nothing is credited on an admin's say-so any more.
  *
- * ⚠ **Every provider here is inactive, so no payment can currently be taken.**
- * That is not an oversight — each one is gated on merchant credentials that
- * have not arrived (MEMORY.md, blocked on external parties), and an active row
- * with no working adapter behind it would offer a customer a method that fails
- * when they try to pay. Activate a provider in the same change that lands its
- * adapter and its credentials, never before.
+ * **A provider is active once its adapter and its credentials both exist, and
+ * not one commit before.** An active row with no working adapter behind it
+ * offers a customer a method that fails at the moment they try to pay, which
+ * is the failure this column exists to prevent.
+ *
+ * eSewa and Khalti now satisfy both halves — `EsewaProviderAdapter` and
+ * `KhaltiProviderAdapter` are real, and their sandbox credentials are verified
+ * against the gateways — so they ship active. Fonepay does not: its adapter is
+ * an honest stub pending the bank's integration document (PHASES.md Phase 9),
+ * and `lib/payments/providers.ts` refuses to register it at all.
+ *
+ * Shipping the wallets inactive is what made "it works in dev but not in
+ * production" a structural certainty rather than bad luck: every environment
+ * was seeded dead, and the only way one ever came alive was somebody typing
+ * UPDATE into a database console. `is_active` is a statement about whether the
+ * integration exists, and the integration is in the repository — so the answer
+ * belongs here, where every environment reads the same one.
  *
  * `maxAmountMinor` is left NULL deliberately. Wallets do have per-transaction
  * limits (API.md §8), but no document here states the numbers, and inventing a
@@ -50,8 +61,13 @@ export const providerSeeds: ProviderSeed[] = [
   {
     id: 'esewa',
     displayName: 'eSewa',
-    // Enabled once production credentials arrive (MEMORY.md, blocked items).
-    isActive: false,
+    /*
+     * Adapter and credentials both exist. Which *set* of credentials a payment
+     * uses is the session's mode, not this flag — an active row with only
+     * sandbox keys configured serves Sandbox sessions and is correctly refused
+     * for Production ones by the registry.
+     */
+    isActive: true,
     balanceAccount: '1031',
     feeAccount: '5010',
     supportsRefund: false,
@@ -65,7 +81,7 @@ export const providerSeeds: ProviderSeed[] = [
   {
     id: 'khalti',
     displayName: 'Khalti',
-    isActive: false,
+    isActive: true,
     balanceAccount: '1032',
     feeAccount: '5010',
     supportsRefund: true,

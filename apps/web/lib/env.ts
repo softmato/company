@@ -19,14 +19,23 @@ const hex32 = z
  *
  * `KEY=` in a `.env` file is an empty string, not an absent variable — and a
  * blank line is exactly how every optional value in `.env.example` ships. On a
- * plain `z.string().optional()` that is harmless, because every reader treats
+ * plain `z.string().optional()` that is harmless where every reader treats
  * `''` as falsy anyway. On one carrying a format check it is not: `.email()`
  * and `.url()` both reject `''`, so leaving an optional variable blank failed
  * the boot with "Invalid email" — the opposite of what optional means, and a
  * failure whose message points at the wrong problem.
  *
- * Only wraps the format-checked ones. A *required* URL that is blank must
- * still fail, which is why this is applied per field rather than globally.
+ * **Every gateway credential is wrapped too, and there the distinction is not
+ * cosmetic.** `lib/payments/providers.ts` resolves them with `??`, which falls
+ * through `undefined` and *not* through `''`. So a deployment carrying
+ * `ESEWA_SANDBOX_MERCHANT_CODE=` — which is precisely what pasting
+ * `.env.example` into a dashboard produces — made the fallback to
+ * `ESEWA_MERCHANT_CODE` stop happening, and eSewa silently disappeared from
+ * Sandbox while remaining fully configured on paper. Blank has to mean absent
+ * before that chain runs, or the chain reads a variable nobody set.
+ *
+ * A *required* URL that is blank must still fail, which is why this is applied
+ * per field rather than globally.
  */
 function blankAsUnset<T extends z.ZodTypeAny>(schema: T) {
   return z.preprocess(
@@ -87,12 +96,12 @@ const serverSchema = z.object({
    * which adapters exist, `*_ENV` says which of a provider's two hosts an
    * adapter talks to.
    */
-  ESEWA_MERCHANT_CODE: z.string().optional(),
-  ESEWA_SECRET_KEY: z.string().optional(),
+  ESEWA_MERCHANT_CODE: blankAsUnset(z.string()),
+  ESEWA_SECRET_KEY: blankAsUnset(z.string()),
   ESEWA_BASE_URL: blankAsUnset(z.string().url()),
   ESEWA_ENV: providerEnv(),
 
-  KHALTI_SECRET_KEY: z.string().optional(),
+  KHALTI_SECRET_KEY: blankAsUnset(z.string()),
   KHALTI_BASE_URL: blankAsUnset(z.string().url()),
   KHALTI_ENV: providerEnv(),
 
@@ -115,13 +124,13 @@ const serverSchema = z.object({
    * existing environments set it and its guard below still catches a confused
    * configuration.
    */
-  ESEWA_SANDBOX_MERCHANT_CODE: z.string().optional(),
-  ESEWA_SANDBOX_SECRET_KEY: z.string().optional(),
-  ESEWA_LIVE_MERCHANT_CODE: z.string().optional(),
-  ESEWA_LIVE_SECRET_KEY: z.string().optional(),
+  ESEWA_SANDBOX_MERCHANT_CODE: blankAsUnset(z.string()),
+  ESEWA_SANDBOX_SECRET_KEY: blankAsUnset(z.string()),
+  ESEWA_LIVE_MERCHANT_CODE: blankAsUnset(z.string()),
+  ESEWA_LIVE_SECRET_KEY: blankAsUnset(z.string()),
 
-  KHALTI_SANDBOX_SECRET_KEY: z.string().optional(),
-  KHALTI_LIVE_SECRET_KEY: z.string().optional(),
+  KHALTI_SANDBOX_SECRET_KEY: blankAsUnset(z.string()),
+  KHALTI_LIVE_SECRET_KEY: blankAsUnset(z.string()),
 
   COMPANY_NAME: z.string().default('Softmato Technology Pvt Ltd'),
 
