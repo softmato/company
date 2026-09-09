@@ -1,5 +1,14 @@
 # Fixing the integration surface
 
+> **Superseded on one point, 2026-09-09.** This plan repeatedly states that
+> Sandbox is "a label on the identifier, not an isolation boundary" and that a
+> Sandbox credential used against production takes real money. That was the
+> position while the plan was being written. The provider registry is now built
+> **per mode** (`apps/web/lib/payments/providers.ts`): a Sandbox credential
+> resolves to the providers' test gateways, and the live adapters read
+> `*_LIVE_*` with no fallback. A Sandbox credential is safe against any
+> deployment. `docs/API.md` and `docs/INTEGRATION.md` carry the current
+> position; this file is kept as a record of how it was decided.
 A work order, written 2026-09-03, for the session that makes `@softmato/sdk`
 usable by a real integrator and rebuilds the credential screens around a
 Sandbox / Production split.

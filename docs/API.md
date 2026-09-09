@@ -91,12 +91,22 @@ The mode is carried in the identifiers: `app_test_…` / `app_live_…`, and
 checkout sessions `cs_test_…` / `cs_live_…`. Those two words appear nowhere
 else. Every sentence written for a person says Sandbox or Production.
 
-**Sandbox is a label on the identifier, not an isolation boundary.** It does
-not select a payment provider, does not change which gateway is called, and
-does not keep anything out of the ledger. `PAYMENT_MODE` decides that, and it
-is deployment-wide. So a Sandbox credential used against the production
-deployment reaches the real gateways, takes real money and posts real journal
-entries. Use one against a non-production deployment and nowhere else.
+**The mode selects the gateway.** The provider registry is built once per
+mode: a Sandbox credential resolves to the sandbox adapters
+(`rc-epay.esewa.com.np`, `dev.khalti.com`) built from the `*_SANDBOX_*` keys,
+and a Production credential to the live adapters, which read `*_LIVE_*` and
+have no fallback — a deployment missing a live key offers no live provider
+rather than signing a real payment with a test key.
+
+So a Sandbox credential is safe against any deployment, including production.
+It is not, however, a separate world: the same database, the same invoice
+sequence and the same webhook queue. Sandbox rows are labelled and hidden from
+the admin section's default Production view, but they are in the real books.
+
+> This paragraph previously said the reverse — that the mode selected nothing
+> and a Sandbox credential against production took real money. That predates
+> the per-mode registry (`apps/web/lib/payments/providers.ts`) and is no longer
+> true.
 
 ### A credential is not sufficient on its own
 

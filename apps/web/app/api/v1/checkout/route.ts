@@ -50,11 +50,18 @@ export const POST = mutatingEndpoint(
      * did.
      */
     if (input.return_url !== undefined) {
+      /*
+       * A redirect, not a fetch. We never call this address — the customer's
+       * browser navigates to it — so a Sandbox integrator may point it at
+       * their own `*.localhost`, from any deployment. `webhook_url` is the
+       * direction that stays gated, because that one we do call.
+       */
       await assertRegisteredHost(
         application.credentialId,
         input.return_url,
         'return_url',
         tx,
+        'redirect',
       );
     }
 

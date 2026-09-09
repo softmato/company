@@ -1,5 +1,5 @@
 /**
- * The development escape hatch, and the three conditions that keep it one.
+ * The localhost rule, and why it is asymmetric.
  *
  * ## Why it exists
  *
@@ -7,38 +7,59 @@
  * it has no public hostname and no certificate. `./domains.ts` refuses both
  * halves of that — `http:` is not https, and our own surfaces prove the shape
  * we expect a dev to use (`admin.localhost`, `payment.localhost`, see
- * docs/ENVIRONMENT.md §1). So an integrator could not test the return leg or
- * receive a webhook without standing up a local certificate authority first,
- * which is a large amount of yak for a `console.log`.
+ * docs/ENVIRONMENT.md §1). So an integrator could not test the return leg
+ * without standing up a local certificate authority first, which is a large
+ * amount of yak for a `console.log`.
  *
- * ## Why it is not a hole
+ * ## The two directions are not the same risk
  *
- * The dangerous direction is `webhook_url`, because **our server** fetches it.
- * A loopback address there points at whatever is listening on the machine
- * running this code — on a laptop that is the developer's own dev server, and
- * on a deployment it is us. Those are not the same act, so the deployment
- * decides, not the caller and not the row:
+ * This file used to treat them as one and gate both on the deployment being
+ * local. That was over-broad, and it cost an integrator a second deployment
+ * they did not need: a Sandbox credential could not send a developer back to
+ * their own machine from production, so the whole loop had to be rebuilt
+ * locally to test a redirect.
  *
- *   1. **`APP_ENV=local`.** Read from `process.env` here rather than from the
- *      app's parsed env, because `apps/web/lib/env.ts` *defaults* `APP_ENV` to
- *      `'local'` and a default is the wrong direction for a gate. An unset
- *      variable is `undefined`, which is not `'local'`, so a deployment that
- *      never heard of this flag has the hatch shut. Fail closed by omission.
- *   2. **Sandbox only.** A Production credential has no business pointing at a
- *      loopback address even on a laptop; the mode is read from the database
- *      on the request that enforces it, never from a form.
- *   3. **Loopback names only.** `localhost` and `*.localhost` — nothing else
+ * **`return_url` is navigated by the customer's browser.** We do not fetch it.
+ * A loopback address there resolves on *their* machine, which for a Sandbox
+ * credential is the developer's own laptop and is exactly what they asked for.
+ * There is nothing to reach and nothing to forge; the worst case is a link
+ * that does not open, for the person who typed it. So it is allowed for a
+ * Sandbox credential on **any** deployment.
+ *
+ * **`webhook_url` is fetched by our server.** A loopback address there points
+ * at whatever is listening on the machine running this code — on a laptop the
+ * developer's dev server, on a deployment *us*. That is the SSRF direction,
+ * and it is also useless: our production server cannot reach a laptop, so
+ * allowing it would be risk bought with no benefit. It stays gated on the
+ * deployment saying it is local.
+ *
+ * An integrator on localhost therefore gets the redirect and does not get the
+ * webhook. That is not a gap to work around: `docs/INTEGRATION.md` §6.4 names
+ * a **server-side `getTransaction`** as an equally authoritative answer, and a
+ * laptop can make an outbound call perfectly well.
+ *
+ * ## What still holds in both directions
+ *
+ *   1. **Sandbox only.** A Production credential has no business pointing at a
+ *      loopback address anywhere; the mode is read from the database on the
+ *      request that enforces it, never from a form.
+ *   2. **Loopback names only.** `localhost` and `*.localhost` — nothing else
  *      widens. Numeric addresses are still refused by the shape check in
  *      `./domains.ts`, which is what keeps `169.254.169.254` out.
- *
- * Note that this file is a net *tightening* of production. `app.localhost`
- * already satisfied both the `https:` rule and the `hostname_is_bare_lowercase`
- * check constraint, so a Production webhook could be aimed at our own loopback
- * and nothing said no. Now something does.
  */
 import type { CredentialMode } from '@softmato/db';
 
 import { PaymentError } from '../errors';
+
+/**
+ * Which destination is being judged.
+ *
+ * `redirect` is anywhere a customer's browser is sent. `fetch` is anywhere our
+ * own server makes a request. The distinction is the whole rule, so it is a
+ * parameter rather than something inferred from a field name at each call
+ * site — a new caller has to say which kind it is.
+ */
+export type LoopbackUse = 'redirect' | 'fetch';
 
 /**
  * `localhost` and every name under it.
@@ -53,23 +74,35 @@ export function isLoopbackHostname(hostname: string): boolean {
   return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
-/** Condition 1. Explicitly set, never defaulted. See the note above. */
+/**
+ * Whether this deployment is a developer's own machine.
+ *
+ * Read from `process.env` here rather than from the app's parsed env, because
+ * `apps/web/lib/env.ts` *defaults* `APP_ENV` to `'local'` and a default is the
+ * wrong direction for a gate. An unset variable is `undefined`, which is not
+ * `'local'`, so a deployment that never heard of this flag fails closed.
+ */
 export function isLocalDeployment(): boolean {
   return process.env.APP_ENV === 'local';
 }
 
 /**
- * Whether a loopback destination may be *written* at all, before any credential
- * exists to hang it off. The mode is supplied by the caller here because
- * `registerApplication` mints its credential and its domains in one
- * transaction — there is no row to read the mode from yet.
+ * Whether a loopback destination may be used or stored.
+ *
+ * `use` defaults to `fetch`, the stricter of the two. A caller that has not
+ * thought about which direction it is in gets the safe answer.
  */
-export function isLoopbackAllowed(mode: CredentialMode): boolean {
-  return isLocalDeployment() && mode === 'test';
+export function isLoopbackAllowed(
+  mode: CredentialMode,
+  use: LoopbackUse = 'fetch',
+): boolean {
+  if (mode !== 'test') return false;
+
+  return use === 'redirect' || isLocalDeployment();
 }
 
 /**
- * The same question, phrased as a refusal, so every call site produces the same
+ * The same question phrased as a refusal, so every call site produces the same
  * sentence and names the same field.
  *
  * `publicDetail` is safe to send: it describes our own policy and a hostname
@@ -79,17 +112,24 @@ export function assertLoopbackAllowed(
   hostname: string,
   mode: CredentialMode,
   field: string,
+  use: LoopbackUse = 'fetch',
 ): void {
-  if (isLoopbackAllowed(mode)) return;
+  if (isLoopbackAllowed(mode, use)) return;
 
-  const why = !isLocalDeployment()
-    ? 'this deployment is not a local one'
-    : 'it belongs to a Production credential';
+  const why =
+    mode !== 'test'
+      ? 'it belongs to a Production credential'
+      : 'this deployment is not a local one, and we would be fetching it';
+
+  const publicDetail =
+    mode !== 'test'
+      ? `${field} points at "${hostname}". Loopback addresses are accepted only for a Sandbox credential.`
+      : `${field} points at "${hostname}". A loopback address is accepted as a redirect target, but not as one we call — we cannot reach your machine. Use a server-side transaction read instead (docs/INTEGRATION.md §6.4), or give us a public hostname.`;
 
   throw new PaymentError(
     'VALIDATION_FAILED',
     `${field} points at the loopback address "${hostname}", and ${why}`,
-    { field, hostname, mode },
-    `${field} points at "${hostname}". Loopback addresses are accepted only by a local development deployment, and only for a Sandbox credential.`,
+    { field, hostname, mode, use },
+    publicDetail,
   );
 }

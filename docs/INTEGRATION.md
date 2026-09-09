@@ -117,15 +117,31 @@ Ask us, and we do it.
 Your first credential is a **Sandbox** one. Read that word carefully, because
 it promises less than it sounds like it does.
 
-Sandbox is **a label on the identifier, not an isolation boundary.** It picks
-the `app_test_` and `cs_test_` prefixes and nothing else. It does not select a
-payment provider, does not change which gateway is called, and does not keep
-anything out of anyone's ledger. What decides whether real money moves is the
-deployment you are pointed at.
+Sandbox **does** select the gateway, and that is the point of it.
 
-So: **a Sandbox credential used against the production deployment takes real
-money through the real gateways.** Point `baseUrl` at a non-production
-deployment while you are building, and ask us which one.
+The provider registry is built once per mode. A Sandbox credential resolves to
+the sandbox adapters — `rc-epay.esewa.com.np`, `dev.khalti.com` — configured
+from the `*_SANDBOX_*` keys. A Production credential resolves to the live
+adapters, which read `*_LIVE_*` and have **no fallback**: a deployment missing
+a live key offers no live provider at all, rather than quietly signing real
+payments with a test key.
+
+So a Sandbox credential is safe against any deployment, including this one.
+`app_test_` and `cs_test_` are the visible half of that; the routing is the
+half that matters. Sandbox activity is labelled as such in the ledger and
+hidden from the admin section's default Production view.
+
+What Sandbox does *not* give you is a separate world. It is the same database,
+the same invoice sequence and the same webhook queue — your test invoices sit
+in the real books, marked. Do not read it as a scratch environment you can
+leave a mess in.
+
+> An earlier version of this section said the opposite: that Sandbox was "a
+> label on the identifier, not an isolation boundary" and that a Sandbox
+> credential against production "takes real money through the real gateways".
+> That was true before the registry became mode-aware and is no longer. It is
+> recorded here because it is the kind of stale warning that makes an
+> integrator build a whole second deployment they did not need.
 
 ---
 
@@ -730,10 +746,10 @@ ready. Your Sandbox credential keeps working afterwards.
    issued (§6.2), and until one is registered no `return_url` on it will be
    accepted.
 2. Work against your **Sandbox** credential until the whole loop works —
-   invoice, checkout, a payment, the webhook, the receipt. Do that against a
-   non-production deployment: Sandbox is a label on the identifier and not an
-   isolation boundary, so the same credential pointed at production would take
-   real money.
+   invoice, checkout, a payment, the webhook, the receipt. Pointing it at this
+   deployment is fine: a Sandbox credential resolves to the providers' test
+   gateways, so no real money moves. What it cannot reach is a `localhost`
+   address — see §6.2.
 3. Point `webhook_url` at your production endpoint and verify a delivery lands
    and verifies **before** you switch keys.
 4. Ask us for your **Production** credential. Both of its secrets are issued

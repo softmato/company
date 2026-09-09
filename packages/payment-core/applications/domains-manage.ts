@@ -73,6 +73,13 @@ export async function addDomain(
      * A loopback name is refused here as well as at use time, and the mode
      * comes from the row rather than from the caller — this function is
      * reachable by anyone who can post to the domain form.
+     *
+     * Judged as a `redirect`, which is the weaker of the two rules: one row
+     * serves both directions, and refusing to *store* it would mean a Sandbox
+     * integrator on localhost could not register the address their browser is
+     * sent back to. The `fetch` rule still bites where it matters —
+     * `setCredentialWebhookUrl` re-checks this hostname as a fetch target and
+     * refuses it off a non-local deployment.
      */
     if (isLoopbackHostname(hostname)) {
       const [credential] = await tx
@@ -87,7 +94,7 @@ export async function addDomain(
         });
       }
 
-      assertLoopbackAllowed(hostname, credential.mode, 'hostname');
+      assertLoopbackAllowed(hostname, credential.mode, 'hostname', 'redirect');
     }
 
     const [created] = await tx

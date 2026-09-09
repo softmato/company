@@ -43,41 +43,102 @@ describe('isLoopbackHostname', () => {
   });
 });
 
-describe('the deployment gate', () => {
+describe('the deployment gate, which is only half the rule', () => {
   /**
-   * The important one. `apps/web/lib/env.ts` *defaults* `APP_ENV` to `local`,
-   * so if this read went through the parsed env a deployment that never set
-   * the variable would have the hatch open. Reading `process.env` directly
-   * means unset is `undefined`, which is not `'local'`.
+   * The gate applies to **fetch** targets and nothing else, and these two are
+   * the reason it exists at all. `webhook_url` is retrieved by our own server:
+   * on a laptop a loopback address there reaches the developer's dev server,
+   * and on a deployment it reaches *us*. Those are not the same act.
    */
-  it('is shut when APP_ENV is not set at all', () => {
+  it('is shut for a fetch target when APP_ENV is not set at all', () => {
+    /*
+     * `apps/web/lib/env.ts` *defaults* `APP_ENV` to `local`, so if this read
+     * went through the parsed env a deployment that never set the variable
+     * would have the hatch open. Reading `process.env` directly means unset is
+     * `undefined`, which is not `'local'`.
+     */
     expect(isLoopbackAllowed('test')).toBe(false);
-    expect(normalizeHostname('http://app.localhost:3000/paid')).toBeNull();
+    expect(isLoopbackAllowed('test', 'fetch')).toBe(false);
   });
 
-  it('is shut on preview and production', () => {
+  it('is shut for a fetch target on preview and production', () => {
     for (const value of ['preview', 'production']) {
       process.env.APP_ENV = value;
-      expect(isLoopbackAllowed('test')).toBe(false);
-      expect(normalizeHostname('http://app.localhost:3000/paid')).toBeNull();
+      expect(isLoopbackAllowed('test', 'fetch')).toBe(false);
+      expect(() =>
+        assertLoopbackAllowed('app.localhost', 'test', 'webhook_url', 'fetch'),
+      ).toThrow(/we would be fetching it/);
     }
   });
 
-  it('opens for a Sandbox credential on a local deployment', () => {
+  it('opens for a fetch target on a local deployment', () => {
     process.env.APP_ENV = 'local';
-    expect(isLoopbackAllowed('test')).toBe(true);
+    expect(isLoopbackAllowed('test', 'fetch')).toBe(true);
   });
 
   /**
-   * A Production credential has no business pointing at a loopback address
-   * even on a laptop — `webhook_url` is fetched by our own server.
+   * The half that is *not* gated, and the reason the rule was split.
+   *
+   * A `return_url` is navigated by the customer's own browser — we never call
+   * it — so a loopback address there resolves on their machine, which for a
+   * Sandbox credential is the developer who typed it. Gating this on the
+   * deployment cost an integrator a whole second deployment to test a
+   * redirect, and bought nothing: there is no address for us to be tricked
+   * into fetching, because we do not fetch it.
    */
-  it('stays shut for a Production credential even locally', () => {
+  it('is open for a redirect from any deployment', () => {
+    for (const value of ['preview', 'production', undefined]) {
+      if (value === undefined) delete process.env.APP_ENV;
+      else process.env.APP_ENV = value;
+
+      expect(isLoopbackAllowed('test', 'redirect')).toBe(true);
+      expect(() =>
+        assertLoopbackAllowed('app.localhost', 'test', 'return_url', 'redirect'),
+      ).not.toThrow();
+    }
+  });
+
+  /**
+   * The default is the strict answer. A caller that has not thought about
+   * which direction it is in must not be given the permissive one.
+   */
+  it('defaults to the fetch rule when the direction is not stated', () => {
+    process.env.APP_ENV = 'production';
+    expect(isLoopbackAllowed('test')).toBe(false);
+  });
+
+  /**
+   * Mode is checked in both directions. A Production credential has no
+   * business pointing at a loopback address anywhere, laptop included.
+   */
+  it('stays shut for a Production credential, in either direction', () => {
     process.env.APP_ENV = 'local';
     expect(isLoopbackAllowed('live')).toBe(false);
+    expect(isLoopbackAllowed('live', 'redirect')).toBe(false);
     expect(() =>
       assertLoopbackAllowed('app.localhost', 'live', 'webhookUrl'),
-    ).toThrow(/Production/);
+    ).toThrow(/Production credential/);
+    expect(() =>
+      assertLoopbackAllowed('app.localhost', 'live', 'return_url', 'redirect'),
+    ).toThrow(/Production credential/);
+  });
+});
+
+describe('parsing a loopback address', () => {
+  /**
+   * `normalizeHostname` is a shape check and nothing more. It used to refuse
+   * `http://app.localhost` unless the deployment was local, which meant
+   * production could not so much as read the address a Sandbox integrator
+   * wanted their browser sent back to. Authorisation moved to
+   * `assertLoopbackAllowed`, where the mode and the direction are both known.
+   */
+  it('accepts the shape regardless of deployment', () => {
+    for (const value of ['production', 'preview']) {
+      process.env.APP_ENV = value;
+      expect(normalizeHostname('http://app.localhost:3000/paid')).toBe(
+        'app.localhost',
+      );
+    }
   });
 });
 

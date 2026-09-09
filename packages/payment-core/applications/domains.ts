@@ -36,8 +36,8 @@ import {
 import { PaymentError } from '../errors';
 import {
   assertLoopbackAllowed,
-  isLocalDeployment,
   isLoopbackHostname,
+  type LoopbackUse,
 } from './loopback';
 
 /**
@@ -97,17 +97,20 @@ export function normalizeHostname(value: string): string | null {
   if (host.length < 4 || host.length > 253) return null;
 
   /*
-   * The one place a plain `http:` URL is allowed to live: a loopback name, on
-   * a deployment that says it is local. `app.localhost:3000` is what a SaaS
-   * under construction actually runs on, and it has no certificate.
+   * The one place a plain `http:` URL is allowed to live: a loopback name.
+   * `app.localhost:3000` is what a SaaS under construction actually runs on,
+   * and it has no certificate.
    *
-   * This says nothing about the credential's mode — `normalizeHostname` has
-   * no credential to ask. `assertLoopbackAllowed` settles that below, on the
-   * request that enforces it, after the row has been read.
+   * This is a **shape** check and settles nothing about whether the address
+   * may be used. `normalizeHostname` has no credential to ask the mode of, and
+   * does not know which direction the destination is being judged for;
+   * `assertLoopbackAllowed` decides both below, after the row has been read.
+   *
+   * It used to also require `APP_ENV=local`, which meant a production
+   * deployment could not so much as parse the address a Sandbox integrator
+   * wanted their own browser sent back to.
    */
-  if (url.protocol === 'http:') {
-    if (!isLocalDeployment() || !isLoopbackHostname(host)) return null;
-  }
+  if (url.protocol === 'http:' && !isLoopbackHostname(host)) return null;
 
   return host;
 }
@@ -151,6 +154,15 @@ export async function assertRegisteredHost(
   url: string,
   field: string,
   conn: DbLike = db,
+  /**
+   * Which direction this destination is used in. `redirect` is somewhere the
+   * customer's browser is sent; `fetch` is somewhere **we** make a request.
+   *
+   * Only the second can be aimed at us, so only the second refuses a loopback
+   * address off a non-local deployment. Defaults to the stricter answer, so a
+   * caller that has not thought about it gets the safe one.
+   */
+  use: LoopbackUse = 'fetch',
 ): Promise<string> {
   const hostname = normalizeHostname(url);
 
@@ -212,7 +224,7 @@ export async function assertRegisteredHost(
    * insufficient on its own.
    */
   if (isLoopbackHostname(hostname)) {
-    assertLoopbackAllowed(hostname, match.mode, field);
+    assertLoopbackAllowed(hostname, match.mode, field, use);
   }
 
   return hostname;
@@ -234,7 +246,14 @@ export async function isRegisteredHost(
   if (!url) return false;
 
   try {
-    await assertRegisteredHost(credentialId, url, 'return_url', conn);
+    // A return link is a redirect: the reader's browser goes there, not us.
+    await assertRegisteredHost(
+      credentialId,
+      url,
+      'return_url',
+      conn,
+      'redirect',
+    );
     return true;
   } catch {
     return false;
