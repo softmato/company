@@ -19,6 +19,7 @@
  */
 import type { Metadata } from 'next';
 
+import { ProviderBadge } from '@/components/brand/provider-badge';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { formatAdDateTime } from '@/lib/format/date';
 import { formatPaisa } from '@/lib/format/money';
@@ -101,9 +102,7 @@ export default async function AdminReconciliationPage() {
                       {row.customerName}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold uppercase text-primary">
-                        {row.providerId}
-                      </div>
+                      <ProviderBadge id={row.providerId} />
                       <div className="numeric max-w-[12rem] truncate text-[11px] text-muted-foreground">
                         {row.providerRef ?? '—'}
                       </div>
@@ -182,8 +181,8 @@ export default async function AdminReconciliationPage() {
                       <td className="numeric px-4 py-3 text-foreground">
                         {item.providerRef ?? '—'}
                       </td>
-                      <td className="px-4 py-3 font-semibold uppercase text-primary">
-                        {item.providerId}
+                      <td className="px-4 py-3">
+                        <ProviderBadge id={item.providerId} />
                       </td>
                       <td className="numeric px-4 py-3 text-right text-foreground">
                         {item.internalMinor === null

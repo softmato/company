@@ -14,21 +14,14 @@
  * used `<button>` elements with a hand-drawn circle, which looks identical and
  * is not: arrow keys do not move between them, nothing announces "2 of 3", and
  * there is no group label. This is the one control on the page.
+ *
+ * The marks are the providers' real ones, from `lib/brand`. They used to be
+ * three inline SVGs drawn from memory, which is a poor thing to put on the
+ * screen where somebody decides who gets their money.
  */
-import {
-  EsewaIcon,
-  FonepayIcon,
-  KhaltiIcon,
-} from '@/components/checkout/provider-icons';
+import { ProviderMark } from '@/components/brand/provider-mark';
 import type { CheckoutProvider } from '@/lib/checkout/view';
 import type { ProviderId } from '@softmato/payment-core';
-
-/** Presentation only — never the source of which providers are offered. */
-const ICONS: Record<ProviderId, React.ReactNode> = {
-  fonepay: <FonepayIcon className="h-6 w-6" />,
-  esewa: <EsewaIcon className="h-6 w-6" />,
-  khalti: <KhaltiIcon className="h-6 w-6" />,
-};
 
 interface ProviderPickerProps {
   providers: CheckoutProvider[];
@@ -80,7 +73,7 @@ export function ProviderPicker({
               ) : null}
             </span>
 
-            {ICONS[id]}
+            <ProviderMark id={id} size={26} />
 
             {/* The database's display name, not a hardcoded label. */}
             <span className="font-medium text-foreground">{displayName}</span>

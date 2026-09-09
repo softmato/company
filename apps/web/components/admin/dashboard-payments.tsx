@@ -4,6 +4,7 @@ import {
   type DashboardSnapshot,
 } from '@/lib/admin/dashboard-model';
 import { Badge } from '@/components/ui/badge';
+import { ProviderBadge } from '@/components/brand/provider-badge';
 import { BsDate } from '@/components/ui/bs-date';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -94,8 +95,12 @@ export function DashboardPayments({
               <Tr key={payment.id}>
                 <Td className="font-mono text-[13px]">{payment.txnNo}</Td>
                 <Td>{payment.customerName}</Td>
-                <Td className="text-muted-foreground">
-                  {payment.providerName}
+                <Td>
+                  <ProviderBadge
+                    id={payment.provider}
+                    name={payment.providerName}
+                    size={18}
+                  />
                 </Td>
                 <Td>
                   <Badge status={payment.status}>{payment.status}</Badge>

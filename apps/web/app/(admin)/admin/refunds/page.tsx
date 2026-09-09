@@ -11,6 +11,7 @@
  */
 import type { Metadata } from 'next';
 
+import { ProviderBadge } from '@/components/brand/provider-badge';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { formatAdDateTime } from '@/lib/format/date';
 import { formatPaisa } from '@/lib/format/money';
@@ -98,8 +99,8 @@ export default async function AdminRefundsPage() {
                   <td className="px-4 py-3 text-foreground">
                     {refund.customerName}
                   </td>
-                  <td className="px-4 py-3 font-semibold uppercase text-primary">
-                    {refund.providerId}
+                  <td className="px-4 py-3">
+                    <ProviderBadge id={refund.providerId} />
                   </td>
                   <td className="numeric px-4 py-3 text-right font-semibold text-foreground">
                     {refund.currency} {formatPaisa(refund.amountMinor)}

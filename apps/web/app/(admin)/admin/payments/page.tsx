@@ -7,6 +7,7 @@
  */
 import type { Metadata } from 'next';
 
+import { ProviderBadge } from '@/components/brand/provider-badge';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { TableFilters } from '@/components/admin/table-filters';
 import { formatAdDateTime } from '@/lib/format/date';
@@ -104,9 +105,7 @@ export default async function AdminPaymentsPage({
                     {payment.customerName}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="font-semibold uppercase text-primary">
-                      {payment.providerId}
-                    </div>
+                    <ProviderBadge id={payment.providerId} />
                     <div className="numeric max-w-[14rem] truncate text-[11px] text-muted-foreground">
                       {payment.providerTxnId ?? payment.providerRef ?? '—'}
                     </div>

@@ -1,5 +1,6 @@
 import type { DashboardSnapshot } from '@/lib/admin/dashboard-model';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProviderMark } from '@/components/brand/provider-mark';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Money } from '@/components/ui/money';
 import { StatTile } from '@/components/ui/stat-tile';
@@ -111,8 +112,9 @@ export function DashboardOverview({ data }: { data: DashboardSnapshot }) {
               <ul className="space-y-4">
                 {data.paymentMethods.map((method) => (
                   <li key={method.provider}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-sm font-medium">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2 text-sm font-medium">
+                        <ProviderMark id={method.provider} size={18} />
                         {method.providerName}
                       </span>
                       <Money minor={BigInt(method.totalMinor)} />
