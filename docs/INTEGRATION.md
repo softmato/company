@@ -33,32 +33,47 @@ Reference material, in the order you will need it:
 ## Installing the SDK
 
 `@softmato/sdk` is published to **GitHub Packages**, privately, under the
-`softmato` organisation. It is not on public npm, so `pnpm add @softmato/sdk`
-on its own will 404 until the scope is pointed at the right registry.
+`softmato` account. That account is a **User, not an organisation** — the
+package belongs to it directly, which is why a token minted by some other
+account cannot see it even with the right scope. It is not on public npm
+either, so `pnpm add @softmato/sdk` on its own will 404 until the scope is
+pointed at the right registry.
 
 **1. Route the `@softmato` scope.** An `.npmrc` beside your `package.json`:
 
 ```
 @softmato:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+//npm.pkg.github.com/:_authToken=${NPM_GITHUB_TOKEN}
 ```
 
-Commit it. There is no secret in that file — `${GITHUB_TOKEN}` is expanded from
-the environment when npm reads it, which is exactly why it is written as a
+Commit it. There is no secret in that file — `${NPM_GITHUB_TOKEN}` is expanded
+from the environment when npm reads it, which is exactly why it is written as a
 variable and not pasted.
 
 **2. Give it a token.** A GitHub personal access token (classic) with the
-**`read:packages`** scope, exported as `GITHUB_TOKEN`. In GitHub Actions the
-job's own token is already enough:
+**`read:packages`** scope, created by an account that can read the `softmato`
+packages, exported as **`NPM_GITHUB_TOKEN`**.
+
+> **Do not name it `GITHUB_TOKEN`.** The `gh` CLI prefers `GITHUB_TOKEN` over
+> its own keyring and marks the keyring account inactive, so a
+> `read:packages`-only token under that name silently breaks every `gh` command
+> — and any `git push` that uses `gh` as its credential helper. The symptom is
+> `gh auth status` reporting `Active account: false` against your real account.
+
+In GitHub Actions, map whichever token you use onto that name:
 
 ```yaml
 - run: pnpm install
   env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    NPM_GITHUB_TOKEN: ${{ secrets.NPM_GITHUB_TOKEN }}
 ```
 
-On Vercel, set `GITHUB_TOKEN` as an environment variable on the project so the
-build can install.
+The job's own `secrets.GITHUB_TOKEN` is enough only inside a repository the
+package has granted access to — from any other repository it 404s, so store a
+PAT as a repository secret and map that instead.
+
+On Vercel, set `NPM_GITHUB_TOKEN` as an environment variable on the project so
+the build can install.
 
 **3. Install.**
 
@@ -66,10 +81,12 @@ build can install.
 pnpm add @softmato/sdk
 ```
 
-Two failures worth telling apart: a **401** means the token is missing or has
-no `read:packages` scope; a **404** means the token is valid but the account
-cannot see the `softmato` organisation, which is an access problem rather than
-a registry one.
+To test the token before wiring anything up, drop that same `.npmrc` in an
+empty directory and run `npm view @softmato/sdk versions`. Two failures are
+worth telling apart: a **401** means the token is missing or has no
+`read:packages` scope; a **404** means the token is valid but belongs to an
+account that cannot see the `softmato` packages, which is an access problem
+rather than a registry one.
 
 ### It is server-side only
 

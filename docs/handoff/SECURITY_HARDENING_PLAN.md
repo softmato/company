@@ -584,5 +584,5 @@ ready:
     git tag sdk-v0.1.0 && git push origin sdk-v0.1.0
 
 **QuestionCall needs a read token.** A GitHub PAT with `read:packages`, set as
-`GITHUB_TOKEN` in its CI and on its Vercel project, plus the two-line `.npmrc`
+`NPM_GITHUB_TOKEN` in its CI and on its Vercel project, plus the two-line `.npmrc`
 from `docs/INTEGRATION.md` §Installing the SDK.

@@ -48,57 +48,74 @@ four scopes.
 
 ---
 
-## What is left, in order
+## The consuming product
 
-### 1. Prove the token can read the package
+**QuestionCall's web app: `D:\Jiwan-Mijhar\web`**, repo
+`github.com/softmato/questioncall-web`, branch `main`. Next.js, and it uses
+**npm** — `package-lock.json`, no pnpm lockfile — so the guide's `pnpm add` is
+`npm install` here. `D:\Jiwan-Mijhar\app` is the Expo client and the SDK cannot
+go in it: server-side only, and every call carries the client secret.
 
-Not yet done. One command, from anywhere:
+That repo is owned by `softmato`, the same account that owns the package, so
+`secrets.GITHUB_TOKEN` in _its_ Actions may be enough if the package has granted
+the repo access. Untested — a PAT under `NPM_GITHUB_TOKEN` works either way.
 
-```bash
-cd $env:TEMP; mkdir npmcheck -Force; cd npmcheck
-"@softmato:registry=https://npm.pkg.github.com`n//npm.pkg.github.com/:_authToken=`${NPM_GITHUB_TOKEN}" | Set-Content .npmrc
-npm view @softmato/sdk versions
-```
+---
 
-Expect `[ '0.1.0', '0.1.1', '0.1.2' ]`. A **401** means the scope is wrong; a
-**404** means the token belongs to an account that cannot see the package,
-which is the failure this section exists to prevent.
+## Done 2026-09-09
 
-### 2. The `.npmrc` in the consuming product
+### 1. The token reads the package ✅
 
-Beside that project's `package.json`, and committed — it holds a variable
-reference, never a secret:
+`npm view @softmato/sdk versions` with the two-line `.npmrc` returned
+`[ '0.1.0', '0.1.1', '0.1.2' ]`. No 401, no 404 — the account question from the
+previous session is settled.
 
-```
-@softmato:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NPM_GITHUB_TOKEN}
-```
+### 2. `.npmrc` in the consuming product ✅
 
-### 3. Install and integrate
+Written beside `web/package.json`, holding the variable reference and no
+secret. `.gitignore` there does not cover it, so it will be tracked.
 
-```bash
-pnpm add @softmato/sdk
-```
+### 3. Installed ✅
 
-`docs/INTEGRATION.md` is the guide. The SDK is server-side only — it imports
-`node:crypto` and every call carries the client secret, so it belongs in route
-handlers, never in anything shipped to a device.
+`npm install @softmato/sdk` added `^0.1.2`, resolved from
+`npm.pkg.github.com/download/@softmato/sdk/0.1.2/...` — 1 package added, no
+other tree movement. `import('@softmato/sdk')` under Node 22 loads and exports
+`SoftmatoClient`, `verifyWebhook`, `sign`, `signingBase`, `SoftmatoApiError`,
+`SoftmatoTransportError`, `API_ERROR_CODES`, `WEBHOOK_EVENTS` and the guards.
 
-### 4. Give the deployment the token
+Uncommitted in that repo: `.npmrc`, `package.json`, `package-lock.json`. Its
+tree also carries unrelated in-progress work on call expiry and a new
+`app/api/calls/[id]/heartbeat/` route — commit by explicit path there too.
 
-On Vercel, set `NPM_GITHUB_TOKEN` on the **consuming** project or its build
-cannot install. In GitHub Actions, map the job token onto the name:
+### 5. `docs/INTEGRATION.md` corrected ✅
 
-```yaml
-env:
-  NPM_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+The variable is `NPM_GITHUB_TOKEN` throughout, with the `gh`-keyring trap
+written down as a blockquote. Two other corrections went in with it: `softmato`
+is described as a **User account, not an organisation** — which is the real
+reason a foreign token 404s — and the Actions snippet no longer claims the
+job's own token is always enough. `docs/MEMORY.md` and
+`docs/handoff/SECURITY_HARDENING_PLAN.md` carried the same wrong name and were
+fixed.
 
-### 5. Correct `docs/INTEGRATION.md`
+---
 
-It still documents the variable as `GITHUB_TOKEN`, which is the trap described
-above. Rename it to `NPM_GITHUB_TOKEN` there and say why, so the next person
-does not rediscover it by breaking their `gh`.
+## What is actually left
+
+### 4. Give the deployment the token — needs a human
+
+On Vercel, `NPM_GITHUB_TOKEN` on the **questioncall-web** project, all three
+environments, or its build cannot install. Entering the token is a person's
+job, not a session's.
+
+### The integration itself — needs a decision, not a keystroke
+
+This is not a blank slate. QuestionCall already runs its own payment stack:
+`app/api/payments/esewa/{initiate,verify,course-verify}`, course and chapter
+purchase initiation, a wallet, subscriptions, admin transactions, receipts,
+refunds and withdrawals. So "integrate the SDK" means choosing what Softmato
+takes over — one new flow, or the existing eSewa path re-pointed — and that
+choice belongs to the founder. `docs/INTEGRATION.md` §2 is the happy path once
+it is made; §5 is the recurring-billing shape if subscriptions are the target.
 
 ---
 

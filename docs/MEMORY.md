@@ -174,7 +174,7 @@ or the admin panel.
 `npm notice name: @softmato/sdk`, `version: 0.1.0`, 26 files, then
 `+ @softmato/sdk@0.1.0`. `gh` is now installed on this machine, so the Actions
 tab is readable from a session. QuestionCall still needs a GitHub PAT with
-`read:packages` as `GITHUB_TOKEN` in its CI and on its Vercel project, plus the
+`read:packages` as `NPM_GITHUB_TOKEN` in its CI and on its Vercel project, plus the
 two-line `.npmrc` from `docs/INTEGRATION.md` §Installing the SDK.
 
 **Needed from the founder:** QuestionCall's production hostnames — every host a
