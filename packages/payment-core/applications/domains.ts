@@ -26,9 +26,19 @@
  */
 import { and, eq } from 'drizzle-orm';
 
-import { applicationDomains, db, type DbLike } from '@softmato/db';
+import {
+  applicationCredentials,
+  applicationDomains,
+  db,
+  type DbLike,
+} from '@softmato/db';
 
 import { PaymentError } from '../errors';
+import {
+  assertLoopbackAllowed,
+  isLocalDeployment,
+  isLoopbackHostname,
+} from './loopback';
 
 /**
  * The bare hostname a URL will be matched by, or null if the URL is not one
@@ -49,7 +59,14 @@ export function normalizeHostname(value: string): string | null {
     return null;
   }
 
-  if (url.protocol !== 'https:') return null;
+  /*
+   * `http:` is admitted this far and no further. It survives only if the host
+   * turns out to be a loopback name on a local deployment — the check at the
+   * bottom, once `host` has been through the shape rules and is worth
+   * testing. Every other scheme is gone here: `javascript:`, `data:` and
+   * `file:` never reach a hostname at all.
+   */
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
 
   // `url.hostname` is already lowercase and punycode; it drops the port.
   const host = url.hostname.replace(/\.$/, '');
@@ -78,6 +95,19 @@ export function normalizeHostname(value: string): string | null {
   if (/\.[0-9]+$/.test(host)) return null;
 
   if (host.length < 4 || host.length > 253) return null;
+
+  /*
+   * The one place a plain `http:` URL is allowed to live: a loopback name, on
+   * a deployment that says it is local. `app.localhost:3000` is what a SaaS
+   * under construction actually runs on, and it has no certificate.
+   *
+   * This says nothing about the credential's mode — `normalizeHostname` has
+   * no credential to ask. `assertLoopbackAllowed` settles that below, on the
+   * request that enforces it, after the row has been read.
+   */
+  if (url.protocol === 'http:') {
+    if (!isLocalDeployment() || !isLoopbackHostname(host)) return null;
+  }
 
   return host;
 }
@@ -133,9 +163,22 @@ export async function assertRegisteredHost(
     );
   }
 
+  /*
+   * The credential's `mode` rides along on the lookup that was happening
+   * anyway. It is needed for the loopback rule below, and reading it here
+   * rather than taking it from a caller is the same principle the rest of this
+   * file runs on: a gate whose condition the caller supplies is not a gate.
+   */
   const [match] = await conn
-    .select({ id: applicationDomains.id })
+    .select({
+      id: applicationDomains.id,
+      mode: applicationCredentials.mode,
+    })
     .from(applicationDomains)
+    .innerJoin(
+      applicationCredentials,
+      eq(applicationCredentials.id, applicationDomains.credentialId),
+    )
     .where(
       and(
         eq(applicationDomains.credentialId, credentialId),
@@ -158,6 +201,18 @@ export async function assertRegisteredHost(
        */
       `${field} points at "${hostname}", which is not a registered domain for this application. An administrator must add it at admin.softmato.com before it can be used.`,
     );
+  }
+
+  /*
+   * Registered is not sufficient for a loopback name. The row could have been
+   * written on a laptop and restored somewhere else, or written before this
+   * rule existed — `app.localhost` satisfied both the https requirement and
+   * the `hostname_is_bare_lowercase` constraint long before anything asked
+   * what it pointed at. This is the check that makes the stored row
+   * insufficient on its own.
+   */
+  if (isLoopbackHostname(hostname)) {
+    assertLoopbackAllowed(hostname, match.mode, field);
   }
 
   return hostname;

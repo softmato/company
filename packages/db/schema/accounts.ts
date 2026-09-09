@@ -23,6 +23,14 @@ export const productKind = pgEnum('product_kind', [
   'corporate',
 ]);
 
+/**
+ * Named so a form can accept one without importing the Drizzle enum object by
+ * value — `@softmato/db` re-exports the `pg` client, so a `'use client'` file
+ * that imports a value from here drags `dns`, `net` and `tls` into the browser
+ * bundle. Types are erased; the list itself arrives as a prop.
+ */
+export type ProductKind = (typeof productKind.enumValues)[number];
+
 export const products = pgTable('products', {
   id: text('id').primaryKey(), // 'hostelhub', 'questioncall'
   name: text('name').notNull(),

@@ -34,6 +34,36 @@ Command-line tools resolve `*.localhost` less reliably than browsers do. Use a
 curl -H 'Host: admin.localhost' http://127.0.0.1:3000/
 ```
 
+### Registering a SaaS that is still on localhost
+
+A product under construction has no public hostname and no certificate, and the
+destination allowlist normally requires both. The way through is the same
+`*.localhost` convention above — register the **bare hostname**, not the URL:
+
+```
+app.localhost
+```
+
+One row covers every port, because a port is not part of a hostname. So
+`http://app.localhost:3000/paid` as a `return_url` and
+`http://app.localhost:3000/webhooks/softmato` as a `webhook_url` are both
+matched by that single line.
+
+Three conditions, and all three must hold (`applications/loopback.ts`):
+
+| Condition                         | Why                                                     |
+| --------------------------------- | ------------------------------------------------------- |
+| `APP_ENV=local`                   | `webhook_url` is fetched by **our** server               |
+| A **Sandbox** credential          | Production never points at loopback, laptop or not       |
+| `localhost` or a `*.localhost` name | Nothing else widens; IPs are still refused outright    |
+
+`APP_ENV` is read straight from `process.env` there rather than through
+`lib/env.ts`, which *defaults* it to `local` — an unset variable is `undefined`,
+so a deployment that never heard of this flag has the hatch shut.
+
+Bare `localhost` is **not** accepted: `application_domains.hostname` requires at
+least two dot-separated labels, so it could never be stored. Use a subdomain.
+
 ```yaml
 # docker-compose.yml
 services:

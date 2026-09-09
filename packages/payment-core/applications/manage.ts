@@ -14,11 +14,13 @@ import {
   applicationDomains,
   applications,
   db,
+  products,
   type Application,
   type ApplicationCredential,
   CREDENTIAL_MODE_LABEL,
   type ApplicationScope,
   type CredentialMode,
+  type ProductKind,
 } from '@softmato/db';
 
 import type { Actor, AuditRecorder } from '../audit';
@@ -29,6 +31,8 @@ import {
   normalizeHostname,
   normalizeHostnameInput,
 } from './domains';
+import { assertLoopbackAllowed, isLoopbackHostname } from './loopback';
+import { normalizeProductId } from './product-slug';
 
 /** docs/API.md §2 — "Rotation issues a new secret with a 24-hour overlap." */
 const ROTATION_OVERLAP_MS = 24 * 60 * 60 * 1000;
@@ -39,8 +43,31 @@ export interface DomainInput {
   note?: string | null;
 }
 
+/**
+ * A product line that does not exist yet, created in the same transaction as
+ * the application that needs it.
+ *
+ * Same transaction rather than a separate call, because the alternative is a
+ * products row for an application that then failed to register — an orphan
+ * ledger dimension nobody can see the purpose of, and no screen to delete it
+ * from. Either both rows exist or neither does.
+ *
+ * `id` is checked by `normalizeProductId`: it is minted into every client id
+ * this product ever issues and cannot be changed afterwards.
+ */
+export interface NewProductInput {
+  name: string;
+  kind: ProductKind;
+}
+
 export interface RegisterInput {
+  /**
+   * The product this integration bills to. When `newProduct` is present this
+   * is the id being created; otherwise it names an existing row.
+   */
   productId: string;
+  /** Set to create `productId` rather than expect it. */
+  newProduct?: NewProductInput;
   name: string;
   scopes: ApplicationScope[];
   webhookUrl?: string | null;
@@ -67,7 +94,8 @@ export async function registerApplication(
   actor: Actor,
   audit: AuditRecorder,
 ): Promise<IssuedCredential> {
-  const hostnames = normalizeDomains(input.domains);
+  const productId = resolveProductId(input);
+  const hostnames = normalizeDomains(input.domains, input.mode);
 
   /*
    * The webhook URL is checked against the domains arriving on this same
@@ -88,6 +116,15 @@ export async function registerApplication(
       );
     }
 
+    /*
+     * `normalizeHostname` already knows whether the deployment is local; only
+     * the mode is left, and here it is the mode being minted rather than one
+     * to read back — there is no credential yet.
+     */
+    if (isLoopbackHostname(host)) {
+      assertLoopbackAllowed(host, input.mode, 'webhookUrl');
+    }
+
     if (!hostnames.some((domain) => domain.hostname === host)) {
       throw new PaymentError(
         'VALIDATION_FAILED',
@@ -97,14 +134,53 @@ export async function registerApplication(
     }
   }
 
-  const clientId = generateClientId(input.productId, input.mode);
+  const clientId = generateClientId(productId, input.mode);
   const { secret, secretHash, secretLast4 } = await issueSecret(clientId);
 
   const created = await db.transaction(async (tx) => {
+    if (input.newProduct) {
+      /*
+       * `onConflictDoNothing` and then a check, rather than letting the
+       * primary key throw: a bare Postgres constraint message is not an
+       * answer, and "that id is taken" is the only thing the admin needs to
+       * know. The insert is inside the transaction, so a collision rolls the
+       * application back with it.
+       */
+      const [product] = await tx
+        .insert(products)
+        .values({
+          id: productId,
+          name: input.newProduct.name,
+          kind: input.newProduct.kind,
+        })
+        .onConflictDoNothing({ target: products.id })
+        .returning();
+
+      if (!product) {
+        throw new PaymentError(
+          'VALIDATION_FAILED',
+          `A product with the id "${productId}" already exists. Pick it from the list instead of creating it.`,
+          { field: 'newProductId', productId },
+        );
+      }
+
+      await audit(
+        {
+          actorType: actor.type,
+          actorId: actor.id,
+          action: 'product.create',
+          resourceType: 'product',
+          resourceId: productId,
+          afterState: { name: product.name, kind: product.kind },
+        },
+        tx,
+      );
+    }
+
     const [application] = await tx
       .insert(applications)
       .values({
-        productId: input.productId,
+        productId,
         name: input.name,
         scopes: input.scopes,
       })
@@ -159,7 +235,7 @@ export async function registerApplication(
         afterState: {
           clientId,
           credentialId: credential.id,
-          productId: input.productId,
+          productId,
           scopes: input.scopes,
           mode: input.mode,
           secretLast4,
@@ -575,12 +651,44 @@ export async function setCredentialWebhookUrl(
 }
 
 /**
+ * The product id this registration will use, whether it is being created or
+ * merely named.
+ *
+ * The shape is enforced for a *new* id only. Existing rows were seeded before
+ * this rule and are named by credentials already issued, so re-judging them
+ * here would refuse a registration for a product that is working fine — the
+ * foreign key is what proves an existing id is real.
+ */
+function resolveProductId(input: RegisterInput): string {
+  if (!input.newProduct) return input.productId;
+
+  const productId = normalizeProductId(input.productId);
+
+  if (productId === null) {
+    throw new PaymentError(
+      'VALIDATION_FAILED',
+      `"${input.productId}" is not a usable product id. Lowercase letters, digits and single hyphens, 2–32 characters.`,
+      { field: 'newProductId', productId: input.productId },
+    );
+  }
+
+  if (input.newProduct.name.trim() === '') {
+    throw new PaymentError('VALIDATION_FAILED', 'A new product needs a name.', {
+      field: 'newProductName',
+    });
+  }
+
+  return productId;
+}
+
+/**
  * Turns admin-typed hostnames into the rows that will be stored, refusing the
  * whole set rather than silently dropping a bad one — an admin who mistypes
  * one of three domains must not discover it by a customer being refused.
  */
 function normalizeDomains(
   domains: DomainInput[],
+  mode: CredentialMode,
 ): { hostname: string; note: string | null }[] {
   const seen = new Map<string, string | null>();
 
@@ -604,6 +712,16 @@ function normalizeDomains(
         `"${raw}" is not a bare hostname. Enter it without a scheme, port or path.`,
         { field: 'domains', hostname: raw },
       );
+    }
+
+    /*
+     * Refused at write time as well as at use time. `assertRegisteredHost`
+     * would turn it down later anyway, but a row that can never be used is a
+     * row an admin will spend an afternoon staring at — better to say so on
+     * the form that is trying to create it.
+     */
+    if (isLoopbackHostname(hostname)) {
+      assertLoopbackAllowed(hostname, mode, 'domains');
     }
 
     // Last note wins; the unique index would reject the duplicate row anyway.

@@ -233,8 +233,29 @@ curl -X POST https://softmato.com/api/v1/invoices \
 ```
 
 ```json
-{ "invoice_id": 41, "invoice_no": "INV-2083/84-000010", "status": "open" }
+{
+  "invoice_id": "INV-2083/84-000010",
+  "external_ref": "HH-2026-00123",
+  "status": "issued",
+  "currency": "NPR",
+  "total_minor": 2000000,
+  "subtotal_minor": 2000000,
+  "paid_minor": 0,
+  "issued_at": "2026-09-09T05:59:59.443Z",
+  "due_at": null
+}
 ```
+
+**`invoice_id` is the invoice number.** There is not a second, opaque id
+alongside it: the same `INV-2083/84-000010` is what you send to
+`POST /v1/checkout`, what addresses `GET /v1/invoices/{…}`, and what a
+webhook's own `invoice_id` carries. One handle, everywhere.
+
+> This block previously showed a numeric `invoice_id` beside a separate
+> `invoice_no`, and `@softmato/sdk`'s `Invoice` type still declares both — the
+> API sends only the first. An integrator who stored `invoice_no` stored
+> `undefined`, and found out at the checkout call. Until the SDK type is
+> corrected, read `invoice.invoice_no ?? invoice.invoice_id`.
 
 `unit_price_minor` is **paisa**, always an integer. NPR 20,000 is `2000000`.
 There are no floats anywhere in this API, in either direction.

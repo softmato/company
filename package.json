@@ -32,7 +32,8 @@
     "legal:todo": "tsx --env-file-if-exists=.env.local ./scripts/legal-todo.mts",
     "legal:refresh": "tsx --env-file-if-exists=.env.local ./scripts/refresh-legal.mts",
     "predeploy": "pnpm typecheck && pnpm test && pnpm legal:check",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
+    "app:domains": "tsx --env-file-if-exists=.env.local ./scripts/app-domains.mts"
   },
   "pnpm": {
     "overrides": {

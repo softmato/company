@@ -28,14 +28,38 @@ export function ScopeCheckboxes({
   available,
   name = 'scopes',
   selected,
+  onChange,
   error,
 }: {
   available: readonly ApplicationScope[];
   name?: string;
   selected?: readonly ApplicationScope[] | undefined;
+  /**
+   * Supply this to control the boxes; omit it and they seed from `selected`
+   * and are then the DOM's business.
+   *
+   * The distinction matters on a form submitted by a server action. React
+   * resets an uncontrolled `<form action={…}>` once the action settles, so a
+   * rejected submission puts every tick back to the default and the admin has
+   * to re-read six checkboxes to find the one they changed. On the register
+   * form that reset is the bug; on the edit form (`application-header.tsx`)
+   * the fields are re-rendered from the saved row anyway, so it is not.
+   */
+  onChange?: (scopes: ApplicationScope[]) => void;
   error?: string | undefined;
 }) {
   const chosen = new Set(selected ?? []);
+
+  const toggle = (scope: ApplicationScope, ticked: boolean) => {
+    if (!onChange) return;
+
+    const next = new Set(chosen);
+    if (ticked) next.add(scope);
+    else next.delete(scope);
+
+    // Emitted in `available` order, so the array is stable across toggles.
+    onChange(available.filter((candidate) => next.has(candidate)));
+  };
 
   return (
     <fieldset className="mt-4">
@@ -48,7 +72,12 @@ export function ScopeCheckboxes({
               type="checkbox"
               name={name}
               value={scope}
-              defaultChecked={chosen.has(scope)}
+              {...(onChange
+                ? {
+                    checked: chosen.has(scope),
+                    onChange: (event) => toggle(scope, event.target.checked),
+                  }
+                : { defaultChecked: chosen.has(scope) })}
               className="mt-0.5 size-4 rounded-sm border-input"
             />
             <span>

@@ -10,6 +10,7 @@ import {
   type Application,
   type ApplicationDomain,
   type CredentialMode,
+  type ProductKind,
 } from '@softmato/db';
 
 /**
@@ -371,11 +372,28 @@ export async function applicationGate(
 export interface ProductOption {
   id: string;
   name: string;
+  /**
+   * `saas` is what an API integration is normally for. `agency` and
+   * `corporate` are ledger dimensions that exist so every rupee has somewhere
+   * to post, and the register form groups them apart rather than hiding them —
+   * the client portal bills against `agency`, so removing it from the list
+   * would take away a registration somebody legitimately needs.
+   */
+  kind: ProductKind;
 }
 
+/**
+ * What the register form may pick from.
+ *
+ * Inactive products are excluded: an inactive product line is one the company
+ * has stopped selling, and issuing a fresh credential against it is almost
+ * certainly a mistake. A product that does not exist at all is handled the
+ * other way — the form creates it, rather than the admin being stuck with
+ * whatever was seeded.
+ */
 export async function listProductOptions(): Promise<ProductOption[]> {
   return db
-    .select({ id: products.id, name: products.name })
+    .select({ id: products.id, name: products.name, kind: products.kind })
     .from(products)
     .where(eq(products.isActive, true))
     .orderBy(asc(products.name));
@@ -394,7 +412,6 @@ export async function findApplication(
 }
 
 export interface ProductWithApplicationCount extends ProductOption {
-  kind: string;
   isActive: boolean;
   applicationCount: number;
   liveApplicationCount: number;

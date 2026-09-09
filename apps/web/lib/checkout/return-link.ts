@@ -44,7 +44,7 @@ export async function returnLinkFor(
   const [row] = await db
     .select({
       returnUrl: paymentSessions.returnUrl,
-      applicationId: paymentSessions.applicationId,
+      credentialId: paymentSessions.credentialId,
       applicationName: applications.name,
     })
     .from(paymentSessions)
@@ -52,11 +52,27 @@ export async function returnLinkFor(
     .where(eq(paymentSessions.id, sessionId))
     .limit(1);
 
-  // No return URL is the ordinary case, not an error: the page then renders
-  // exactly as it did before this existed.
-  if (!row?.returnUrl || row.applicationId === null) return null;
+  /*
+   * No return URL is the ordinary case, not an error: the page then renders
+   * exactly as it did before this existed.
+   *
+   * A null `credentialId` means a session opened from the admin panel. There
+   * is no credential, so there is no allowlist to check against and no
+   * integration to hand the customer back to — the same answer, reached
+   * honestly rather than by checking a list that does not apply.
+   */
+  if (!row?.returnUrl || row.credentialId === null) return null;
 
-  const allowed = await isRegisteredHost(row.applicationId, row.returnUrl);
+  /*
+   * The **credential's** allowlist. This read `applicationId` for the same
+   * reason `POST /v1/checkout` did — both were written when domains hung off
+   * the application — and `isRegisteredHost` filters
+   * `application_domains.credential_id`. Passing the wrong id here fails
+   * closed rather than open, because it swallows the refusal and simply does
+   * not draw the button, which is why it went unnoticed: the link was just
+   * missing sometimes.
+   */
+  const allowed = await isRegisteredHost(row.credentialId, row.returnUrl);
 
   if (!allowed) return null;
 

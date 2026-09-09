@@ -10,7 +10,10 @@ import {
 } from '@softmato/db';
 import {
   addCredential,
+  explainProductId,
+  normalizeProductId,
   registerApplication,
+  type NewProductInput,
   revealWebhookSecret,
   revokeCredential,
   rotateSecret,
@@ -75,6 +78,17 @@ import { failure, type CredentialResult } from './result';
  * not a gate.
  */
 
+/**
+ * The sentinel the product `<select>` submits when the admin chose to create a
+ * product instead of picking one.
+ *
+ * A sentinel rather than a separate checkbox, because "which product" has one
+ * answer and one control. It cannot collide with a real id:
+ * `normalizeProductId` refuses everything but lowercase letters, digits and
+ * single hyphens, so no product can ever be called `__new__`.
+ */
+const NEW_PRODUCT = '__new__';
+
 const registerSchema = z.object({
   productId: z.string().min(1, 'Pick a product'),
   name: z.string().min(2, 'Give it a name').max(80),
@@ -108,6 +122,51 @@ function readDomains(form: FormData): { hostname: string }[] {
 function readId(form: FormData, field: string): number | null {
   const id = Number(form.get(field));
   return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * The product half of the register form: either an existing id, or a new
+ * product to create alongside the application.
+ *
+ * The id shape is checked here so the admin gets it back on the field they
+ * typed it into. `registerApplication` checks it again before it writes —
+ * this endpoint is reachable by anyone who can post to it, and a validation
+ * that only exists in the caller is a validation the caller can skip.
+ */
+function readProduct(
+  form: FormData,
+):
+  | { ok: true; productId: string; newProduct?: NewProductInput }
+  | { ok: false; result: CredentialResult } {
+  const chosen = String(form.get('productId') ?? '');
+
+  if (chosen !== NEW_PRODUCT) return { ok: true, productId: chosen };
+
+  const productId = String(form.get('newProductId') ?? '').trim();
+  const name = String(form.get('newProductName') ?? '').trim();
+  const kind = String(form.get('newProductKind') ?? '');
+
+  const refuse = (fieldErrors: Record<string, string>) => ({
+    ok: false as const,
+    result: { ok: false, message: 'Nothing was created.', fieldErrors },
+  });
+
+  const complaint = explainProductId(productId);
+  if (complaint) return refuse({ newProductId: complaint });
+
+  if (name.length < 2) {
+    return refuse({ newProductName: 'Give the product a name.' });
+  }
+
+  if (kind !== 'saas' && kind !== 'agency' && kind !== 'corporate') {
+    return refuse({ newProductKind: 'Pick what kind of product this is.' });
+  }
+
+  return {
+    ok: true,
+    productId: normalizeProductId(productId) ?? productId,
+    newProduct: { name, kind },
+  };
 }
 
 /**
@@ -241,8 +300,12 @@ export async function registerApplicationAction(
    * would be a way to mint a production credential with no re-authentication
    * at all.
    */
+  const product = readProduct(form);
+
+  if (!product.ok) return product.result;
+
   const parsed = registerSchema.safeParse({
-    productId: String(form.get('productId') ?? ''),
+    productId: product.productId,
     name: String(form.get('name') ?? '').trim(),
     mode: 'test',
     webhookUrl: String(form.get('webhookUrl') ?? '').trim(),
@@ -288,6 +351,7 @@ export async function registerApplicationAction(
     const { application, credential, secret } = await registerApplication(
       {
         productId: parsed.data.productId,
+        ...(product.newProduct ? { newProduct: product.newProduct } : {}),
         name: parsed.data.name,
         scopes,
         webhookUrl: parsed.data.webhookUrl ?? null,

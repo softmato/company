@@ -38,10 +38,20 @@ export const POST = mutatingEndpoint(
      * and costs us no session row. `tx` is passed so the check reads the same
      * snapshot the insert writes into — a domain deleted mid-request cannot
      * be validated against and then vanish.
+     *
+     * **`credentialId`, not `id`.** `AuthenticatedApplication` carries both,
+     * and `assertRegisteredHost` filters `application_domains.credential_id`.
+     * This passed `application.id` from the day domains moved from
+     * per-application to per-credential, so the allowlist was matching a
+     * credential id against an application id — two independent identity
+     * sequences that collide by coincidence. The failure was silent in both
+     * directions: a legitimate `return_url` refused when the numbers happened
+     * not to line up, and somebody else's registered host accepted when they
+     * did.
      */
     if (input.return_url !== undefined) {
       await assertRegisteredHost(
-        application.id,
+        application.credentialId,
         input.return_url,
         'return_url',
         tx,

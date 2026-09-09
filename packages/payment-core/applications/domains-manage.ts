@@ -9,11 +9,17 @@
  */
 import { asc, eq } from 'drizzle-orm';
 
-import { applicationDomains, db, type ApplicationDomain } from '@softmato/db';
+import {
+  applicationCredentials,
+  applicationDomains,
+  db,
+  type ApplicationDomain,
+} from '@softmato/db';
 
 import type { Actor, AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import { normalizeHostnameInput } from './domains';
+import { assertLoopbackAllowed, isLoopbackHostname } from './loopback';
 
 export async function listDomains(
   credentialId: number,
@@ -63,6 +69,27 @@ export async function addDomain(
   }
 
   return db.transaction(async (tx) => {
+    /*
+     * A loopback name is refused here as well as at use time, and the mode
+     * comes from the row rather than from the caller — this function is
+     * reachable by anyone who can post to the domain form.
+     */
+    if (isLoopbackHostname(hostname)) {
+      const [credential] = await tx
+        .select({ mode: applicationCredentials.mode })
+        .from(applicationCredentials)
+        .where(eq(applicationCredentials.id, input.credentialId))
+        .limit(1);
+
+      if (!credential) {
+        throw new PaymentError('RESOURCE_NOT_FOUND', 'No such credential', {
+          credentialId: input.credentialId,
+        });
+      }
+
+      assertLoopbackAllowed(hostname, credential.mode, 'hostname');
+    }
+
     const [created] = await tx
       .insert(applicationDomains)
       .values({

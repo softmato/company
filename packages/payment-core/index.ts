@@ -32,6 +32,17 @@ export {
 } from './applications/domains';
 
 export {
+  isLocalDeployment,
+  isLoopbackAllowed,
+  isLoopbackHostname,
+} from './applications/loopback';
+
+export {
+  explainProductId,
+  normalizeProductId,
+} from './applications/product-slug';
+
+export {
   revealWebhookSecret,
   rotateWebhookSecret,
 } from './applications/webhook-secret';
@@ -52,6 +63,7 @@ export {
   updateApplication,
   type DomainInput,
   type IssuedCredential,
+  type NewProductInput,
   type RegisterInput,
   type RotationResult,
 } from './applications/manage';

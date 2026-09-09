@@ -54,7 +54,27 @@ export function failure(error: unknown): CredentialResult {
   );
 
   if (isPaymentError(error)) {
-    return { ok: false, message: error.publicDetail ?? error.message };
+    const message = error.publicDetail ?? error.message;
+    const field = error.context?.['field'];
+
+    /*
+     * A refusal that knows which field caused it says so next to that field.
+     *
+     * Every `PaymentError` raised on the registration path already carries
+     * `context.field` — `domains`, `webhookUrl`, `newProductId` — and none of
+     * it reached the form, so a mistyped hostname came back as a sentence at
+     * the bottom of the page with four inputs above it and no indication of
+     * which one was wrong. The message is repeated at the top rather than
+     * moved, because the field error is easy to miss on a long form and the
+     * summary is what a screen reader announces.
+     */
+    return {
+      ok: false,
+      message,
+      ...(typeof field === 'string'
+        ? { fieldErrors: { [field]: message } }
+        : {}),
+    };
   }
 
   return { ok: false, message: 'That did not work, so nothing changed.' };
