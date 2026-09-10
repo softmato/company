@@ -1,12 +1,13 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { db } from '@softmato/db';
 
 import { recordAudit } from '@/lib/audit';
 import { contentKind, getContent, tableFor } from '@/lib/cms';
+import { rowSlug } from '@/lib/cms/public-paths';
 
+import { revalidateContent } from './revalidate';
 import { parseId, requireAdmin, requireKind } from './shared';
 
 /**
@@ -51,7 +52,7 @@ export async function publishContent(form: FormData): Promise<void> {
     afterState: await getContent(kindSlug, id),
   });
 
-  revalidatePath(`/admin/cms/${kindSlug}`);
+  revalidateContent(kindSlug, [rowSlug(before)]);
 }
 
 /** Takes content off the public site without deleting it. */
@@ -79,5 +80,5 @@ export async function unpublishContent(form: FormData): Promise<void> {
     afterState: await getContent(kindSlug, id),
   });
 
-  revalidatePath(`/admin/cms/${kindSlug}`);
+  revalidateContent(kindSlug, [rowSlug(before)]);
 }

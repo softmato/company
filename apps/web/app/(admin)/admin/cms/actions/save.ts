@@ -1,12 +1,13 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 import { db } from '@softmato/db';
 
 import { recordAudit } from '@/lib/audit';
 import { contentKind, getContent, tableFor } from '@/lib/cms';
+import { rowSlug } from '@/lib/cms/public-paths';
 
+import { revalidateContent } from './revalidate';
 import {
   databaseMessage,
   parseId,
@@ -64,6 +65,8 @@ export async function saveContent(
     return { ok: false, message: databaseMessage(error) };
   }
 
+  const after = await getContent(kindSlug, id);
+
   await recordAudit({
     actorType: 'admin',
     actorId: adminId,
@@ -71,9 +74,10 @@ export async function saveContent(
     resourceType: kindSlug,
     resourceId: String(id),
     beforeState: before,
-    afterState: await getContent(kindSlug, id),
+    afterState: after,
   });
 
-  revalidatePath(`/admin/cms/${kindSlug}`);
+  // Both slugs: a renamed page moves, and the route it left behind is stale.
+  revalidateContent(kindSlug, [rowSlug(before), rowSlug(after)]);
   return { ok: true, message: 'Saved.' };
 }

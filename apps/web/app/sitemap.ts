@@ -6,6 +6,7 @@ import {
   publishedSlugs,
 } from '@/lib/cms/public-queries';
 import { isIndexableLegalDocument } from '@/lib/cms/legal-readiness';
+import { pagePath } from '@/lib/cms/public-paths';
 import { isProductionSite, siteUrl } from '@/lib/seo/site';
 
 /**
@@ -47,9 +48,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const weekly = 'weekly' as const;
   const monthly = 'monthly' as const;
 
-  /** `home` is the root path, not `/home`. */
-  const pageUrl = (slug: string) => (slug === 'home' ? '/' : `/${slug}`);
-
   /** How much of the site each CMS page carries, by slug. */
   const pagePriority: Record<string, number> = {
     home: 1,
@@ -76,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...pages.map((row) => ({
-      url: siteUrl(pageUrl(row.slug)),
+      url: siteUrl(pagePath(row.slug)),
       lastModified: row.updatedAt,
       changeFrequency: row.slug === 'home' ? weekly : monthly,
       priority: pagePriority[row.slug] ?? 0.5,
