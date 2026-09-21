@@ -24,7 +24,12 @@
  * are the record of what the *job* did; a diagnostic that rewrote them would
  * destroy the evidence it was run to collect. Read-only by design.
  */
-import { closeDb, db, applications, webhookDeliveries } from '@softmato/db';
+import {
+  applicationCredentials,
+  closeDb,
+  db,
+  webhookDeliveries,
+} from '@softmato/db';
 import { desc, eq } from 'drizzle-orm';
 
 import { sign } from '../packages/payment-core/webhooks/signature.ts';
@@ -49,11 +54,14 @@ const rows = await db
     eventType: webhookDeliveries.eventType,
     status: webhookDeliveries.status,
     createdAt: webhookDeliveries.createdAt,
-    secret: applications.webhookSecret,
-    clientId: applications.clientId,
+    secret: applicationCredentials.webhookSecret,
+    clientId: applicationCredentials.clientId,
   })
   .from(webhookDeliveries)
-  .innerJoin(applications, eq(applications.id, webhookDeliveries.applicationId))
+  .innerJoin(
+    applicationCredentials,
+    eq(applicationCredentials.id, webhookDeliveries.credentialId),
+  )
   .orderBy(desc(webhookDeliveries.createdAt))
   .limit(200);
 

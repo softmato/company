@@ -26,7 +26,14 @@
  * Safe to run repeatedly: every invoice gets a fresh `external_ref`, so no run
  * collides with another's idempotency record.
  */
-import { db, platformSettings } from '../packages/db/index.ts';
+import { eq } from 'drizzle-orm';
+
+import {
+  applicationCredentials,
+  applications,
+  db,
+  platformSettings,
+} from '../packages/db/index.ts';
 /*
  * The app's own settings resolution and seller mapping, both pure. A script
  * that assembled the company's details by hand would put a second spelling of
@@ -52,7 +59,7 @@ import {
   type AuditRecorder,
 } from '../packages/payment-core/index.ts';
 
-/** The seeded sandbox application. Not live, so nothing here can touch real money. */
+/** The seeded Sandbox credential. Not live, so nothing here can touch real money. */
 const CLIENT_ID = 'app_test_hostelhub_2d90d3bq';
 
 interface Options {
@@ -90,38 +97,64 @@ function parseArgs(argv: string[]): Options {
 }
 
 /**
- * The application row, read rather than assumed.
+ * The credential and the application it hangs off, read rather than assumed.
  *
  * `authenticateApplication` needs a client secret we do not have here, so this
- * loads the row directly — the one shortcut in the script, and it is a read of
- * data the real path would have read too. It refuses a live application: this
- * script must never be the thing that raises a real invoice.
+ * runs its query directly — the one shortcut in the script — and builds the
+ * same `AuthenticatedApplication` from it, credential id and mode included. It
+ * keeps that function's refusals too (revoked credential, inactive
+ * application), and adds one of its own: anything but a Sandbox credential.
+ * This script must never be the thing that raises a real invoice.
  */
 async function loadApplication(): Promise<AuthenticatedApplication> {
-  const rows = await db.query.applications.findMany();
-  const app = rows.find((row) => row.clientId === CLIENT_ID);
+  const [found] = await db
+    .select({
+      credentialId: applicationCredentials.id,
+      clientId: applicationCredentials.clientId,
+      mode: applicationCredentials.mode,
+      webhookUrl: applicationCredentials.webhookUrl,
+      revokedAt: applicationCredentials.revokedAt,
+      applicationId: applications.id,
+      productId: applications.productId,
+      name: applications.name,
+      scopes: applications.scopes,
+      isActive: applications.isActive,
+    })
+    .from(applicationCredentials)
+    .innerJoin(
+      applications,
+      eq(applications.id, applicationCredentials.applicationId),
+    )
+    .where(eq(applicationCredentials.clientId, CLIENT_ID))
+    .limit(1);
 
-  if (!app) {
+  if (!found) {
     throw new Error(
-      `No application with client_id ${CLIENT_ID}. Seed the database first.`,
+      `No credential with client_id ${CLIENT_ID}. Seed the database first.`,
     );
   }
 
-  if (app.isLive) {
+  if (found.mode !== 'test') {
     throw new Error(
-      `${CLIENT_ID} is a live application. This script only runs against sandbox.`,
+      `${CLIENT_ID} is a ${found.mode} credential. This script only runs against Sandbox.`,
     );
+  }
+
+  if (!found.isActive || found.revokedAt) {
+    throw new Error(`${CLIENT_ID} is revoked, or its application is inactive.`);
   }
 
   return {
-    id: app.id,
-    clientId: app.clientId,
-    productId: app.productId,
-    name: app.name,
-    isLive: app.isLive,
-    scopes: app.scopes as AuthenticatedApplication['scopes'],
-    webhookUrl: app.webhookUrl,
+    id: found.applicationId,
+    credentialId: found.credentialId,
+    clientId: found.clientId,
+    productId: found.productId,
+    name: found.name,
+    mode: found.mode,
+    scopes: found.scopes,
+    webhookUrl: found.webhookUrl,
     usedPreviousSecret: false,
+    previousSecretExpiresAt: null,
   };
 }
 

@@ -1,0 +1,20 @@
+{
+  "extends": "../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    // Scripts import `../packages/db/index.ts` and friends with extensions.
+    "allowImportingTsExtensions": true,
+    // The root has no @types/node; declaring one there re-resolves the
+    // @types/pg, @types/ws and @types/qrcode dependencies onto @types/node 22
+    // and puts two copies of Node's globals into apps/web. Borrow the web app's.
+    "typeRoots": ["../apps/web/node_modules/@types"],
+    "types": ["node"],
+    // Type-only reach into the web app: its `@/` alias (seller.ts), and the
+    // sharp that build-brand-assets.mts `require`s from there at run time
+    // (hence the CommonJS typings; `paths` ignores the package's `exports`).
+    "paths": {
+      "@/*": ["../apps/web/*"],
+      "sharp": ["../apps/web/node_modules/sharp/dist/index.d.cts"]
+    }
+  },
+  "include": ["*.mts"]
+}
