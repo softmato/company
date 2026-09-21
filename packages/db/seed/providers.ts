@@ -14,11 +14,8 @@
  * offers a customer a method that fails at the moment they try to pay, which
  * is the failure this column exists to prevent.
  *
- * eSewa and Khalti now satisfy both halves — `EsewaProviderAdapter` and
- * `KhaltiProviderAdapter` are real, and their sandbox credentials are verified
- * against the gateways — so they ship active. Fonepay does not: its adapter is
- * an honest stub pending the bank's integration document (PHASES.md Phase 9),
- * and `lib/payments/providers.ts` refuses to register it at all.
+ * All three satisfy both halves — each adapter is real and checked against
+ * its gateway — so they ship active.
  *
  * Shipping the wallets inactive is what made "it works in dev but not in
  * production" a structural certainty rather than bad luck: every environment
@@ -44,11 +41,10 @@ export const providerSeeds: ProviderSeed[] = [
      * The primary route: a full merchant integration reaching bank accounts
      * and wallets rather than one wallet's customers.
      *
-     * Phase 9 in PHASES.md, and blocked on the bank's credentials and its
-     * integration document. Making it primary does not unblock it — and
-     * PHASES.md is explicit that Fonepay request shapes must not be guessed at.
+     * Active since migration 0014: the adapter is built from the bank's
+     * document. It is still offered only where its credentials are set.
      */
-    isActive: false,
+    isActive: true,
     balanceAccount: '1033',
     feeAccount: '5010',
     supportsRefund: false,

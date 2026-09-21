@@ -21,10 +21,12 @@ import {
   isPaymentError,
   isProviderId,
   startPayment,
+  type BankApp,
   type FormPost,
 } from '@softmato/payment-core';
 
 import { recordAudit } from '@/lib/audit';
+import { qrSvg } from '@/lib/enrolment/qr';
 import { ensureProvidersRegistered } from '@/lib/payments/providers';
 
 export type BeginPaymentResult =
@@ -32,6 +34,14 @@ export type BeginPaymentResult =
   | { ok: true; kind: 'redirect'; url: string }
   /** Submit this form. eSewa's ePay v2 does not answer a GET. */
   | { ok: true; kind: 'form'; formPost: FormPost }
+  /** Fonepay: the customer pays from this page, by QR or banking app. */
+  | {
+      ok: true;
+      kind: 'qr';
+      qrSvg: string;
+      socketUrl?: string;
+      bankApps: BankApp[];
+    }
   /** Show this to the customer. Never a raw error message. */
   | { ok: false; message: string };
 
@@ -66,6 +76,19 @@ export async function beginPayment(
 
     if (started.initiate.redirectUrl) {
       return { ok: true, kind: 'redirect', url: started.initiate.redirectUrl };
+    }
+
+    const { qrPayload, socketUrl, bankApps } = started.initiate;
+
+    if (qrPayload) {
+      return {
+        ok: true,
+        kind: 'qr',
+        // Drawn here so the browser gets an image, not a QR library.
+        qrSvg: await qrSvg(qrPayload),
+        ...(socketUrl ? { socketUrl } : {}),
+        bankApps: bankApps ?? [],
+      };
     }
 
     /*

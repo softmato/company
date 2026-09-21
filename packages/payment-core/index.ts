@@ -103,6 +103,7 @@ export {
 export {
   PROVIDER_IDS,
   isProviderId,
+  type BankApp,
   type FormPost,
   type InitiateResult,
   type ProviderAdapter,

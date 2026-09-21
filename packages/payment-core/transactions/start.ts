@@ -16,6 +16,7 @@
 import { and, eq, inArray } from 'drizzle-orm';
 
 import {
+  invoices,
   transactions,
   type DbTx,
   type PaymentSession,
@@ -26,7 +27,11 @@ import { allocateDocumentNo, resolveFiscalPeriod } from '@softmato/accounting';
 import type { AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import { providerAdapter } from '../providers/registry';
-import type { FormPost, InitiateResult } from '../providers/types';
+import type {
+  BankApp,
+  FormPost,
+  InitiateResult,
+} from '../providers/types';
 import { selectProvider } from '../sessions/select-provider';
 import { transitionSession } from '../sessions/transition';
 import { isTerminal, type TxnStatus } from './state-machine';
@@ -85,6 +90,17 @@ export async function startPayment(
    */
   const adapter = providerAdapter(input.providerId, session.mode);
 
+  const [invoice] = await tx
+    .select({ invoiceNo: invoices.invoiceNo })
+    .from(invoices)
+    .where(eq(invoices.id, session.invoiceId));
+
+  if (!invoice) {
+    throw new PaymentError('INTERNAL', 'Session invoice not found', {
+      sessionId: session.id,
+    });
+  }
+
   /*
    * ⚠ Ordering to revisit with the first real gateway.
    *
@@ -99,7 +115,7 @@ export async function startPayment(
    * Decide it against a real gateway's semantics in Phase 4 rather than guess
    * here. `poll()` and reconciliation are the backstop either way.
    */
-  const initiate = await adapter.initiate(session);
+  const initiate = await adapter.initiate(session, invoice.invoiceNo);
 
   const period = await resolveFiscalPeriod(tx, now);
   const { documentNo } = await allocateDocumentNo(tx, 'TXN', period.fiscalYear);
@@ -239,6 +255,8 @@ function displayable(initiate: InitiateResult): Record<string, unknown> {
     ...(initiate.redirectUrl ? { redirectUrl: initiate.redirectUrl } : {}),
     ...(initiate.deeplink ? { deeplink: initiate.deeplink } : {}),
     ...(initiate.formPost ? { formPost: initiate.formPost } : {}),
+    ...(initiate.socketUrl ? { socketUrl: initiate.socketUrl } : {}),
+    ...(initiate.bankApps?.length ? { bankApps: initiate.bankApps } : {}),
   };
 }
 
@@ -261,6 +279,16 @@ function storedInitiate(transaction: Transaction): InitiateResult {
   const redirectUrl = text('redirectUrl');
   const deeplink = text('deeplink');
   const formPost = storedFormPost(stored.formPost);
+  const socketUrl = text('socketUrl');
+  // Same rule as `formPost`: checked entry by entry, never cast.
+  const bankApps = Array.isArray(stored.bankApps)
+    ? stored.bankApps.filter(
+        (app): app is BankApp =>
+          typeof app?.name === 'string' &&
+          typeof app?.deeplink === 'string' &&
+          (app.icon === undefined || typeof app.icon === 'string'),
+      )
+    : [];
 
   return {
     providerRef: transaction.providerRef ?? '',
@@ -268,6 +296,8 @@ function storedInitiate(transaction: Transaction): InitiateResult {
     ...(redirectUrl ? { redirectUrl } : {}),
     ...(deeplink ? { deeplink } : {}),
     ...(formPost ? { formPost } : {}),
+    ...(socketUrl ? { socketUrl } : {}),
+    ...(bankApps.length ? { bankApps } : {}),
     ...(transaction.providerCorrelationId
       ? { correlationId: transaction.providerCorrelationId }
       : {}),

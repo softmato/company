@@ -16,7 +16,11 @@
  */
 import { useState, useTransition } from 'react';
 
-import { beginPayment } from '@/app/(checkout)/checkout/[sessionId]/actions';
+import {
+  beginPayment,
+  type BeginPaymentResult,
+} from '@/app/(checkout)/checkout/[sessionId]/actions';
+import { FonepayQr } from '@/components/checkout/fonepay-qr';
 import { GatewayForm } from '@/components/checkout/gateway-form';
 import { ProviderPicker } from '@/components/checkout/provider-picker';
 import type { CheckoutProvider } from '@/lib/checkout/view';
@@ -43,10 +47,16 @@ export function CheckoutFlow({
   const [selected, setSelected] = useState(providers[0]?.id ?? null);
   const [error, setError] = useState<string | null>(null);
   const [handover, setHandover] = useState<FormPost | null>(null);
+  const [qr, setQr] = useState<Extract<BeginPaymentResult, { kind: 'qr' }> | null>(
+    null,
+  );
   const [pending, startTransition] = useTransition();
 
   // Once a gateway form exists the customer is leaving; nothing else renders.
   if (handover) return <GatewayForm formPost={handover} />;
+
+  // Fonepay: the customer pays from here, so the QR replaces the picker.
+  if (qr) return <FonepayQr sessionId={sessionId} {...qr} />;
 
   function pay(): void {
     if (!selected) return;
@@ -63,6 +73,11 @@ export function CheckoutFlow({
 
       if (result.kind === 'form') {
         setHandover(result.formPost);
+        return;
+      }
+
+      if (result.kind === 'qr') {
+        setQr(result);
         return;
       }
 

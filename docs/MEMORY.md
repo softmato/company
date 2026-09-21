@@ -845,6 +845,17 @@ divergence between docs and code is how a project loses its plan.
 
 ## Session log
 
+### Session — 2026-09-21 (Fonepay)
+
+- Fonepay built and proven locally with real NPR 1 payments on the production
+  merchant (terminal `2222040021755313`): the page moves on by itself, the
+  ledger balances, and the payer's bank shows the invoice number as the remark.
+- Learned: `DYNAMIC_QR`, not `INTENT_QR`; no scan signal exists; the socket
+  lags the status API by ~15 s and reaches one listener, so the page polls.
+- Rollout: `FONEPAY_LIVE_*` on Vercel Production, migration 0014 on the
+  production DB, then deploy. Still open: phone bank links (test on
+  production), and the questions for Fonepay in `docs/fonepay/README.md`.
+
 Newest first. Keep entries short.
 
 **Sessions 12 and 13 have no entry here.** 12 wrote the `todo.md` tracker

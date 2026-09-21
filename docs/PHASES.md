@@ -235,19 +235,21 @@ rest do not.
 
 ## Phase 9 — Fonepay
 
-Gated on bank credentials and the bank's integration document.
+Built 2026-09-21 from the bank's Checkout Intent Flow v1.10 (`docs/fonepay/`),
+request shapes checked against its dev gateway. Waiting on our merchant login
+to be tried and on a real payment (acceptance 1).
 
 **Build**
 
-- Adapter behind a feature flag
-- Dynamic QR generation
-- PG redirect flow
-- HMAC verification per the bank's spec
-- Confirmation path once known (callback vs. polling)
+- ☑ Adapter, registered only where `FONEPAY_*` is set — no separate flag
+- ☑ Dynamic QR (Fonepay builds it; we draw it) + banking-app deep links on phones
+- ✗ PG redirect flow — the intent flow has none
+- ☑ RSA-SHA256 request signing (the bank's spec; there is no HMAC)
+- ☑ Confirmation: status API polling; the WebSocket is only a cue to poll
 
 **Accept when**
 
-1. A sandbox payment completes
+1. ☑ A real payment completes (NPR 1 on the production merchant, 2026-09-21)
 2. Amount-based routing surfaces Fonepay for amounts above wallet limits
 3. Reconciliation includes Fonepay settlement
 

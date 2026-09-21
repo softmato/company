@@ -42,3 +42,8 @@ graphify-out/manifest.json
 
 # Local document previews (pnpm doc:preview) — generated, never committed.
 .preview/
+
+# The bank's Fonepay documents stay on the founder's machine: this repo is public,
+# and they carry working sample credentials. Only our notes are published.
+docs/fonepay/*
+!docs/fonepay/README.md

@@ -12,6 +12,15 @@ this file tracks what was delivered.
 
 ## [Unreleased]
 
+### Added
+
+- **Checkout by Fonepay.** A dynamic QR on desktop, banking-app links on
+  phones, RSA-signed calls to Fonepay's third-party merchant API, and the status
+  API as the only thing that settles a payment. The QR page checks every 3 s
+  and moves on by itself; Fonepay's socket only hurries a check. The payer's
+  bank shows our invoice number as the remark. Proven with real NPR 1 payments
+  against the production merchant (2026-09-21). See `docs/fonepay/README.md`.
+
 ### Changed
 
 - **A credential's mode now picks the gateway it transacts against.** A Sandbox

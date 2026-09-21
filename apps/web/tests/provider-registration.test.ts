@@ -24,6 +24,8 @@
  * on the config object behind it — a test of the intermediate shape would have
  * passed throughout the incident.
  */
+import { generateKeyPairSync } from 'node:crypto';
+
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { resetProviderRegistry } from '@softmato/payment-core';
@@ -121,6 +123,30 @@ describe('a deployment nobody can pay on refuses to serve', () => {
     expect(() =>
       availableFor({ ...SANDBOX, PAYMENT_MODE: 'sandbx' }, 'test'),
     ).toThrow(/not one of mock, sandbox or live/);
+  });
+
+  it('registers Fonepay only with its full set, in each mode', () => {
+    const fonepay: ProviderEnv = {
+      ...SANDBOX,
+      FONEPAY_USERNAME: 'merchant',
+      FONEPAY_PASSWORD: 'secret',
+      FONEPAY_TERMINAL_ID: '4271423331147924',
+      FONEPAY_PRIVATE_KEY: generateKeyPairSync('rsa', { modulusLength: 2048 })
+        .privateKey.export({ format: 'der', type: 'pkcs8' })
+        .toString('base64'),
+      FONEPAY_LIVE_USERNAME: 'merchant',
+      FONEPAY_LIVE_PASSWORD: 'secret',
+      FONEPAY_LIVE_TERMINAL_ID: '4271423331147924',
+    };
+    fonepay.FONEPAY_LIVE_PRIVATE_KEY = fonepay.FONEPAY_PRIVATE_KEY;
+
+    expect(availableFor(fonepay, 'test')).toContain('fonepay');
+    expect(availableFor(fonepay, 'live')).toContain('fonepay');
+
+    resetProviderRegistry();
+    expect(
+      availableFor({ ...fonepay, FONEPAY_PASSWORD: ' ' }, 'test'),
+    ).not.toContain('fonepay');
   });
 
   it('mock stands in for both wallets in both modes, and never for Fonepay', () => {

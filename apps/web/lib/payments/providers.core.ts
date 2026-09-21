@@ -32,12 +32,12 @@
  * remove. An unregistered provider cannot be selected, so a customer is never
  * offered a way to pay that cannot take their money.
  *
- * **Fonepay is never registered.** Its adapter is an honest stub pending the
- * bank's integration document (PHASES.md Phase 9), and registering a stub
- * would put it on checkout pages.
+ * Fonepay is real-only: it is never mocked, because its checkout is a QR on
+ * our own page rather than a hand-off a mock could stand in for.
  */
 import {
   EsewaProviderAdapter,
+  FonepayProviderAdapter,
   KhaltiProviderAdapter,
   MockProviderAdapter,
   hasProvider,
@@ -71,6 +71,17 @@ export interface ProviderEnv {
   KHALTI_BASE_URL?: string | undefined;
   KHALTI_SANDBOX_SECRET_KEY?: string | undefined;
   KHALTI_LIVE_SECRET_KEY?: string | undefined;
+
+  FONEPAY_USERNAME?: string | undefined;
+  FONEPAY_PASSWORD?: string | undefined;
+  FONEPAY_TERMINAL_ID?: string | undefined;
+  FONEPAY_PRIVATE_KEY?: string | undefined;
+  FONEPAY_BASE_URL?: string | undefined;
+  FONEPAY_LIVE_USERNAME?: string | undefined;
+  FONEPAY_LIVE_PASSWORD?: string | undefined;
+  FONEPAY_LIVE_TERMINAL_ID?: string | undefined;
+  FONEPAY_LIVE_PRIVATE_KEY?: string | undefined;
+  FONEPAY_LIVE_BASE_URL?: string | undefined;
 }
 
 /** Which providers a mock deployment stands in for. Never Fonepay. */
@@ -261,6 +272,39 @@ function khaltiConfig(source: ProviderEnv, mode: CredentialMode) {
     : null;
 }
 
+/** Fonepay's, on the same rule: unprefixed is the sandbox set, `*_LIVE_*` production. */
+function fonepayConfig(source: ProviderEnv, mode: CredentialMode) {
+  const live = mode === 'live';
+  const [username, password, terminalId, privateKey, baseUrl] = (
+    live
+      ? [
+          source.FONEPAY_LIVE_USERNAME,
+          source.FONEPAY_LIVE_PASSWORD,
+          source.FONEPAY_LIVE_TERMINAL_ID,
+          source.FONEPAY_LIVE_PRIVATE_KEY,
+          source.FONEPAY_LIVE_BASE_URL,
+        ]
+      : [
+          source.FONEPAY_USERNAME,
+          source.FONEPAY_PASSWORD,
+          source.FONEPAY_TERMINAL_ID,
+          source.FONEPAY_PRIVATE_KEY,
+          source.FONEPAY_BASE_URL,
+        ]
+  ).map(set);
+
+  if (!username || !password || !terminalId || !privateKey) return null;
+
+  return {
+    username,
+    password,
+    terminalId,
+    privateKey,
+    env: live ? ('live' as const) : ('sandbox' as const),
+    ...(baseUrl ? { baseUrl } : {}),
+  };
+}
+
 /**
  * Real adapters, each one skipped rather than half-built when its credentials
  * are absent.
@@ -282,6 +326,12 @@ function registerReal(source: ProviderEnv): void {
 
     if (khalti && !hasProvider('khalti', mode)) {
       registerProvider(new KhaltiProviderAdapter(khalti), mode);
+    }
+
+    const fonepay = fonepayConfig(source, mode);
+
+    if (fonepay && !hasProvider('fonepay', mode)) {
+      registerProvider(new FonepayProviderAdapter(fonepay), mode);
     }
   }
 }

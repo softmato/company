@@ -99,6 +99,13 @@
       "when": 1788959782007,
       "tag": "0013_activate_wallet_providers",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790005081460,
+      "tag": "0014_activate_fonepay",
+      "breakpoints": true
     }
   ]
 }

@@ -52,14 +52,25 @@ export interface FormPost {
   fields: Readonly<Record<string, string>>;
 }
 
+/** A banking app a phone can open with the payment already loaded. */
+export interface BankApp {
+  name: string;
+  deeplink: string;
+  icon?: string;
+}
+
 export interface InitiateResult {
-  /** Khalti: pidx. eSewa: transaction_uuid. Fonepay: per the bank's spec. */
+  /** Khalti: pidx. eSewa: transaction_uuid. Fonepay: referenceLabel. */
   providerRef: string;
   redirectUrl?: string;
   /** For gateways entered by form POST rather than a link. */
   formPost?: FormPost;
   deeplink?: string;
   qrPayload?: string;
+  /** Fonepay: announces a scan or a payment. A cue to poll, never a result. */
+  socketUrl?: string;
+  /** Fonepay: the mobile alternative to scanning `qrPayload`. */
+  bankApps?: BankApp[];
   correlationId?: string;
 }
 
@@ -89,7 +100,8 @@ export interface RefundResult {
 export interface ProviderAdapter {
   readonly id: ProviderId;
 
-  initiate(session: PaymentSession): Promise<InitiateResult>;
+  /** `invoiceNo` is the customer-facing number, for gateways that print a bill reference. */
+  initiate(session: PaymentSession, invoiceNo: string): Promise<InitiateResult>;
 
   /** Only for providers that actually push. Verify the signature first. */
   handleCallback?(raw: unknown, headers: Headers): Promise<VerifiedResult>;

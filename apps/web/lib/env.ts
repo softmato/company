@@ -132,6 +132,21 @@ const serverSchema = z.object({
   KHALTI_SANDBOX_SECRET_KEY: blankAsUnset(z.string()),
   KHALTI_LIVE_SECRET_KEY: blankAsUnset(z.string()),
 
+  /*
+   * Fonepay. Unprefixed is the sandbox set, `*_LIVE_*` production. The key is
+   * ours (base64 PKCS#8); the bank holds its public half. See docs/fonepay/.
+   */
+  FONEPAY_USERNAME: blankAsUnset(z.string()),
+  FONEPAY_PASSWORD: blankAsUnset(z.string()),
+  FONEPAY_TERMINAL_ID: blankAsUnset(z.string().max(16)),
+  FONEPAY_PRIVATE_KEY: blankAsUnset(z.string()),
+  FONEPAY_BASE_URL: blankAsUnset(z.string().url()),
+  FONEPAY_LIVE_USERNAME: blankAsUnset(z.string()),
+  FONEPAY_LIVE_PASSWORD: blankAsUnset(z.string()),
+  FONEPAY_LIVE_TERMINAL_ID: blankAsUnset(z.string().max(16)),
+  FONEPAY_LIVE_PRIVATE_KEY: blankAsUnset(z.string()),
+  FONEPAY_LIVE_BASE_URL: blankAsUnset(z.string().url()),
+
   COMPANY_NAME: z.string().default('Softmato Technology Pvt Ltd'),
 
   /*
@@ -266,14 +281,30 @@ const ESEWA_PAIRS = [
   ['ESEWA_LIVE_MERCHANT_CODE', 'ESEWA_LIVE_SECRET_KEY'],
 ] as const;
 
-for (const pair of ESEWA_PAIRS) {
+/** Fonepay likewise, four at a time. The host is optional: each mode has a default. */
+const FONEPAY_SETS = [
+  [
+    'FONEPAY_USERNAME',
+    'FONEPAY_PASSWORD',
+    'FONEPAY_TERMINAL_ID',
+    'FONEPAY_PRIVATE_KEY',
+  ],
+  [
+    'FONEPAY_LIVE_USERNAME',
+    'FONEPAY_LIVE_PASSWORD',
+    'FONEPAY_LIVE_TERMINAL_ID',
+    'FONEPAY_LIVE_PRIVATE_KEY',
+  ],
+] as const;
+
+for (const pair of [...ESEWA_PAIRS, ...FONEPAY_SETS]) {
   const set = pair.filter((key) => env[key]);
 
   if (set.length > 0 && set.length < pair.length) {
     const missing = pair.filter((key) => !env[key]);
     throw new Error(
-      `eSewa is partially configured. Missing: ${missing.join(', ')}. ` +
-        'Set both or neither — a half-configured provider fails at checkout.',
+      `${pair[0].split('_')[0]} is partially configured. Missing: ${missing.join(', ')}. ` +
+        'Set all or none — a half-configured provider fails at checkout.',
     );
   }
 }
