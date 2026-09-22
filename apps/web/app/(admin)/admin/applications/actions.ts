@@ -427,6 +427,15 @@ export async function addCredentialAction(
       recordAudit,
     );
 
+    // Through the audited reveal, as registration does: both keys, handed over
+    // once. Never fatal — the signing secret can be revealed later; the client
+    // secret, if this threw, could not.
+    const webhookSecret = await revealWebhookSecret(
+      credential.id,
+      { type: 'admin', id: adminId },
+      recordAudit,
+    ).catch(() => undefined);
+
     /*
      * No revalidatePath here. It re-renders the page with the new credential,
      * which swaps this form for the credential panel and unmounts the one-time
@@ -437,6 +446,7 @@ export async function addCredentialAction(
       message:
         'Created. Copy the secret now — it is not shown again. Add this credential’s domains before it can be used.',
       secret,
+      ...(webhookSecret !== undefined ? { webhookSecret } : {}),
       clientId: credential.clientId,
       applicationId,
       credentialId: credential.id,

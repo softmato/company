@@ -24,6 +24,7 @@ import { ApplicationHeader } from '@/components/admin/application-header';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
 import { CredentialPanel } from '@/components/admin/credential-panel';
 import { KeyLegend } from '@/components/admin/key-legend';
+import { Tabs } from '@/components/ui/tabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,59 +64,67 @@ export default async function ApplicationDetailPage({
           {application.productName}
         </p>
 
-        <section className="mt-8">
-          <ApplicationHeader
-            application={application}
-            scopes={APPLICATION_SCOPES}
-          />
-        </section>
-
-        <div className="mt-10 space-y-8">
-          {MODES.map((mode) => {
-            /*
-             * The panel is about the *live* credential. A revoked one no longer
-             * holds the mode's slot — migration 0009 made the uniqueness
-             * partial — so a mode can hold one live credential and any number of
-             * dead ones, and the panel has to be able to offer a replacement
-             * while still showing what it replaces.
-             */
-            const forMode = application.credentials.filter(
-              (c) => c.mode === mode,
-            );
-            const credential = forMode.find((c) => c.revokedAt === null);
-            const revoked = forMode
-              .filter((c) => c.revokedAt !== null)
-              .sort(
-                (a, b) =>
-                  (b.revokedAt?.getTime() ?? 0) - (a.revokedAt?.getTime() ?? 0),
+        <Tabs
+          className="mt-8"
+          tabs={[
+            {
+              label: 'Permissions',
+              content: (
+                <ApplicationHeader
+                  application={application}
+                  scopes={APPLICATION_SCOPES}
+                />
+              ),
+            },
+            ...MODES.map((mode) => {
+              /*
+               * The panel is about the *live* credential. A revoked one no longer
+               * holds the mode's slot — migration 0009 made the uniqueness
+               * partial — so a mode can hold one live credential and any number of
+               * dead ones, and the panel has to be able to offer a replacement
+               * while still showing what it replaces.
+               */
+              const forMode = application.credentials.filter(
+                (c) => c.mode === mode,
               );
+              const credential = forMode.find((c) => c.revokedAt === null);
+              const revoked = forMode
+                .filter((c) => c.revokedAt !== null)
+                .sort(
+                  (a, b) =>
+                    (b.revokedAt?.getTime() ?? 0) -
+                    (a.revokedAt?.getTime() ?? 0),
+                );
 
-            return (
-              <CredentialPanel
-                key={mode}
-                applicationId={application.id}
-                applicationName={application.name}
-                mode={mode}
-                label={CREDENTIAL_MODE_LABEL[mode]}
-                signingSecret={
-                  mode === 'test' ? application.sandboxSigningSecret : null
-                }
-                credential={credential}
-                revoked={revoked}
-                domains={(credential
-                  ? (application.domainsByCredential[credential.id] ?? [])
-                  : []
-                ).map((domain) => ({
-                  id: domain.id,
-                  hostname: domain.hostname,
-                  note: domain.note,
-                  createdBy: domain.createdBy,
-                  createdAt: domain.createdAt.toISOString(),
-                }))}
-              />
-            );
-          })}
-        </div>
+              return {
+                label: `${CREDENTIAL_MODE_LABEL[mode]} credentials`,
+                content: (
+                  <CredentialPanel
+                    applicationId={application.id}
+                    applicationName={application.name}
+                    mode={mode}
+                    label={CREDENTIAL_MODE_LABEL[mode]}
+                    signingSecret={
+                      mode === 'test' ? application.sandboxSigningSecret : null
+                    }
+                    credential={credential}
+                    revoked={revoked}
+                    domains={(credential
+                      ? (application.domainsByCredential[credential.id] ?? [])
+                      : []
+                    ).map((domain) => ({
+                      id: domain.id,
+                      hostname: domain.hostname,
+                      note: domain.note,
+                      createdBy: domain.createdBy,
+                      createdAt: domain.createdAt.toISOString(),
+                    }))}
+                  />
+                ),
+              };
+            }),
+          ]}
+        />
 
         <p className="mt-10 text-sm">
           <Link

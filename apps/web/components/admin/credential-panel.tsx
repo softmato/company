@@ -494,16 +494,12 @@ function CreateForm({
       </div>
 
       {state?.ok && state.secret ? (
-        <>
-          <SecretReveal secret={state.secret} clientId={state.clientId} />
-          <button
-            type="button"
-            onClick={() => router.refresh()}
-            className="mt-3 text-sm underline underline-offset-4"
-          >
-            Copied — show the credential
-          </button>
-        </>
+        <SecretReveal
+          secret={state.secret}
+          clientId={state.clientId}
+          webhookSecret={state.webhookSecret}
+          onClose={() => router.refresh()}
+        />
       ) : null}
     </form>
   );
@@ -517,6 +513,7 @@ function RotateSecretForm({
   isLive: boolean;
 }) {
   const [state, action] = useActionState(rotateSecretAction, undefined);
+  const [closed, setClosed] = useState<typeof state>();
 
   return (
     <form action={action}>
@@ -534,11 +531,12 @@ function RotateSecretForm({
         <Status state={state} />
       </div>
 
-      {state?.ok && state.secret ? (
+      {state?.ok && state.secret && closed !== state ? (
         <SecretReveal
           secret={state.secret}
           clientId={state.clientId}
           previousSecretExpiresAt={state.previousSecretExpiresAt}
+          onClose={() => setClosed(state)}
         />
       ) : null}
     </form>
