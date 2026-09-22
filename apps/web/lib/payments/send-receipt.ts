@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { after } from 'next/server';
+
 import type { Receipt } from '@softmato/payment-core';
 
 import { receiptAttachment } from '@/lib/documents/attachment';
@@ -25,6 +27,18 @@ import { paymentReceiptEmail } from '@/lib/email/templates/payment-receipt';
  * nowhere to send the receipt.
  */
 export async function sendPaymentReceipt(receipt: Receipt): Promise<void> {
+  /*
+   * After the response, never inline. The caller is still inside the
+   * settlement's database transaction, so from here the payment is not
+   * committed: `buildReceiptDocument` reads on its own connection, could not
+   * see it, and every receipt went out without its PDF. `after()` runs once
+   * the request is done — the transaction has committed or rolled back by
+   * then — and keeps a slow mail provider from holding its row locks.
+   */
+  after(() => deliverReceipt(receipt));
+}
+
+async function deliverReceipt(receipt: Receipt): Promise<void> {
   if (!receipt.payerEmail) {
     console.info(
       `[receipt] ${receipt.receiptNo}: payer has no email address; nothing sent`,
@@ -45,7 +59,14 @@ export async function sendPaymentReceipt(receipt: Receipt): Promise<void> {
    * a delivery problem into an accounting one.
    */
   const document = await buildReceiptDocument(receipt.receiptNo);
-  const attachment = document ? await receiptAttachment(document) : null;
+
+  // Committed, a settled payment always has a document. None means the settlement rolled back: no money, no receipt.
+  if (!document) {
+    console.warn(`[receipt] ${receipt.receiptNo}: payment not settled; nothing sent`);
+    return;
+  }
+
+  const attachment = await receiptAttachment(document);
 
   if (!attachment) {
     console.warn(
