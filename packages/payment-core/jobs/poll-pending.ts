@@ -21,6 +21,7 @@ import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import { transactions, type DbLike, type Transaction } from '@softmato/db';
 
 import type { AuditRecorder } from '../audit';
+import { PROVIDER_IDS } from '../providers/types';
 import type { ReceiptSender } from '../receipts/receipt';
 import { confirmTransaction } from '../transactions/confirm';
 import type { TxnStatus } from '../transactions/state-machine';
@@ -66,6 +67,9 @@ export async function pollPendingTransactions(
     .where(
       and(
         inArray(transactions.status, [...LIVE]),
+        // Gateways only: a pending cash payment waits for an admin, and there
+        // is no gateway to ask about it.
+        inArray(transactions.providerId, [...PROVIDER_IDS]),
         // A transaction never polled has no `next_poll_at` and is due now.
         or(isNull(transactions.nextPollAt), lte(transactions.nextPollAt, now)),
       ),

@@ -261,3 +261,12 @@ export {
   type FiledRefund,
   type RequestRefundInput,
 } from './refunds/request';
+
+export {
+  CASH_PROVIDER,
+  confirmOfflinePayment,
+  recordOfflinePayment,
+  rejectOfflinePayment,
+  type RecordedOfflinePayment,
+  type RecordOfflinePaymentInput,
+} from './offline/cash';

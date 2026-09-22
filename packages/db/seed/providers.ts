@@ -88,4 +88,20 @@ export const providerSeeds: ProviderSeed[] = [
     pollTimeoutSec: 3600,
     sortOrder: 30,
   },
+  {
+    id: 'cash',
+    displayName: 'Cash',
+    /**
+     * Not a gateway: no adapter, never offered at checkout. A cash payment is
+     * filed by an integrator (`POST /v1/offline-payments`) and books to Cash in
+     * Hand only when a Softmato admin confirms it (migration 0015).
+     */
+    isActive: false,
+    balanceAccount: '1010',
+    feeAccount: '5010',
+    supportsRefund: false,
+    supportsCallback: false,
+    requiresPolling: false,
+    sortOrder: 90,
+  },
 ];

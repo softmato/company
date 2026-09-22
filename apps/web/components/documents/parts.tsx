@@ -7,16 +7,9 @@
  */
 import { formatAd, formatBs } from '@/lib/format/date';
 import type { DocumentStatus, Party } from '@/lib/documents/types';
+import { STATUS_LABEL } from '@/lib/documents/wording';
 
-/** What the badge says. Reader's words, not the enum's. */
-const STATUS_LABEL: Record<DocumentStatus, string> = {
-  unpaid: 'Unpaid',
-  partially_paid: 'Part paid',
-  paid: 'Paid',
-  past_due: 'Overdue',
-  void: 'Void',
-  written_off: 'Written off',
-};
+export { vatNote } from '@/lib/documents/wording';
 
 export function StatusBadge({ status }: { status: DocumentStatus }) {
   return (
@@ -72,26 +65,6 @@ export function PartyBlock({
         {party.phone ? <span className="num">{party.phone}</span> : null}
       </p>
     </div>
-  );
-}
-
-/**
- * The single sentence that does the whole of our VAT compliance on this page.
- *
- * Billing spec §5 is precise about this and the precision is the point: we
- * state that no VAT is charged, and we never print a `VAT: 0%` row, because a
- * zero-rate line implies a registration Softmato does not hold.
- *
- * It takes the seller's name rather than hardcoding one. The name at the top
- * of the document comes from `company.legal_name` and reads "Softmato
- * Technology Private Limited"; a footer that said "Pvt. Ltd." instead was two
- * different entities naming themselves on one page, which is exactly the kind
- * of small inconsistency that makes a reader doubt a financial document.
- */
-export function vatNote(sellerName: string): string {
-  return (
-    `${sellerName} is PAN-registered and is not registered for VAT. ` +
-    'No VAT is charged on this document.'
   );
 }
 

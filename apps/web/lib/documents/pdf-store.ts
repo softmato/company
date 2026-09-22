@@ -8,15 +8,16 @@ import {
 import { privateStorageConfigured } from '@/lib/storage/private-client';
 
 import { documentPdfKey, FINGERPRINT_LENGTH } from './object-key';
+import { PDF_LAYOUT } from './pdf';
 import type { InvoiceDocument, ReceiptDocument } from './types';
 
 /**
  * The stored copy of a rendered document.
  *
- * Rendering a PDF means running a browser, which is the slowest and most
- * fragile thing this application does. A document, once rendered, is a fixed
- * sequence of bytes — so it is rendered once and read back afterwards, and the
- * browser only ever runs for a document nobody has printed yet.
+ * A document, once rendered, is a fixed sequence of bytes, so it is drawn
+ * once and read back afterwards — the copy a customer downloads is the copy
+ * that was archived. (Drawing is cheap since `pdf.ts` moved to pdf-lib; the
+ * store is kept as the archive, not as a speed-up.)
  *
  * **Storage being unavailable is not an error.** With no private bucket
  * configured, or with R2 refusing, every function here reports nothing and the
@@ -48,6 +49,9 @@ export function documentKeyFor(
       document.kind === 'invoice' ? document.invoiceNo : document.receiptNo,
     fiscalYear: document.fiscalYear,
     fingerprint: createHash('sha256')
+      // The PDF is drawn from the document, not printed from the HTML, so its
+      // layout version is part of what makes two renders the same.
+      .update(PDF_LAYOUT)
       .update(html, 'utf8')
       .digest('hex')
       .slice(0, FINGERPRINT_LENGTH),

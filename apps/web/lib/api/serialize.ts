@@ -1,6 +1,10 @@
 import 'server-only';
 import type { Invoice, PaymentSession } from '@softmato/db';
-import type { FiledRefund, TransactionView } from '@softmato/payment-core';
+import type {
+  FiledRefund,
+  RecordedOfflinePayment,
+  TransactionView,
+} from '@softmato/payment-core';
 
 /**
  * Database rows → API bodies (docs/API.md §1).
@@ -98,5 +102,24 @@ export function serializeRefund(refund: FiledRefund) {
     status: refund.status,
     created_at: refund.requestedAt.toISOString(),
     note: 'This is a request, not a refund. No money has been returned. A Softmato admin must approve it before anything reaches the customer.',
+  };
+}
+
+/**
+ * Cash, as filed. Like a refund request, it is said out loud that this is a
+ * claim: nothing is booked and no receipt exists until a Softmato admin
+ * confirms it, which arrives as `payment.success` for this `transaction_id`.
+ */
+export function serializeOfflinePayment(payment: RecordedOfflinePayment) {
+  return {
+    object: 'offline_payment',
+    transaction_id: payment.txnNo,
+    invoice_id: payment.invoiceNo,
+    amount_minor: paisa(payment.amountMinor),
+    currency: payment.currency,
+    status: 'pending_confirmation',
+    collected_by: payment.collectedBy,
+    collected_at: payment.collectedAt.toISOString(),
+    note: 'Filed, not booked. A Softmato admin confirms cash against the money handed over; the receipt is issued then.',
   };
 }

@@ -19,7 +19,6 @@ import {
   presentationSchema,
   toStoredPresentation,
 } from '@/lib/documents/presentation';
-import { prerenderInvoicePdf } from '@/lib/documents/prerender';
 import { sellerParty } from '@/lib/documents/seller-query';
 
 /** Amounts are integers in paisa. Never a float, never a string with a dot. */
@@ -125,17 +124,6 @@ export const POST = mutatingEndpoint(
       },
       recordAudit,
     );
-
-    /*
-     * The document goes into the private bucket after this response has been
-     * sent, so the first customer to download it is not the one who waits for
-     * a browser to start. Only for a newly created invoice — a repeat lookup
-     * has already been through here once.
-     *
-     * Scheduled, never awaited, and unable to fail the request: see
-     * `lib/documents/prerender.ts`.
-     */
-    if (created) prerenderInvoicePdf(invoice.invoiceNo);
 
     return {
       // 201 only when something was actually created; a repeat of an

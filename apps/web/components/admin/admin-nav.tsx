@@ -33,6 +33,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     title: 'Money',
     items: [
       { label: 'Payments', href: '/admin/payments' },
+      { label: 'Cash to confirm', href: '/admin/cash' },
       { label: 'Refunds', href: '/admin/refunds' },
       { label: 'Invoices', href: '/admin/invoices' },
       { label: 'Subscriptions', href: '/admin/subscriptions' },

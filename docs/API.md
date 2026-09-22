@@ -251,6 +251,18 @@ Scoped to your application. Another integrator's invoice answers
 `RESOURCE_NOT_FOUND` — the same as one that does not exist, which is the right
 amount to tell a caller with no business knowing either way.
 
+`payments` lists the settled payments behind `paid_minor`, each with the
+`transaction_id` its receipt is filed under (`GET /v1/receipts/{txn_no}`). A
+page your customer returns to can name the real receipt immediately instead of
+waiting for the webhook — so you never need to print a stand-in of your own.
+
+```json
+"payments": [
+  { "transaction_id": "TXN-2083/84-00000008", "amount_minor": 500000,
+    "currency": "NPR", "provider": "Fonepay", "paid_at": "2026-09-22T05:10:00Z" }
+]
+```
+
 ### `GET /v1/receipts/{txn_no}` — scope `payment:read`
 
 The receipt for a settled payment, in the same three formats. The natural
@@ -419,6 +431,24 @@ year is the one the **request** is filed in — not the year of the payment it
 refunds.
 
 ---
+
+### `POST /v1/offline-payments` — scope `offline_payment:record`
+
+Cash your staff took against one of your invoices. **A claim, not a
+payment**: nothing is booked and no receipt exists until a Softmato admin
+confirms it against the money actually handed over. The scope is off by
+default.
+
+```json
+{ "invoice_id": "INV-2083/84-000010", "amount_minor": 500000,
+  "collected_by": "Ram Thapa (field agent)", "reference": "SLIP-0042" }
+```
+
+Answers `201` with `status: "pending_confirmation"` and a `transaction_id`.
+Confirmation arrives as `payment.success` for that `transaction_id` — the
+receipt is emailed then, like any other. A rejection arrives as
+`payment.failed`. Filing more than is still owed, counting cash already
+waiting, is refused.
 
 ## 4. Outbound webhooks
 

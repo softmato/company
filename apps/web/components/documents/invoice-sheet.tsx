@@ -17,6 +17,7 @@
  */
 import { amountInWords } from '@/lib/documents/amount-in-words';
 import type { InvoiceDocument } from '@/lib/documents/types';
+import { isoDay, PAY_NOTE, trimQuantity } from '@/lib/documents/wording';
 import { formatPaisa } from '@/lib/format/money';
 
 import { DocumentDate, PartyBlock, StatusBadge, vatNote } from './parts';
@@ -233,7 +234,7 @@ export function InvoiceSheet({ document }: { document: InvoiceDocument }) {
       ) : null}
 
       <div className="notes">
-        <p>Pay via Khalti · eSewa · Bank transfer.</p>
+        <p>{PAY_NOTE}</p>
         <p>{vatNote(document.seller.name)}</p>
       </div>
 
@@ -243,17 +244,4 @@ export function InvoiceSheet({ document }: { document: InvoiceDocument }) {
       </footer>
     </article>
   );
-}
-
-/** `2026-08-25`. Deliberately ISO in the period column — it is a range, and a
- * range reads faster when both ends are the same fixed width. */
-function isoDay(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
-
-/** `1.000` → `1`, `1.500` → `1.5`. The stored scale is 3; nobody reads that. */
-function trimQuantity(quantity: string): string {
-  return quantity.includes('.')
-    ? quantity.replace(/0+$/, '').replace(/\.$/, '')
-    : quantity;
 }

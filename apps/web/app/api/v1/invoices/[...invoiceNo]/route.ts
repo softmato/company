@@ -20,11 +20,14 @@ import {
 } from '@/lib/api/document-response';
 import { serializeInvoiceDocument } from '@/lib/api/serialize-document';
 import { buildInvoiceDocument } from '@/lib/documents/invoice-document';
+import { findInvoice, paymentsFor } from '@/lib/documents/queries';
 import { env } from '@/lib/env';
 import { apiError } from '@/lib/api/respond';
 import { PaymentError } from '@softmato/payment-core';
 
 export const dynamic = 'force-dynamic';
+
+const SETTLED = new Set(['succeeded', 'partially_refunded', 'refunded']);
 
 /**
  * A PDF may launch a browser; the default 15s is not enough on a cold host.
@@ -55,8 +58,28 @@ export const GET = readEndpoint<{ invoiceNo: string[] }>(
       return documentFile(format, document);
     }
 
+    /*
+     * The settled payments behind `paid_minor`, each with the transaction
+     * number its receipt is filed under. An integrator reading an invoice paid
+     * a moment ago can name the real receipt at once instead of waiting for the
+     * webhook — and so never needs to print a stand-in of its own.
+     */
+    const record = await findInvoice(invoiceNo, application.id);
+    const payments = record ? await paymentsFor(record.id) : [];
+
     return {
-      body: serializeInvoiceDocument(document, documentUrl(invoiceNo)),
+      body: {
+        ...serializeInvoiceDocument(document, documentUrl(invoiceNo)),
+        payments: payments
+          .filter((payment) => SETTLED.has(payment.status))
+          .map((payment) => ({
+            transaction_id: payment.txnNo,
+            amount_minor: Number(payment.grossAmountMinor),
+            currency: payment.currency,
+            provider: payment.providerName,
+            paid_at: payment.succeededAt?.toISOString() ?? null,
+          })),
+      },
     };
   },
 );

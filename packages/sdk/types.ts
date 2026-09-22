@@ -145,6 +145,31 @@ export interface TransactionView {
   succeeded_at: string | null;
 }
 
+export interface RecordOfflinePaymentInput {
+  invoice_id: string;
+  /** Paisa, at most what is still owed. */
+  amount_minor: number;
+  /** Who took the money — they answer for it until it is banked. */
+  collected_by: string;
+  /** ISO 8601. Defaults to now. */
+  collected_at?: string;
+  /** A slip number, if one was written. */
+  reference?: string;
+  note?: string;
+}
+
+export interface OfflinePayment {
+  object: 'offline_payment';
+  transaction_id: string;
+  invoice_id: string;
+  amount_minor: number;
+  currency: string;
+  status: 'pending_confirmation';
+  collected_by: string;
+  collected_at: string;
+  note: string;
+}
+
 export interface CreateRefundInput {
   transaction_id: string;
   /** Paisa. Omit to request the full amount. */
@@ -231,6 +256,21 @@ export interface InvoiceDetail {
   presentation: (Presentation & { version: number }) | null;
   /** Add `?format=pdf` to this URL for the file. */
   document_url: string;
+  /**
+   * The settled payments behind `paid_minor`, each with the transaction
+   * number its receipt is filed under (`GET /v1/receipts/{transaction_id}`).
+   * Absent on deployments older than this field.
+   */
+  payments?: InvoicePayment[];
+}
+
+export interface InvoicePayment {
+  transaction_id: string;
+  amount_minor: number;
+  currency: string;
+  /** Display name: `Fonepay`, `Cash`. */
+  provider: string;
+  paid_at: string | null;
 }
 
 /**

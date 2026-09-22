@@ -22,6 +22,8 @@ const DESCRIPTION: Record<ApplicationScope, string> = {
   'invoice:read': 'Read its own invoices',
   'refund:request': 'Request a refund — approval stays with an admin',
   'customer:read': 'Read its own customers',
+  'offline_payment:record':
+    'File cash its staff took — booked only when an admin confirms it',
 };
 
 export function ScopeCheckboxes({

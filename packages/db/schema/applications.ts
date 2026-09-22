@@ -43,6 +43,12 @@ export const APPLICATION_SCOPES = [
   'invoice:read',
   'refund:request',
   'customer:read',
+  /**
+   * Filing cash (or any money taken outside a gateway) against an invoice.
+   * Off by default and never ticked by the register form: it is a claim by the
+   * integrator's staff, and it books nothing until a Softmato admin confirms it.
+   */
+  'offline_payment:record',
 ] as const;
 
 export type ApplicationScope = (typeof APPLICATION_SCOPES)[number];
@@ -137,7 +143,7 @@ export const applications = pgTable(
     index('applications_product_idx').on(t.productId),
     check(
       'scopes_known',
-      sql`${t.scopes} <@ ARRAY['payment:create','payment:read','invoice:create','invoice:read','refund:request','customer:read']::TEXT[]`,
+      sql`${t.scopes} <@ ARRAY['payment:create','payment:read','invoice:create','invoice:read','refund:request','customer:read','offline_payment:record']::TEXT[]`,
     ),
   ],
 );

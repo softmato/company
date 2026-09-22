@@ -322,32 +322,17 @@ engine at all the download falls back to HTML with an
 
 ### The PDF engine
 
-`lib/documents/pdf.ts` picks one of two, in this order:
+`lib/documents/pdf.ts` draws invoice and receipt PDFs with **pdf-lib**, straight
+from the same `InvoiceDocument` / `ReceiptDocument` values the HTML sheets
+render — no browser, no binary, no configuration, milliseconds per document, in
+any runtime. Figures and fixed wording come from one place (`types.ts`,
+`wording.ts`), so the screen and the PDF can differ in look, never in content.
 
-|                                      |                                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| A Chrome or Edge on the machine      | `CHROME_PATH`, or a standard install location. Every developer, and any container built on a Chrome image. No dependency |
-| Chromium bundled into the deployment | `@sparticuz/chromium` + `puppeteer-core`. **This is the production engine** — Vercel's servers have no browser           |
-
-The local binary wins where there is one: it starts faster than unpacking 65 MB
-of Chromium into `/tmp`, and the bundled build is Linux x64, so on a Mac or on
-Windows it declines and the local path is the only one that runs.
-
-Both packages are in `serverExternalPackages` — `@sparticuz/chromium` finds its
-own binary relative to its package directory, and a bundler that inlines the
-code moves it away from `bin/`. The binary is then traced into the five routes
-that can start a browser (`outputFileTracingIncludes`): the three that read a
-document as PDF, and the two that produce one — `POST /v1/invoices`, and the
-gateway return page and polling job that settle a payment and email its
-receipt. It is 65 MB against a function's size budget, so it goes to those and
-nowhere else.
-
-**A render that came out wrong is served but not stored.** If the Google Fonts
-faces do not arrive the document is laid out in a fallback face and its figures
-lose their tabular alignment; the person who asked still gets a PDF, but the
-key is the document's identity, so archiving that one would answer every future
-request with the wrong typeface. It is returned with a `degraded` reason and
-rendered again next time.
+The faces are the PDF standard Helvetica and Courier (WinAnsi). A document with
+text they cannot draw — a name in Devanagari — is answered `{ ok: false }` and
+served as HTML with the `X-Softmato-PDF-Fallback` header, never garbled and
+never an error. `PDF_LAYOUT` is part of every stored PDF's key; bump it when
+the drawing changes.
 
 Uploads: validate MIME by **magic bytes, not extension**; cap at 5 MB; strip
 EXIF from images. Never trust a client-declared content type.

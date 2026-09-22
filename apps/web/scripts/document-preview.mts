@@ -38,11 +38,11 @@ const alsoPdf = argv.includes('--pdf');
 await mkdir(out, { recursive: true });
 
 const documents = [
-  { name: 'invoice-unpaid', html: invoiceHtml(SAMPLE_INVOICE) },
-  { name: 'invoice-part-paid', html: invoiceHtml(SAMPLE_INVOICE_PART_PAID) },
-  { name: 'invoice-void', html: invoiceHtml(SAMPLE_INVOICE_VOID) },
-  { name: 'receipt-paid', html: receiptHtml(SAMPLE_RECEIPT) },
-  { name: 'receipt-partial', html: receiptHtml(SAMPLE_RECEIPT_PARTIAL) },
+  { name: 'invoice-unpaid', document: SAMPLE_INVOICE, html: invoiceHtml(SAMPLE_INVOICE) },
+  { name: 'invoice-part-paid', document: SAMPLE_INVOICE_PART_PAID, html: invoiceHtml(SAMPLE_INVOICE_PART_PAID) },
+  { name: 'invoice-void', document: SAMPLE_INVOICE_VOID, html: invoiceHtml(SAMPLE_INVOICE_VOID) },
+  { name: 'receipt-paid', document: SAMPLE_RECEIPT, html: receiptHtml(SAMPLE_RECEIPT) },
+  { name: 'receipt-partial', document: SAMPLE_RECEIPT_PARTIAL, html: receiptHtml(SAMPLE_RECEIPT_PARTIAL) },
 ];
 
 for (const { name, html } of documents) {
@@ -53,22 +53,13 @@ for (const { name, html } of documents) {
 }
 
 if (alsoPdf) {
-  // Imported lazily: it is `server-only` in spirit and pulls in child_process,
-  // which the HTML path has no business needing.
-  const { renderPdf, pdfAvailable } = await import('../lib/documents/pdf');
-
-  if (!pdfAvailable()) {
-    console.error(
-      '\nNo Chrome or Edge found. Set CHROME_PATH to render PDFs; the HTML ' +
-        'above prints correctly from a browser in the meantime.',
-    );
-    process.exit(1);
-  }
+  // Drawn by pdf-lib from the same values as the HTML — no browser involved.
+  const { renderPdf } = await import('../lib/documents/pdf');
 
   console.log('');
 
-  for (const { name, html } of documents) {
-    const result = await renderPdf(html);
+  for (const { name, document } of documents) {
+    const result = await renderPdf(document);
 
     if (!result.ok) {
       console.error(`  ${name}.pdf — ${result.reason}`);

@@ -1,116 +1,70 @@
 /**
- * Which engine runs, and what happens when none can.
+ * The PDF is drawn by pdf-lib from the document values — no browser.
  *
- * The order matters — a machine with a real Chrome must use it rather than
- * unpacking 65 MB of Linux Chromium — but the case worth pinning is the last
- * one. **No engine is a supported state, not an error.** Every caller relies
- * on `renderPdf` answering `{ ok: false, reason }` so it can serve the HTML
- * with a header saying so, and an engine addition that turned that into a
- * throw would take out an invoice download on a host where the binary is
- * simply missing.
+ * Pinned here: every sample becomes a real PDF; a long invoice breaks across
+ * pages instead of running off the bottom; and text the standard fonts cannot
+ * draw is refused as `{ ok: false }` — **never thrown, never garbled** — so the
+ * caller serves the HTML exactly as it did when no engine was installed.
  */
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { PDFDocument } from 'pdf-lib';
+import { describe, expect, test } from 'vitest';
 
-const chromeBinary = vi.fn();
-const renderWithChrome = vi.fn();
-const chromiumUsable = vi.fn();
-const renderWithBundledChromium = vi.fn();
+import { renderPdf } from '@/lib/documents/pdf';
+import {
+  SAMPLE_INVOICE,
+  SAMPLE_INVOICE_PART_PAID,
+  SAMPLE_INVOICE_VOID,
+  SAMPLE_RECEIPT,
+  SAMPLE_RECEIPT_PARTIAL,
+} from '@/lib/documents/samples';
 
-vi.mock('@/lib/documents/pdf-chrome', () => ({
-  chromeBinary: () => chromeBinary(),
-  renderWithChrome: (html: string, chrome: string) =>
-    renderWithChrome(html, chrome),
-}));
+async function pages(result: Awaited<ReturnType<typeof renderPdf>>) {
+  if (!result.ok) throw new Error(result.reason);
 
-vi.mock('@/lib/documents/pdf-chromium', () => ({
-  chromiumUsable: () => chromiumUsable(),
-  renderWithBundledChromium: (html: string) => renderWithBundledChromium(html),
-}));
+  expect(result.pdf.subarray(0, 5).toString()).toBe('%PDF-');
 
-const { renderPdf, pdfAvailable } = await import('@/lib/documents/pdf');
-
-beforeEach(() => {
-  chromeBinary.mockReset();
-  renderWithChrome.mockReset();
-  chromiumUsable.mockReset();
-  renderWithBundledChromium.mockReset();
-});
+  return PDFDocument.load(result.pdf);
+}
 
 describe('renderPdf', () => {
-  test('uses a local binary when the machine has one', async () => {
-    chromeBinary.mockReturnValue('/usr/bin/google-chrome');
-    renderWithChrome.mockResolvedValue({ ok: true, pdf: Buffer.from('%PDF-') });
+  test.each([
+    ['invoice, unpaid', SAMPLE_INVOICE],
+    ['invoice, part paid', SAMPLE_INVOICE_PART_PAID],
+    ['invoice, void', SAMPLE_INVOICE_VOID],
+    ['receipt, paid', SAMPLE_RECEIPT],
+    ['receipt, partial', SAMPLE_RECEIPT_PARTIAL],
+  ] as const)('%s → a one-page PDF titled with its number', async (_, document) => {
+    const pdf = await pages(await renderPdf(document));
+    const number = document.kind === 'invoice' ? document.invoiceNo : document.receiptNo;
 
-    await expect(renderPdf('<p>a</p>')).resolves.toEqual({
-      ok: true,
-      pdf: Buffer.from('%PDF-'),
-    });
-
-    expect(renderWithChrome).toHaveBeenCalledWith(
-      '<p>a</p>',
-      '/usr/bin/google-chrome',
-    );
-    expect(renderWithBundledChromium).not.toHaveBeenCalled();
+    expect(pdf.getPageCount()).toBe(1);
+    expect(pdf.getTitle()).toContain(number);
   });
 
-  test('falls to the bundled Chromium where there is no binary — this is Vercel', async () => {
-    chromeBinary.mockReturnValue(null);
-    chromiumUsable.mockReturnValue(true);
-    renderWithBundledChromium.mockResolvedValue({
-      ok: true,
-      pdf: Buffer.from('%PDF-'),
-    });
+  test('a long invoice breaks across pages', async () => {
+    const line = SAMPLE_INVOICE.lines[0]!;
+    const lines = Array.from({ length: 60 }, (_, index) => ({ ...line, lineNo: index + 1 }));
+    const pdf = await pages(await renderPdf({ ...SAMPLE_INVOICE, lines }));
 
-    await expect(renderPdf('<p>a</p>')).resolves.toEqual({
-      ok: true,
-      pdf: Buffer.from('%PDF-'),
-    });
+    expect(pdf.getPageCount()).toBeGreaterThan(1);
   });
 
-  test('says so rather than throwing when neither engine can run', async () => {
-    chromeBinary.mockReturnValue(null);
-    chromiumUsable.mockReturnValue(false);
+  test('typography the fonts lack but can say plainly is drawn, not refused', async () => {
+    const result = await renderPdf({
+      ...SAMPLE_RECEIPT,
+      forDescription: 'Plan − annual → renewal',
+    });
 
-    const result = await renderPdf('<p>a</p>');
+    expect(result.ok).toBe(true);
+  });
+
+  test('a name the fonts cannot draw falls back to HTML instead of printing garbage', async () => {
+    const result = await renderPdf({
+      ...SAMPLE_INVOICE,
+      customer: { ...SAMPLE_INVOICE.customer, name: 'सगरमाथा होस्टल' },
+    });
 
     expect(result.ok).toBe(false);
-    expect(!result.ok && result.reason).toMatch(/CHROME_PATH/);
-    expect(renderWithBundledChromium).not.toHaveBeenCalled();
-  });
-
-  test('a bundled engine that throws is reported, not propagated', async () => {
-    chromeBinary.mockReturnValue(null);
-    chromiumUsable.mockReturnValue(true);
-    renderWithBundledChromium.mockRejectedValue(new Error('CDP hung up'));
-
-    const result = await renderPdf('<p>a</p>');
-
-    expect(result.ok).toBe(false);
-    expect(!result.ok && result.reason).toContain('CDP hung up');
-  });
-
-  test('carries a degraded render through instead of discarding it', async () => {
-    chromeBinary.mockReturnValue(null);
-    chromiumUsable.mockReturnValue(true);
-    renderWithBundledChromium.mockResolvedValue({
-      ok: true,
-      pdf: Buffer.from('%PDF-'),
-      degraded:
-        'Web fonts did not load; the document is set in a fallback face.',
-    });
-
-    const result = await renderPdf('<p>a</p>');
-
-    expect(result.ok && result.degraded).toBeTruthy();
-  });
-});
-
-describe('pdfAvailable', () => {
-  test('answers about this machine, which is what doc:preview asks', () => {
-    chromeBinary.mockReturnValue('/usr/bin/google-chrome');
-    expect(pdfAvailable()).toBe(true);
-
-    chromeBinary.mockReturnValue(null);
-    expect(pdfAvailable()).toBe(false);
+    expect(!result.ok && result.reason).toMatch(/served as HTML/);
   });
 });

@@ -215,14 +215,10 @@ export const transactions = pgTable(
     lastPolledAt: timestamp('last_polled_at', { withTimezone: true }),
 
     /**
-     * Vestigial: these held the screenshot and the approving admin for the
-     * `manual_qr` flow, removed on 2026-08-16. Nothing writes them now — every
-     * payment is confirmed by a gateway, not by a person.
-     *
-     * Left in place rather than dropped. They are nullable and cost nothing,
-     * and dropping columns from the payments table is a destructive migration
-     * that should be its own reviewed change, not a side effect of deleting an
-     * adapter. Drop them once it is certain no historical row uses them.
+     * The admin who confirmed a **cash** payment, and when (see
+     * `cash_needs_second_person`). Gateway payments leave them null. They held
+     * the removed `manual_qr` flow's approvals before 2026-08-16; `proofUrl`
+     * is still unused.
      */
     proofUrl: text('proof_url'),
     approvedBy: bigint('approved_by', { mode: 'number' }),
@@ -271,6 +267,15 @@ export const transactions = pgTable(
     check(
       'succeeded_needs_journal',
       sql`${t.status} NOT IN ('succeeded','refunded','partially_refunded') OR ${t.journalId} IS NOT NULL`,
+    ),
+    /*
+     * Cash is the one payment no gateway vouches for, so it books only on a
+     * second person's word: the integrator's staff file it, a Softmato admin
+     * confirms it (`approved_by`). Enforced here so no code path can skip it.
+     */
+    check(
+      'cash_needs_second_person',
+      sql`${t.providerId} <> 'cash' OR ${t.status} NOT IN ('succeeded','refunded','partially_refunded') OR ${t.approvedBy} IS NOT NULL`,
     ),
   ],
 );

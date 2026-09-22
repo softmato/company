@@ -75,10 +75,6 @@ describe.skipIf(!live || !invoiceNo)('a real invoice, end to end', () => {
       await import('@/lib/documents/invoice-document');
     const { invoiceHtml } = await import('@/lib/documents/render-html');
     const { documentPdf } = await import('@/lib/documents/document-pdf');
-    const { pdfAvailable } = await import('@/lib/documents/pdf');
-
-    expect(pdfAvailable(), 'no Chrome on this machine').toBe(true);
-
     const document = await buildInvoiceDocument(invoiceNo!);
     expect(document, `no invoice ${invoiceNo}`).not.toBeNull();
 

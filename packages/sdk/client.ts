@@ -29,6 +29,8 @@ import type {
   CreateCheckoutInput,
   CreateInvoiceInput,
   CreateRefundInput,
+  OfflinePayment,
+  RecordOfflinePaymentInput,
   DocumentFile,
   Invoice,
   InvoiceDetail,
@@ -262,6 +264,24 @@ export class SoftmatoClient {
     options?: RequestOptions,
   ): Promise<RefundRequest> {
     return this.request<RefundRequest>('POST', '/refunds', input, options);
+  }
+
+  /**
+   * Files cash your staff took against one of your invoices. **It books
+   * nothing yet.**
+   *
+   * The payment is written at `pending_confirmation`. A Softmato admin
+   * confirms it against the money actually handed over; only then is it
+   * booked, the receipt issued, and `payment.success` sent for the returned
+   * `transaction_id`. A rejection arrives as `payment.failed`.
+   *
+   * Needs the `offline_payment:record` scope, which is **off by default**.
+   */
+  recordOfflinePayment(
+    input: RecordOfflinePaymentInput,
+    options?: RequestOptions,
+  ): Promise<OfflinePayment> {
+    return this.request<OfflinePayment>('POST', '/offline-payments', input, options);
   }
 
   /**

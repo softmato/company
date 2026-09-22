@@ -20,8 +20,8 @@ const readDocumentPdf = vi.fn();
 const writeDocumentPdf = vi.fn();
 
 vi.mock('@/lib/documents/pdf', () => ({
-  renderPdf: (html: string) => renderPdf(html),
-  pdfAvailable: () => true,
+  PDF_LAYOUT: 'test-layout',
+  renderPdf: (document: unknown) => renderPdf(document),
 }));
 
 vi.mock('@/lib/documents/pdf-store', async () => {
@@ -129,35 +129,16 @@ describe('documentPdf', () => {
     );
   });
 
-  test('passes a missing engine straight through, and stores nothing', async () => {
+  test('passes an undrawable document straight through, and stores nothing', async () => {
     readDocumentPdf.mockResolvedValue(null);
     renderPdf.mockResolvedValue({
       ok: false,
-      reason: 'No PDF engine configured.',
+      reason: 'The PDF fonts cannot draw it.',
     });
 
     const result = await documentPdf(invoice, '<p>a</p>');
 
-    expect(result).toEqual({ ok: false, reason: 'No PDF engine configured.' });
-    expect(writeDocumentPdf).not.toHaveBeenCalled();
-  });
-
-  test('serves a degraded render but refuses to archive it', async () => {
-    readDocumentPdf.mockResolvedValue(null);
-    renderPdf.mockResolvedValue({
-      ok: true,
-      pdf: Buffer.from('%PDF-wrong-font'),
-      degraded:
-        'Web fonts did not load; the document is set in a fallback face.',
-    });
-
-    const result = await documentPdf(invoice, '<p>a</p>');
-
-    // The person who asked still gets a document...
-    expect(result).toMatchObject({ ok: true, source: 'render' });
-    expect(result.ok && result.degraded).toBeTruthy();
-    // ...but the key is the document's identity, so storing this one would
-    // answer every future request with the wrong typeface, permanently.
+    expect(result).toEqual({ ok: false, reason: 'The PDF fonts cannot draw it.' });
     expect(writeDocumentPdf).not.toHaveBeenCalled();
   });
 
