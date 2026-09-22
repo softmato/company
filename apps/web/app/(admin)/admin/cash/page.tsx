@@ -44,7 +44,9 @@ export default async function AdminCashPage({
       </div>
 
       {message ? (
-        <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-foreground">{message}</p>
+        <p className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-foreground">
+          {message}
+        </p>
       ) : null}
 
       <div className="space-y-3">
@@ -73,14 +75,22 @@ export default async function AdminCashPage({
             <tbody className="divide-y divide-border">
               {decided.map((row) => (
                 <tr key={row.txnNo}>
-                  <td className="numeric px-4 py-3 font-semibold text-foreground">{row.txnNo}</td>
-                  <td className="px-4 py-3 text-foreground">{row.customerName}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{row.collectedBy}</td>
+                  <td className="numeric px-4 py-3 font-semibold text-foreground">
+                    {row.txnNo}
+                  </td>
+                  <td className="px-4 py-3 text-foreground">
+                    {row.customerName}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {row.collectedBy}
+                  </td>
                   <td className="numeric px-4 py-3 text-right text-foreground">
                     {row.currency} {formatPaisa(row.amountMinor)}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {row.status === 'failed' ? (row.failureReason ?? 'Rejected') : 'Confirmed'}
+                    {row.status === 'failed'
+                      ? (row.failureReason ?? 'Rejected')
+                      : 'Confirmed'}
                   </td>
                 </tr>
               ))}
@@ -105,28 +115,78 @@ function CashCard({ row }: { row: CashRow }) {
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Taken by <strong className="text-foreground">{row.collectedBy}</strong>
-          {row.collectedAt ? ` · ${formatAdDateTime(new Date(row.collectedAt))}` : ''}
+          Taken by{' '}
+          <strong className="text-foreground">{row.collectedBy}</strong>
+          {row.collectedAt
+            ? ` · ${formatAdDateTime(new Date(row.collectedAt))}`
+            : ''}
           {row.reference ? ` · slip ${row.reference}` : ''}
         </p>
       </div>
-      {row.note ? <p className="mt-2 text-xs text-muted-foreground">{row.note}</p> : null}
+      {row.note ? (
+        <p className="mt-2 text-xs text-muted-foreground">{row.note}</p>
+      ) : null}
 
       <div className="mt-3 flex flex-wrap gap-4">
-        <form action={confirmCashAction} className="flex flex-wrap items-center gap-2">
+        <form
+          action={confirmCashAction}
+          className="flex flex-wrap items-center gap-2"
+        >
           <input name="txnNo" type="hidden" value={row.txnNo} />
-          <input autoComplete="current-password" className={INPUT} name="password" placeholder="Password" required type="password" />
-          <input autoComplete="one-time-code" className={`${INPUT} w-24`} inputMode="numeric" name="code" placeholder="Code" required />
-          <button className="h-8 rounded-md bg-foreground px-3 text-xs font-semibold text-background" type="submit">
+          <input
+            autoComplete="current-password"
+            className={INPUT}
+            name="password"
+            placeholder="Password"
+            required
+            type="password"
+          />
+          <input
+            autoComplete="one-time-code"
+            className={`${INPUT} w-24`}
+            inputMode="numeric"
+            name="code"
+            placeholder="Code"
+            required
+          />
+          <button
+            className="h-8 rounded-md bg-foreground px-3 text-xs font-semibold text-background"
+            type="submit"
+          >
             Confirm received
           </button>
         </form>
-        <form action={rejectCashAction} className="flex flex-wrap items-center gap-2">
+        <form
+          action={rejectCashAction}
+          className="flex flex-wrap items-center gap-2"
+        >
           <input name="txnNo" type="hidden" value={row.txnNo} />
-          <input className={`${INPUT} w-44`} name="reason" placeholder="Why it is rejected" required />
-          <input autoComplete="current-password" className={INPUT} name="password" placeholder="Password" required type="password" />
-          <input autoComplete="one-time-code" className={`${INPUT} w-24`} inputMode="numeric" name="code" placeholder="Code" required />
-          <button className="h-8 rounded-md border border-border px-3 text-xs font-semibold text-foreground" type="submit">
+          <input
+            className={`${INPUT} w-44`}
+            name="reason"
+            placeholder="Why it is rejected"
+            required
+          />
+          <input
+            autoComplete="current-password"
+            className={INPUT}
+            name="password"
+            placeholder="Password"
+            required
+            type="password"
+          />
+          <input
+            autoComplete="one-time-code"
+            className={`${INPUT} w-24`}
+            inputMode="numeric"
+            name="code"
+            placeholder="Code"
+            required
+          />
+          <button
+            className="h-8 rounded-md border border-border px-3 text-xs font-semibold text-foreground"
+            type="submit"
+          >
             Reject
           </button>
         </form>

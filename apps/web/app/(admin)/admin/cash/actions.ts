@@ -21,7 +21,10 @@ import { reauthenticate } from '../security/reauth';
  * asks for the password and an authenticator code every time, on top of the
  * MFA session — the same bar as revoking a live credential.
  */
-async function decide(form: FormData, run: (txnNo: string, adminId: number) => Promise<string>) {
+async function decide(
+  form: FormData,
+  run: (txnNo: string, adminId: number) => Promise<string>,
+) {
   const adminId = Number(await requireAdmin());
   const txnNo = String(form.get('txnNo') ?? '');
   const me = await reauthenticate(
@@ -58,7 +61,13 @@ async function decide(form: FormData, run: (txnNo: string, adminId: number) => P
 export async function confirmCashAction(form: FormData): Promise<void> {
   await decide(form, async (txnNo, adminId) => {
     const outcome = await db.transaction((tx) =>
-      confirmOfflinePayment(tx, txnNo, adminId, recordAudit, sendPaymentReceipt),
+      confirmOfflinePayment(
+        tx,
+        txnNo,
+        adminId,
+        recordAudit,
+        sendPaymentReceipt,
+      ),
     );
 
     return outcome.state === 'settled'
@@ -73,7 +82,15 @@ export async function rejectCashAction(form: FormData): Promise<void> {
   await decide(form, async (txnNo, adminId) => {
     if (!reason) return 'Say why it is rejected — the integrator is told.';
 
-    await db.transaction((tx) => rejectOfflinePayment(tx, txnNo, adminId, reason.slice(0, 300), recordAudit));
+    await db.transaction((tx) =>
+      rejectOfflinePayment(
+        tx,
+        txnNo,
+        adminId,
+        reason.slice(0, 300),
+        recordAudit,
+      ),
+    );
 
     return `${txnNo} rejected. Nothing was booked.`;
   });

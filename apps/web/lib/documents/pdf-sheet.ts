@@ -135,7 +135,8 @@ export class Sheet {
     const value = plain(raw);
 
     for (const char of value) {
-      if (!this.drawable.has(char.codePointAt(0) ?? 0)) throw new UndrawableText(value);
+      if (!this.drawable.has(char.codePointAt(0) ?? 0))
+        throw new UndrawableText(value);
     }
 
     return value;
@@ -146,7 +147,10 @@ export class Sheet {
     const font = this.fonts[run.face ?? 'sans'];
     const size = run.size ?? 9;
 
-    return font.widthOfTextAtSize(text, size) + (run.tracking ?? 0) * Math.max(0, text.length - 1);
+    return (
+      font.widthOfTextAtSize(text, size) +
+      (run.tracking ?? 0) * Math.max(0, text.length - 1)
+    );
   }
 
   /** One run at `x` on the current line. Does not advance; returns its width. */
@@ -216,7 +220,13 @@ export class Sheet {
   }
 
   /** Wrapped lines from `x`, advancing past each. */
-  paragraph(x: number, raw: string, width: number, run: Run = {}, leading = (run.size ?? 9) + 4): this {
+  paragraph(
+    x: number,
+    raw: string,
+    width: number,
+    run: Run = {},
+    leading = (run.size ?? 9) + 4,
+  ): this {
     for (const line of this.wrap(raw, width, run)) {
       this.ensure(leading);
       this.text(x, line, run);
@@ -226,7 +236,14 @@ export class Sheet {
     return this;
   }
 
-  rule(options: { color?: RGB; from?: number; thickness?: number; to?: number } = {}): this {
+  rule(
+    options: {
+      color?: RGB;
+      from?: number;
+      thickness?: number;
+      to?: number;
+    } = {},
+  ): this {
     this.page.drawLine({
       color: options.color ?? INK.rule,
       end: { x: options.to ?? RIGHT, y: this.y },
@@ -239,7 +256,11 @@ export class Sheet {
 
   /** `BILL TO` — small, tracked, muted caps. */
   eyebrow(x: number, value: string): this {
-    this.text(x, value.toUpperCase(), { color: INK.faint, size: 6.8, tracking: 1.2 });
+    this.text(x, value.toUpperCase(), {
+      color: INK.faint,
+      size: 6.8,
+      tracking: 1.2,
+    });
 
     return this.down(12);
   }
@@ -249,7 +270,12 @@ export class Sheet {
    * Outline, not fill, as on the screen: this is paper, and a border is what a
    * rubber stamp leaves.
    */
-  stamp(x: number, top: number, value: string, color: RGB): { height: number; width: number } {
+  stamp(
+    x: number,
+    top: number,
+    value: string,
+    color: RGB,
+  ): { height: number; width: number } {
     const label = value.toUpperCase();
     const run: Run = { color, face: 'bold', size: 9, tracking: 1.4 };
     const width = this.width(label, run) + 30;
@@ -277,7 +303,13 @@ export class Sheet {
 
   /** A band of the page's tint behind the next `height` points. */
   band(height: number, from = MARGIN.left, to = RIGHT): void {
-    this.page.drawRectangle({ color: INK.band, height, width: to - from, x: from, y: this.y - height });
+    this.page.drawRectangle({
+      color: INK.band,
+      height,
+      width: to - from,
+      x: from,
+      y: this.y - height,
+    });
   }
 
   /** The same footer on every page, then the bytes. */
@@ -295,7 +327,10 @@ export class Sheet {
       if (pages.length > 1) {
         const mark = `Page ${index + 1} of ${pages.length}`;
 
-        this.text((PAGE.width - this.width(mark, { size: 7 })) / 2, mark, { color: INK.faint, size: 7 });
+        this.text((PAGE.width - this.width(mark, { size: 7 })) / 2, mark, {
+          color: INK.faint,
+          size: 7,
+        });
       }
     });
 

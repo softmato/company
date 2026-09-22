@@ -7,11 +7,11 @@ learned from them.
 
 ## Files
 
-| File | What it is |
-| --- | --- |
-| `fonepay-checkout-api.pdf` / `.txt` | "Checkout Intent Flow" API doc v1.10 (May 2026). The `.txt` is a `pdftotext -layout` extraction — read that, the PDF tool here can't render pages. |
-| `fonepay-checkout-brand-guidelines.pdf` / `.txt` | Brand rules for the checkout UI. Mostly images; the `.txt` has the rules. |
-| `fonepay-postman-collection.json` | Fonepay's Postman collection. `username`, `password`, `privateKey`, `accessToken` were **blanked** before committing — fill them locally, never commit them. |
+| File                                             | What it is                                                                                                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `fonepay-checkout-api.pdf` / `.txt`              | "Checkout Intent Flow" API doc v1.10 (May 2026). The `.txt` is a `pdftotext -layout` extraction — read that, the PDF tool here can't render pages.           |
+| `fonepay-checkout-brand-guidelines.pdf` / `.txt` | Brand rules for the checkout UI. Mostly images; the `.txt` has the rules.                                                                                    |
+| `fonepay-postman-collection.json`                | Fonepay's Postman collection. `username`, `password`, `privateKey`, `accessToken` were **blanked** before committing — fill them locally, never commit them. |
 
 ## Status (2026-09-21)
 
@@ -49,9 +49,12 @@ three listeners on the same URL. So the checkout polls the status every 3 s
 (while visible) and the socket only hurries a check. The message, verbatim shape:
 
 ```json
-{"merchantId":"2222040021755313","deviceId":"433ea55d-…",
- "transactionStatus":"{\"traceId\":1296837507,\"remarks1\":\"INV-2000\",\"transactionDate\":\"Sep 21, 2026, 11:04:08 PM\",\"productNumber\":\"<referenceLabel>\",\"amount\":1,\"message\":\"RES000\",\"success\":true,\"commissionType\":\"Charge\",\"commissionAmount\":0.0,\"totalCalculatedAmount\":1,\"paymentSuccess\":true}",
- "socketUrl":"ws://ws.fonepay.com/merchantEndPoint/<deviceId>/<terminal>/N"}
+{
+  "merchantId": "2222040021755313",
+  "deviceId": "433ea55d-…",
+  "transactionStatus": "{\"traceId\":1296837507,\"remarks1\":\"INV-2000\",\"transactionDate\":\"Sep 21, 2026, 11:04:08 PM\",\"productNumber\":\"<referenceLabel>\",\"amount\":1,\"message\":\"RES000\",\"success\":true,\"commissionType\":\"Charge\",\"commissionAmount\":0.0,\"totalCalculatedAmount\":1,\"paymentSuccess\":true}",
+  "socketUrl": "ws://ws.fonepay.com/merchantEndPoint/<deviceId>/<terminal>/N"
+}
 ```
 
 An unpaid QR's status already carries `totalTransactionAmount: "1"`; only trust
@@ -60,7 +63,7 @@ it once `paymentStatus` is `success`.
 ## Our key
 
 - **Private key** — never in this repo. Stored in Bitwarden, item
-  *"Fonepay Checkout – private key (Nabil Bank)"*, and locally at
+  _"Fonepay Checkout – private key (Nabil Bank)"_, and locally at
   `C:\Users\Aanand\.fonepay\fonepay_private_key.pem`. RSA 2048, PKCS#8, unencrypted PEM.
   At runtime it comes from a server secret env var (base64 PKCS#8, no PEM headers,
   same shape as the collection's `privateKey`).
@@ -87,6 +90,7 @@ Base = `{baseUrl}{basePath}`. Dev from the collection:
 comes from the bank.
 
 Every call carries:
+
 - `Content-Type: application/json`
 - `signature: base64(RSA-SHA256(request body))` — sign the **exact bytes sent**.
   Serialize once, sign that string, send that string. The doc's sample signature
@@ -94,27 +98,29 @@ Every call carries:
   re-serialize after signing.
 - `Authorization` — see each endpoint.
 
-| Step | Call | Notes |
-| --- | --- | --- |
-| Login | `POST /login` body `{"username","password"}`, `Authorization: Basic base64(user:pass)` + signature | Returns `accessToken` **already prefixed** `"Bearer …"` — send as-is, don't add another prefix. Also `refreshToken`, `expiresIn: 3600` (seconds). Cache and reuse. |
-| Bank list | `GET /banks/list`, headers `paymentMode: INTENT`, optional `mobileNo`, `Authorization: <accessToken>`, signature (doc marks optional) | Returns `bankDetails[]`: `bankName`, `bankCode`, `bankIcon`, `packageName` (Android), `intentScheme` (e.g. `LXBLNPKA://payment`). What a GET's signature covers is unspecified — ask Fonepay. |
-| Create payment | `POST /generate-intent-qr` body `{amount, billId, terminalId, paymentMode:"QR", referenceLabel, qrType:"INTENT_QR"}` | Returns `qrString`, `qrMessage`, `prn` (= referenceLabel), `websocketId` (wss URL), `qrDisplayName`, `fonepayPanNumber`. 409 on duplicate `referenceLabel`, 400 on validation. |
-| Status | `POST /thirdPartyDynamicQrGetStatus` body `{terminalId, referenceLabel}` | `paymentStatus`: `success` / `pending` / `failed`; `fonepayTraceId`, `requestedAmount`, `totalTransactionAmount`. 409 = terminal not found. **This is the source of truth** — call it server-side before marking anything paid. |
+| Step           | Call                                                                                                                                  | Notes                                                                                                                                                                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login          | `POST /login` body `{"username","password"}`, `Authorization: Basic base64(user:pass)` + signature                                    | Returns `accessToken` **already prefixed** `"Bearer …"` — send as-is, don't add another prefix. Also `refreshToken`, `expiresIn: 3600` (seconds). Cache and reuse.                                                              |
+| Bank list      | `GET /banks/list`, headers `paymentMode: INTENT`, optional `mobileNo`, `Authorization: <accessToken>`, signature (doc marks optional) | Returns `bankDetails[]`: `bankName`, `bankCode`, `bankIcon`, `packageName` (Android), `intentScheme` (e.g. `LXBLNPKA://payment`). What a GET's signature covers is unspecified — ask Fonepay.                                   |
+| Create payment | `POST /generate-intent-qr` body `{amount, billId, terminalId, paymentMode:"QR", referenceLabel, qrType:"INTENT_QR"}`                  | Returns `qrString`, `qrMessage`, `prn` (= referenceLabel), `websocketId` (wss URL), `qrDisplayName`, `fonepayPanNumber`. 409 on duplicate `referenceLabel`, 400 on validation.                                                  |
+| Status         | `POST /thirdPartyDynamicQrGetStatus` body `{terminalId, referenceLabel}`                                                              | `paymentStatus`: `success` / `pending` / `failed`; `fonepayTraceId`, `requestedAmount`, `totalTransactionAmount`. 409 = terminal not found. **This is the source of truth** — call it server-side before marking anything paid. |
 
 Validation: `amount` 1–9,999,999; `referenceLabel` alphanumeric only, ≤30 chars,
 unique per transaction; `terminalId` ≤16; `qrType` fixed `INTENT_QR`. A QR is single-use.
 
 ### Flows
+
 - **Desktop web** — show `qrString` as a QR; open the `websocketId` socket and wait.
 - **Mobile (web or app)** — fetch bank list, user picks a bank, open the socket, then
   deep link `{intentScheme}/?qrPayload={qrMessage}` (doc format:
   `(Issuer Swift Code)://payment/?qrPayload=…`). On Android set the intent's
   package to the bank's `packageName`.
-- **WebSocket** messages carry `transactionStatus` as a JSON *string*: first a
+- **WebSocket** messages carry `transactionStatus` as a JSON _string_: first a
   `QRVerified` message, then one with `paymentSuccess`. Treat the socket as a hint
   only — on any message, or if none arrives, call the Status API.
 
 ## Brand rules (from the guidelines)
+
 - Always written "Checkout by Fonepay". Logo min height 35 px desktop, 30 px in app;
   clearspace = height of the "o"; no recolouring, stretching, outlines or gradients.
 - Desktop QR screen: Fonepay network mark before the logo, logo centred over the QR,
@@ -124,6 +130,7 @@ unique per transaction; `terminalId` ≤16; `qrType` fixed `INTENT_QR`. A QR is 
   available right now. Please choose another BFI option to continue your payment."
 
 ## Cautions
+
 - One integrator reported that Fonepay's dev environment moves real money. This is
   unconfirmed. Ask the bank before making any test payment.
 - `*.pem` is not in `.gitignore`. Never copy the key file into this repo.

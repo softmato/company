@@ -27,11 +27,7 @@ import { allocateDocumentNo, resolveFiscalPeriod } from '@softmato/accounting';
 import type { AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import { providerAdapter } from '../providers/registry';
-import type {
-  BankApp,
-  FormPost,
-  InitiateResult,
-} from '../providers/types';
+import type { BankApp, FormPost, InitiateResult } from '../providers/types';
 import { selectProvider } from '../sessions/select-provider';
 import { transitionSession } from '../sessions/transition';
 import { isTerminal, type TxnStatus } from './state-machine';

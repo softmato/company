@@ -440,8 +440,12 @@ confirms it against the money actually handed over. The scope is off by
 default.
 
 ```json
-{ "invoice_id": "INV-2083/84-000010", "amount_minor": 500000,
-  "collected_by": "Ram Thapa (field agent)", "reference": "SLIP-0042" }
+{
+  "invoice_id": "INV-2083/84-000010",
+  "amount_minor": 500000,
+  "collected_by": "Ram Thapa (field agent)",
+  "reference": "SLIP-0042"
+}
 ```
 
 Answers `201` with `status: "pending_confirmation"` and a `transaction_id`.

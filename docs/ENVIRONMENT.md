@@ -51,14 +51,14 @@ matched by that single line.
 
 Three conditions, and all three must hold (`applications/loopback.ts`):
 
-| Condition                         | Why                                                     |
-| --------------------------------- | ------------------------------------------------------- |
-| `APP_ENV=local`                   | `webhook_url` is fetched by **our** server               |
-| A **Sandbox** credential          | Production never points at loopback, laptop or not       |
-| `localhost` or a `*.localhost` name | Nothing else widens; IPs are still refused outright    |
+| Condition                           | Why                                                 |
+| ----------------------------------- | --------------------------------------------------- |
+| `APP_ENV=local`                     | `webhook_url` is fetched by **our** server          |
+| A **Sandbox** credential            | Production never points at loopback, laptop or not  |
+| `localhost` or a `*.localhost` name | Nothing else widens; IPs are still refused outright |
 
 `APP_ENV` is read straight from `process.env` there rather than through
-`lib/env.ts`, which *defaults* it to `local` — an unset variable is `undefined`,
+`lib/env.ts`, which _defaults_ it to `local` — an unset variable is `undefined`,
 so a deployment that never heard of this flag has the hatch shut.
 
 Bare `localhost` is **not** accepted: `application_domains.hostname` requires at

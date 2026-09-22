@@ -17,7 +17,9 @@ import { vatNote } from './wording';
 
 const VALUE_X = MARGIN.left + 120;
 
-export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array> {
+export async function drawReceipt(
+  document: ReceiptDocument,
+): Promise<Uint8Array> {
   const sheet = await Sheet.open(`Receipt ${document.receiptNo}`);
   const settled = document.balanceDueMinor <= 0n;
 
@@ -35,7 +37,11 @@ export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array
   sheet.down(4);
   sheet.rule({ color: INK.strong, thickness: 1.2 }).down(28);
 
-  sheet.text(MARGIN.left, 'PAYMENT RECEIPT', { face: 'bold', size: 16, tracking: 2.6 });
+  sheet.text(MARGIN.left, 'PAYMENT RECEIPT', {
+    face: 'bold',
+    size: 16,
+    tracking: 2.6,
+  });
   sheet.down(26);
 
   rows([
@@ -46,7 +52,9 @@ export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array
 
   sheet.down(4);
   sheet.rule().down(20);
-  partyBlock(sheet, 'Received from', document.customer, { width: RIGHT - MARGIN.left });
+  partyBlock(sheet, 'Received from', document.customer, {
+    width: RIGHT - MARGIN.left,
+  });
   sheet.down(10);
 
   /* ── The one figure the page is about ── */
@@ -55,12 +63,19 @@ export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array
   sheet.down(18);
   sheet.eyebrow(MARGIN.left + 14, 'Amount received');
   sheet.down(12);
-  sheet.text(MARGIN.left + 14, `${document.currency} ${formatPaisa(document.amountMinor)}`, {
-    face: 'monoBold',
-    size: 22,
-  });
+  sheet.text(
+    MARGIN.left + 14,
+    `${document.currency} ${formatPaisa(document.amountMinor)}`,
+    {
+      face: 'monoBold',
+      size: 22,
+    },
+  );
   sheet.down(20);
-  sheet.text(MARGIN.left + 14, amountInWords(document.amountMinor), { color: INK.soft, size: 8.5 });
+  sheet.text(MARGIN.left + 14, amountInWords(document.amountMinor), {
+    color: INK.soft,
+    size: 8.5,
+  });
   sheet.down(30);
 
   rows([
@@ -71,7 +86,13 @@ export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array
 
   if (document.forDescription) {
     sheet.text(MARGIN.left, 'For', { color: INK.soft, size: 8.5 });
-    sheet.paragraph(VALUE_X, document.forDescription, RIGHT - VALUE_X, { size: 9 }, 12);
+    sheet.paragraph(
+      VALUE_X,
+      document.forDescription,
+      RIGHT - VALUE_X,
+      { size: 9 },
+      12,
+    );
     sheet.down(3);
   }
 
@@ -85,20 +106,38 @@ export async function drawReceipt(document: ReceiptDocument): Promise<Uint8Array
   rows([
     ['Invoice total', formatPaisa(document.invoiceTotalMinor)],
     ['Total received', formatPaisa(document.totalReceivedMinor)],
-    ['Balance due', formatPaisa(document.balanceDueMinor > 0n ? document.balanceDueMinor : 0n)],
+    [
+      'Balance due',
+      formatPaisa(
+        document.balanceDueMinor > 0n ? document.balanceDueMinor : 0n,
+      ),
+    ],
   ]);
 
   const stampLabel = settled ? 'Paid in full' : 'Part payment';
   const stampColor = STATUS_INK[settled ? 'paid' : 'partially_paid'];
-  const stampWidth = sheet.width(stampLabel.toUpperCase(), { face: 'bold', size: 9, tracking: 1.4 }) + 30;
+  const stampWidth =
+    sheet.width(stampLabel.toUpperCase(), {
+      face: 'bold',
+      size: 9,
+      tracking: 1.4,
+    }) + 30;
 
   sheet.stamp(RIGHT - stampWidth, settlementTop + 10, stampLabel, stampColor);
 
   sheet.down(10);
   sheet.rule().down(16);
-  sheet.paragraph(MARGIN.left, vatNote(document.seller.name), RIGHT - MARGIN.left, { color: INK.soft, size: 8 });
+  sheet.paragraph(
+    MARGIN.left,
+    vatNote(document.seller.name),
+    RIGHT - MARGIN.left,
+    { color: INK.soft, size: 8 },
+  );
 
   // Our own trail, printed small: it means nothing to the customer, but it is
   // what an accountant traces the payment through.
-  return sheet.save('Computer-generated receipt. No signature required.', document.journalNo ?? '');
+  return sheet.save(
+    'Computer-generated receipt. No signature required.',
+    document.journalNo ?? '',
+  );
 }

@@ -31,7 +31,8 @@ const NOTES = {
   checking: 'Checking with Fonepay…',
   paid: 'Payment received. Opening your receipt…',
   pending: 'No payment yet. This page updates by itself once you pay.',
-  unreachable: 'We could not reach Fonepay just now. Please check again in a moment.',
+  unreachable:
+    'We could not reach Fonepay just now. Please check again in a moment.',
   noApp:
     "Your selected mobile banking app or wallet isn't available right now. Please choose another BFI option to continue your payment.",
 } as const;
@@ -46,7 +47,12 @@ const BUSY = new Set<keyof typeof NOTES>(['waiting', 'checking', 'paid']);
  */
 const POLL_MS = 3000;
 
-export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrProps) {
+export function FonepayQr({
+  sessionId,
+  qrSvg,
+  socketUrl,
+  bankApps,
+}: FonepayQrProps) {
   const [note, setNote] = useState<keyof typeof NOTES>('waiting');
   const [query, setQuery] = useState('');
   const [checking, startCheck] = useTransition();
@@ -59,7 +65,9 @@ export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrPr
     busy.current = true;
     if (!quiet) setNote('checking');
 
-    const result = await checkPayment(sessionId).catch(() => 'unreachable' as const);
+    const result = await checkPayment(sessionId).catch(
+      () => 'unreachable' as const,
+    );
 
     if (result === 'pending' || result === 'unreachable') {
       busy.current = false;
@@ -107,7 +115,9 @@ export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrPr
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8">
         <div className="flex flex-col items-center gap-3 text-center">
           <ProviderMark id="fonepay" size={36} />
-          <h2 className="text-lg font-semibold text-foreground">Checkout by Fonepay</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Checkout by Fonepay
+          </h2>
         </div>
 
         {bankApps.length > 0 ? (
@@ -133,7 +143,11 @@ export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrPr
                   >
                     {app.icon ? (
                       // eslint-disable-next-line @next/next/no-img-element -- remote host is Fonepay's, not configurable
-                      <img src={app.icon} alt="" className="size-8 object-contain" />
+                      <img
+                        src={app.icon}
+                        alt=""
+                        className="size-8 object-contain"
+                      />
                     ) : null}
                     {app.name}
                   </a>
@@ -159,7 +173,10 @@ export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrPr
             className="flex items-center gap-2 text-center text-sm font-medium text-foreground"
           >
             {BUSY.has(note) ? (
-              <span aria-hidden className="size-2 shrink-0 animate-pulse rounded-full bg-[#ce2027]" />
+              <span
+                aria-hidden
+                className="size-2 shrink-0 animate-pulse rounded-full bg-[#ce2027]"
+              />
             ) : null}
             {NOTES[note]}
           </p>
@@ -169,7 +186,9 @@ export function FonepayQr({ sessionId, qrSvg, socketUrl, bankApps }: FonepayQrPr
           <li>Open your mobile banking app or wallet.</li>
           <li>Scan this QR, or pick your bank above on a phone.</li>
           <li>Check the amount and approve the payment.</li>
-          <li>This page moves on by itself. If it does not, press Check Status.</li>
+          <li>
+            This page moves on by itself. If it does not, press Check Status.
+          </li>
         </ol>
 
         <div className="flex-1" />

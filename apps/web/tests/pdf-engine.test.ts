@@ -33,17 +33,24 @@ describe('renderPdf', () => {
     ['invoice, void', SAMPLE_INVOICE_VOID],
     ['receipt, paid', SAMPLE_RECEIPT],
     ['receipt, partial', SAMPLE_RECEIPT_PARTIAL],
-  ] as const)('%s → a one-page PDF titled with its number', async (_, document) => {
-    const pdf = await pages(await renderPdf(document));
-    const number = document.kind === 'invoice' ? document.invoiceNo : document.receiptNo;
+  ] as const)(
+    '%s → a one-page PDF titled with its number',
+    async (_, document) => {
+      const pdf = await pages(await renderPdf(document));
+      const number =
+        document.kind === 'invoice' ? document.invoiceNo : document.receiptNo;
 
-    expect(pdf.getPageCount()).toBe(1);
-    expect(pdf.getTitle()).toContain(number);
-  });
+      expect(pdf.getPageCount()).toBe(1);
+      expect(pdf.getTitle()).toContain(number);
+    },
+  );
 
   test('a long invoice breaks across pages', async () => {
     const line = SAMPLE_INVOICE.lines[0]!;
-    const lines = Array.from({ length: 60 }, (_, index) => ({ ...line, lineNo: index + 1 }));
+    const lines = Array.from({ length: 60 }, (_, index) => ({
+      ...line,
+      lineNo: index + 1,
+    }));
     const pdf = await pages(await renderPdf({ ...SAMPLE_INVOICE, lines }));
 
     expect(pdf.getPageCount()).toBeGreaterThan(1);

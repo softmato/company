@@ -69,7 +69,8 @@ export class FonepayClient {
   }
 
   private async accessToken(): Promise<string> {
-    if (this.token && Date.now() < this.token.expiresAt) return this.token.value;
+    if (this.token && Date.now() < this.token.expiresAt)
+      return this.token.value;
 
     const { username, password } = this.credentials;
     const basic = Buffer.from(`${username}:${password}`).toString('base64');
@@ -118,9 +119,11 @@ export class FonepayClient {
             ? {}
             : {
                 'Content-Type': 'application/json',
-                signature: sign('sha256', Buffer.from(payload), this.key).toString(
-                  'base64',
-                ),
+                signature: sign(
+                  'sha256',
+                  Buffer.from(payload),
+                  this.key,
+                ).toString('base64'),
               }),
           ...headers,
         },
@@ -131,10 +134,14 @@ export class FonepayClient {
 
       return { status: response.status, text: await response.text() };
     } catch (error) {
-      throw new PaymentError('PROVIDER_UNAVAILABLE', 'Could not reach Fonepay', {
-        path,
-        error: String(error),
-      });
+      throw new PaymentError(
+        'PROVIDER_UNAVAILABLE',
+        'Could not reach Fonepay',
+        {
+          path,
+          error: String(error),
+        },
+      );
     }
   }
 }
@@ -150,12 +157,16 @@ function parse<T>(path: string, reply: Reply): T {
   }
 
   if (reply.status < 200 || reply.status >= 300 || !parsed) {
-    throw new PaymentError('PROVIDER_UNAVAILABLE', 'Fonepay rejected the request', {
-      path,
-      status: reply.status,
-      // Truncated: this reaches the log, never the client.
-      body: reply.text.slice(0, 500),
-    });
+    throw new PaymentError(
+      'PROVIDER_UNAVAILABLE',
+      'Fonepay rejected the request',
+      {
+        path,
+        status: reply.status,
+        // Truncated: this reaches the log, never the client.
+        body: reply.text.slice(0, 500),
+      },
+    );
   }
 
   return parsed as T;

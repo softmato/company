@@ -39,7 +39,9 @@ export const POST = mutatingEndpoint(
         invoiceNo: input.invoice_id,
         amountMinor: BigInt(input.amount_minor),
         collectedBy: input.collected_by,
-        ...(input.collected_at ? { collectedAt: new Date(input.collected_at) } : {}),
+        ...(input.collected_at
+          ? { collectedAt: new Date(input.collected_at) }
+          : {}),
         ...(input.reference ? { reference: input.reference } : {}),
         ...(input.note ? { note: input.note } : {}),
       },

@@ -20,13 +20,19 @@ const CONFIG = {
   password: 'secret',
   terminalId: '4271423331147924',
   // Base64 PKCS#8 DER: the shape Fonepay's own collection stores.
-  privateKey: privateKey.export({ format: 'der', type: 'pkcs8' }).toString('base64'),
+  privateKey: privateKey
+    .export({ format: 'der', type: 'pkcs8' })
+    .toString('base64'),
 };
 
 type Route = (headers: Record<string, string>) => [number, unknown];
 
 function gateway(routes: Record<string, Route>) {
-  const calls: { path: string; headers: Record<string, string>; body: string | undefined }[] = [];
+  const calls: {
+    path: string;
+    headers: Record<string, string>;
+    body: string | undefined;
+  }[] = [];
 
   vi.stubGlobal(
     'fetch',
@@ -42,9 +48,16 @@ function gateway(routes: Record<string, Route>) {
   return calls;
 }
 
-const login: Route = () => [200, { accessToken: 'Bearer tok', expiresIn: 3600 }];
+const login: Route = () => [
+  200,
+  { accessToken: 'Bearer tok', expiresIn: 3600 },
+];
 
-const session = { id: 'cs_test_x', invoiceId: 42, amountMinor: 2_500_050n } as never;
+const session = {
+  id: 'cs_test_x',
+  invoiceId: 42,
+  amountMinor: 2_500_050n,
+} as never;
 const txn = { txnNo: 'TXN-1', providerRef: 'abc123' } as never;
 
 afterEach(() => {
@@ -55,18 +68,28 @@ describe('FonepayProviderAdapter', () => {
   it('signs the exact bytes it sends, in rupees, with the token as issued', async () => {
     const calls = gateway({
       '/login': login,
-      '/generate-intent-qr': () => [202, { qrMessage: 'QR 1', websocketId: 'wss://ws' }],
+      '/generate-intent-qr': () => [
+        202,
+        { qrMessage: 'QR 1', websocketId: 'wss://ws' },
+      ],
       '/banks/list': () => [
         200,
         {
           bankDetails: [
-            { bankName: 'Laxmi', bankIcon: 'rel/icon.png', intentScheme: 'LXBLNPKA://payment/' },
+            {
+              bankName: 'Laxmi',
+              bankIcon: 'rel/icon.png',
+              intentScheme: 'LXBLNPKA://payment/',
+            },
           ],
         },
       ],
     });
 
-    const result = await new FonepayProviderAdapter(CONFIG).initiate(session, 'INV-2083/84-000042');
+    const result = await new FonepayProviderAdapter(CONFIG).initiate(
+      session,
+      'INV-2083/84-000042',
+    );
 
     const signIn = calls.find((call) => call.path === '/login')!;
     expect(signIn.headers.Authorization).toBe(
@@ -75,12 +98,21 @@ describe('FonepayProviderAdapter', () => {
 
     const qr = calls.find((call) => call.path === '/generate-intent-qr')!;
     expect(
-      verify('sha256', Buffer.from(qr.body!), publicKey, Buffer.from(qr.headers.signature!, 'base64')),
+      verify(
+        'sha256',
+        Buffer.from(qr.body!),
+        publicKey,
+        Buffer.from(qr.headers.signature!, 'base64'),
+      ),
     ).toBe(true);
     expect(qr.headers.Authorization).toBe('Bearer tok');
 
     const sent = JSON.parse(qr.body!);
-    expect(sent).toMatchObject({ amount: 25000.5, billId: 'INV-2083/84-000042', qrType: 'DYNAMIC_QR' });
+    expect(sent).toMatchObject({
+      amount: 25000.5,
+      billId: 'INV-2083/84-000042',
+      qrType: 'DYNAMIC_QR',
+    });
     expect(sent.referenceLabel).toMatch(/^[a-z0-9]{1,30}$/);
 
     expect(result).toEqual({
@@ -88,9 +120,13 @@ describe('FonepayProviderAdapter', () => {
       qrPayload: 'QR 1',
       socketUrl: 'wss://ws',
       // Relative icon dropped; scheme's trailing slash normalised.
-      bankApps: [{ name: 'Laxmi', deeplink: 'LXBLNPKA://payment/?qrPayload=QR%201' }],
+      bankApps: [
+        { name: 'Laxmi', deeplink: 'LXBLNPKA://payment/?qrPayload=QR%201' },
+      ],
     });
-    expect(calls.find((call) => call.path === '/banks/list')!.headers.signature).toBeUndefined();
+    expect(
+      calls.find((call) => call.path === '/banks/list')!.headers.signature,
+    ).toBeUndefined();
   });
 
   it('still hands over the QR when the bank list is down', async () => {
@@ -100,7 +136,10 @@ describe('FonepayProviderAdapter', () => {
       '/banks/list': () => [500, { message: 'An unexpected error occurred' }],
     });
 
-    const result = await new FonepayProviderAdapter(CONFIG).initiate(session, 'INV-2083/84-000042');
+    const result = await new FonepayProviderAdapter(CONFIG).initiate(
+      session,
+      'INV-2083/84-000042',
+    );
 
     expect(result.qrPayload).toBe('QR');
     expect(result.bankApps).toEqual([]);
@@ -113,7 +152,10 @@ describe('FonepayProviderAdapter', () => {
       requestedAmount: '25000.50',
       fonepayTraceId: 3301232,
     };
-    gateway({ '/login': login, '/thirdPartyDynamicQrGetStatus': () => [200, reply] });
+    gateway({
+      '/login': login,
+      '/thirdPartyDynamicQrGetStatus': () => [200, reply],
+    });
     const adapter = new FonepayProviderAdapter(CONFIG);
 
     await expect(adapter.poll(txn)).resolves.toMatchObject({
@@ -147,7 +189,10 @@ describe('FonepayProviderAdapter', () => {
           rejectNext = false;
           return [401, { error: 'Invalid token' }];
         }
-        return [200, { paymentStatus: 'pending', totalTransactionAmount: '10' }];
+        return [
+          200,
+          { paymentStatus: 'pending', totalTransactionAmount: '10' },
+        ];
       },
     });
     const adapter = new FonepayProviderAdapter(CONFIG);
@@ -158,7 +203,9 @@ describe('FonepayProviderAdapter', () => {
     expect(logins()).toBe(1);
 
     rejectNext = true;
-    await expect(adapter.poll(txn)).resolves.toMatchObject({ status: 'pending' });
+    await expect(adapter.poll(txn)).resolves.toMatchObject({
+      status: 'pending',
+    });
     expect(logins()).toBe(2);
   });
 
@@ -166,19 +213,24 @@ describe('FonepayProviderAdapter', () => {
     const pem = privateKey.export({ format: 'pem', type: 'pkcs8' }).toString();
 
     expect(
-      () => new FonepayProviderAdapter({ ...CONFIG, privateKey: pem.replace(/\n/g, '\\n') }),
+      () =>
+        new FonepayProviderAdapter({
+          ...CONFIG,
+          privateKey: pem.replace(/\n/g, '\\n'),
+        }),
     ).not.toThrow();
-    expect(() => new FonepayProviderAdapter({ ...CONFIG, privateKey: 'not-a-key' })).toThrow(
-      PaymentError,
-    );
+    expect(
+      () => new FonepayProviderAdapter({ ...CONFIG, privateKey: 'not-a-key' }),
+    ).toThrow(PaymentError);
   });
 
   it('refuses to run without credentials', () => {
-    expect(() => new FonepayProviderAdapter({ ...CONFIG, password: ' ' })).toThrow(
-      /FONEPAY_PASSWORD/,
-    );
-    expect(() => new FonepayProviderAdapter({ ...CONFIG, env: 'live', terminalId: '' })).toThrow(
-      /FONEPAY_LIVE_TERMINAL_ID/,
-    );
+    expect(
+      () => new FonepayProviderAdapter({ ...CONFIG, password: ' ' }),
+    ).toThrow(/FONEPAY_PASSWORD/);
+    expect(
+      () =>
+        new FonepayProviderAdapter({ ...CONFIG, env: 'live', terminalId: '' }),
+    ).toThrow(/FONEPAY_LIVE_TERMINAL_ID/);
   });
 });

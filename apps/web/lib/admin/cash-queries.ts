@@ -28,7 +28,12 @@ export interface CashRow {
   approvedAt: Date | null;
 }
 
-type Offline = { collectedBy?: string; collectedAt?: string; reference?: string | null; note?: string | null };
+type Offline = {
+  collectedBy?: string;
+  collectedAt?: string;
+  reference?: string | null;
+  note?: string | null;
+};
 
 export async function listCash(
   mode: CredentialMode,
@@ -55,14 +60,18 @@ export async function listCash(
       and(
         eq(transactions.providerId, CASH_PROVIDER),
         eq(transactions.mode, mode),
-        inArray(transactions.status, statuses as (typeof transactions.status.enumValues)[number][]),
+        inArray(
+          transactions.status,
+          statuses as (typeof transactions.status.enumValues)[number][],
+        ),
       ),
     )
     .orderBy(desc(transactions.createdAt))
     .limit(limit);
 
   return rows.map(({ metadata, ...row }) => {
-    const offline = ((metadata as { offline?: Offline }).offline ?? {}) as Offline;
+    const offline = ((metadata as { offline?: Offline }).offline ??
+      {}) as Offline;
 
     return {
       ...row,

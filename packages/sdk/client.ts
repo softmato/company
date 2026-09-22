@@ -281,7 +281,12 @@ export class SoftmatoClient {
     input: RecordOfflinePaymentInput,
     options?: RequestOptions,
   ): Promise<OfflinePayment> {
-    return this.request<OfflinePayment>('POST', '/offline-payments', input, options);
+    return this.request<OfflinePayment>(
+      'POST',
+      '/offline-payments',
+      input,
+      options,
+    );
   }
 
   /**

@@ -131,7 +131,7 @@ So a Sandbox credential is safe against any deployment, including this one.
 half that matters. Sandbox activity is labelled as such in the ledger and
 hidden from the admin section's default Production view.
 
-What Sandbox does *not* give you is a separate world. It is the same database,
+What Sandbox does _not_ give you is a separate world. It is the same database,
 the same invoice sequence and the same webhook queue — your test invoices sit
 in the real books, marked. Do not read it as a scratch environment you can
 leave a mess in.

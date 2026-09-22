@@ -93,7 +93,12 @@ describe('the deployment gate, which is only half the rule', () => {
 
       expect(isLoopbackAllowed('test', 'redirect')).toBe(true);
       expect(() =>
-        assertLoopbackAllowed('app.localhost', 'test', 'return_url', 'redirect'),
+        assertLoopbackAllowed(
+          'app.localhost',
+          'test',
+          'return_url',
+          'redirect',
+        ),
       ).not.toThrow();
     }
   });

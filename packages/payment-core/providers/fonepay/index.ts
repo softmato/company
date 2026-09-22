@@ -106,7 +106,10 @@ export class FonepayProviderAdapter implements ProviderAdapter {
     });
   }
 
-  async initiate(session: PaymentSession, invoiceNo: string): Promise<InitiateResult> {
+  async initiate(
+    session: PaymentSession,
+    invoiceNo: string,
+  ): Promise<InitiateResult> {
     /*
      * Fonepay's rules: unique per transaction, alphanumeric, at most 30
      * characters. Not the session id — that is a bearer token for the

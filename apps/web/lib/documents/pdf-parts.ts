@@ -46,22 +46,46 @@ export function partyBlock(
   options: { showAbsentPan?: boolean; width: number },
 ): void {
   sheet.eyebrow(MARGIN.left, label);
-  sheet.paragraph(MARGIN.left, party.name, options.width, { face: 'bold', size: 11 }, 14);
+  sheet.paragraph(
+    MARGIN.left,
+    party.name,
+    options.width,
+    { face: 'bold', size: 11 },
+    14,
+  );
 
-  if (party.address) sheet.paragraph(MARGIN.left, party.address, options.width, { color: INK.soft, size: 8.5 }, 11.5);
+  if (party.address)
+    sheet.paragraph(
+      MARGIN.left,
+      party.address,
+      options.width,
+      { color: INK.soft, size: 8.5 },
+      11.5,
+    );
 
   if (party.pan) {
-    sheet.text(MARGIN.left, `PAN: ${party.pan}`, { color: INK.soft, face: 'mono', size: 8.5 });
+    sheet.text(MARGIN.left, `PAN: ${party.pan}`, {
+      color: INK.soft,
+      face: 'mono',
+      size: 8.5,
+    });
     sheet.down(11.5);
   } else if (options.showAbsentPan) {
-    sheet.text(MARGIN.left, 'PAN not recorded', { color: INK.faint, size: 8.5 });
+    sheet.text(MARGIN.left, 'PAN not recorded', {
+      color: INK.faint,
+      size: 8.5,
+    });
     sheet.down(11.5);
   }
 
   for (const line of [party.email, party.phone]) {
     if (!line) continue;
 
-    sheet.text(MARGIN.left, line, { color: INK.soft, face: line === party.phone ? 'mono' : 'sans', size: 8.5 });
+    sheet.text(MARGIN.left, line, {
+      color: INK.soft,
+      face: line === party.phone ? 'mono' : 'sans',
+      size: 8.5,
+    });
     sheet.down(11.5);
   }
 }

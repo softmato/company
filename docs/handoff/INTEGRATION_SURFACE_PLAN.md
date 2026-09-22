@@ -9,9 +9,9 @@
 > `*_LIVE_*` with no fallback. A Sandbox credential is safe against any
 > deployment. `docs/API.md` and `docs/INTEGRATION.md` carry the current
 > position; this file is kept as a record of how it was decided.
-A work order, written 2026-09-03, for the session that makes `@softmato/sdk`
-usable by a real integrator and rebuilds the credential screens around a
-Sandbox / Production split.
+> A work order, written 2026-09-03, for the session that makes `@softmato/sdk`
+> usable by a real integrator and rebuilds the credential screens around a
+> Sandbox / Production split.
 
 **QuestionCall is the first integrator and has one sandbox application already
 registered** (`app_test_questioncall_f3kv9zgz`, product `questioncall`, domain

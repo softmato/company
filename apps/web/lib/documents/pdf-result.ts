@@ -6,5 +6,4 @@
  * header saying so, and a browser prints that perfectly well.
  */
 export type PdfResult =
-  | { ok: true; pdf: Buffer }
-  | { ok: false; reason: string };
+  { ok: true; pdf: Buffer } | { ok: false; reason: string };

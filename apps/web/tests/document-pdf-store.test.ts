@@ -138,7 +138,10 @@ describe('documentPdf', () => {
 
     const result = await documentPdf(invoice, '<p>a</p>');
 
-    expect(result).toEqual({ ok: false, reason: 'The PDF fonts cannot draw it.' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'The PDF fonts cannot draw it.',
+    });
     expect(writeDocumentPdf).not.toHaveBeenCalled();
   });
 

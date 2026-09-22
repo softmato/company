@@ -145,9 +145,17 @@ async function sweep() {
     await db
       .update(transactions)
       .set({ credentialId: null })
-      .where(inArray(transactions.credentialId, credentials.map((c) => c.id)));
+      .where(
+        inArray(
+          transactions.credentialId,
+          credentials.map((c) => c.id),
+        ),
+      );
   }
-  await db.update(invoices).set({ applicationId: null }).where(inArray(invoices.applicationId, ids));
+  await db
+    .update(invoices)
+    .set({ applicationId: null })
+    .where(inArray(invoices.applicationId, ids));
   await db.delete(applications).where(inArray(applications.id, ids));
 }
 
@@ -183,7 +191,9 @@ const file = (invoiceNo: string, amountMinor = TOTAL) =>
   );
 
 const row = async (txnNo: string) =>
-  (await db.select().from(transactions).where(eq(transactions.txnNo, txnNo)))[0]!;
+  (
+    await db.select().from(transactions).where(eq(transactions.txnNo, txnNo))
+  )[0]!;
 
 describe('cash', () => {
   it('is filed as a pending claim that books nothing', async () => {
@@ -195,7 +205,10 @@ describe('cash', () => {
     expect(txn.status).toBe('pending');
     expect(txn.journalId).toBeNull();
 
-    const [inv] = await db.select().from(invoices).where(eq(invoices.invoiceNo, invoiceNo));
+    const [inv] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNo, invoiceNo));
     expect(inv!.paidMinor).toBe(0n);
   });
 
@@ -223,7 +236,10 @@ describe('cash', () => {
     expect(txn.approvedBy).toBe(1);
     expect(txn.journalId).not.toBeNull();
 
-    const [inv] = await db.select().from(invoices).where(eq(invoices.invoiceNo, invoiceNo));
+    const [inv] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNo, invoiceNo));
     expect(inv!.status).toBe('paid');
     expect(inv!.paidMinor).toBe(TOTAL);
   });
@@ -231,7 +247,9 @@ describe('cash', () => {
   it('closes a rejected claim with the reason and books nothing', async () => {
     const filed = await file(await invoice());
 
-    await db.transaction((tx) => rejectOfflinePayment(tx, filed.txnNo, 1, 'No deposit found', audit, NOW));
+    await db.transaction((tx) =>
+      rejectOfflinePayment(tx, filed.txnNo, 1, 'No deposit found', audit, NOW),
+    );
 
     const txn = await row(filed.txnNo);
     expect(txn.status).toBe('failed');
@@ -241,7 +259,9 @@ describe('cash', () => {
 
   it('cannot be marked succeeded without a second person, even by hand', async () => {
     const booked = await file(await invoice());
-    await db.transaction((tx) => confirmOfflinePayment(tx, booked.txnNo, 1, audit, sendReceipt, NOW));
+    await db.transaction((tx) =>
+      confirmOfflinePayment(tx, booked.txnNo, 1, audit, sendReceipt, NOW),
+    );
     const { journalId } = await row(booked.txnNo);
 
     const unconfirmed = await file(await invoice());

@@ -47,9 +47,10 @@ export function CheckoutFlow({
   const [selected, setSelected] = useState(providers[0]?.id ?? null);
   const [error, setError] = useState<string | null>(null);
   const [handover, setHandover] = useState<FormPost | null>(null);
-  const [qr, setQr] = useState<Extract<BeginPaymentResult, { kind: 'qr' }> | null>(
-    null,
-  );
+  const [qr, setQr] = useState<Extract<
+    BeginPaymentResult,
+    { kind: 'qr' }
+  > | null>(null);
   const [pending, startTransition] = useTransition();
 
   // Once a gateway form exists the customer is leaving; nothing else renders.

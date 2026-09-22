@@ -26,13 +26,21 @@
 import { and, eq, sql } from 'drizzle-orm';
 
 import { allocateDocumentNo, resolveFiscalPeriod } from '@softmato/accounting';
-import { invoices, transactions, type DbTx, type Transaction } from '@softmato/db';
+import {
+  invoices,
+  transactions,
+  type DbTx,
+  type Transaction,
+} from '@softmato/db';
 
 import type { AuthenticatedApplication } from '../applications/authenticate';
 import type { AuditRecorder } from '../audit';
 import { PaymentError } from '../errors';
 import type { ReceiptSender } from '../receipts/receipt';
-import { settleTransaction, type SettlementOutcome } from '../transactions/settle';
+import {
+  settleTransaction,
+  type SettlementOutcome,
+} from '../transactions/settle';
 import { transitionTransaction } from '../transactions/transition';
 import { enqueueWebhook } from '../webhooks/enqueue';
 
@@ -101,7 +109,9 @@ export async function recordOfflinePayment(
    * rather than confirmed twice by a busy admin.
    */
   const [waiting] = await tx
-    .select({ total: sql<string>`coalesce(sum(${transactions.grossAmountMinor}), 0)` })
+    .select({
+      total: sql<string>`coalesce(sum(${transactions.grossAmountMinor}), 0)`,
+    })
     .from(transactions)
     .where(
       and(
@@ -111,7 +121,8 @@ export async function recordOfflinePayment(
       ),
     );
 
-  const owed = invoice.totalMinor - invoice.paidMinor - BigInt(waiting?.total ?? 0);
+  const owed =
+    invoice.totalMinor - invoice.paidMinor - BigInt(waiting?.total ?? 0);
 
   if (input.amountMinor > owed) {
     throw new PaymentError(
@@ -154,9 +165,13 @@ export async function recordOfflinePayment(
     .returning();
 
   if (!transaction) {
-    throw new PaymentError('INTERNAL', 'Cash transaction insert returned no row', {
-      invoice_id: invoice.invoiceNo,
-    });
+    throw new PaymentError(
+      'INTERNAL',
+      'Cash transaction insert returned no row',
+      {
+        invoice_id: invoice.invoiceNo,
+      },
+    );
   }
 
   await audit(
@@ -191,12 +206,19 @@ async function pendingCash(tx: DbTx, txnNo: string): Promise<Transaction> {
   const [transaction] = await tx
     .select()
     .from(transactions)
-    .where(and(eq(transactions.txnNo, txnNo), eq(transactions.providerId, CASH_PROVIDER)))
+    .where(
+      and(
+        eq(transactions.txnNo, txnNo),
+        eq(transactions.providerId, CASH_PROVIDER),
+      ),
+    )
     .for('update')
     .limit(1);
 
   if (!transaction) {
-    throw new PaymentError('RESOURCE_NOT_FOUND', 'No such cash payment.', { txnNo });
+    throw new PaymentError('RESOURCE_NOT_FOUND', 'No such cash payment.', {
+      txnNo,
+    });
   }
 
   if (transaction.status !== 'pending') {
@@ -292,7 +314,8 @@ export async function rejectOfflinePayment(
     .where(eq(invoices.id, moved.invoiceId))
     .limit(1);
 
-  if (invoice) await enqueueWebhook(tx, moved, 'payment.failed', invoice.invoiceNo, now);
+  if (invoice)
+    await enqueueWebhook(tx, moved, 'payment.failed', invoice.invoiceNo, now);
 
   return moved;
 }
