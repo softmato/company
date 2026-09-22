@@ -34,7 +34,7 @@
  * close a cycle.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { eq, inArray, like } from 'drizzle-orm';
+import { eq, inArray, like, sql } from 'drizzle-orm';
 
 import {
   applicationCredentials,
@@ -86,6 +86,12 @@ beforeAll(async () => {
     .returning({ id: applications.id });
 
   applicationId = app!.id;
+
+  // A fresh database starts both identities at 1, which would make the
+  // application id and a credential id equal by accident.
+  await db.execute(
+    sql`SELECT setval(pg_get_serial_sequence('application_credentials', 'id'), GREATEST(${applicationId}, (SELECT COALESCE(MAX(id), 0) FROM application_credentials)))`,
+  );
 
   const made = await db
     .insert(applicationCredentials)
