@@ -714,7 +714,7 @@ function RotateWebhookForm({
  * unmounts it — which doubles as the way to clear a revealed secret off the
  * screen.
  */
-function Collapsible({
+export function Collapsible({
   title,
   description,
   action,
@@ -806,7 +806,7 @@ function Revoked({ credentials }: { credentials: CredentialSummary[] }) {
   );
 }
 
-function Status({
+export function Status({
   state,
 }: {
   state: { ok: boolean; message?: string } | undefined;

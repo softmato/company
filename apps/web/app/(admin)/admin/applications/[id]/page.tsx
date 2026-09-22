@@ -23,6 +23,7 @@ import { getApplicationDetail } from '@/lib/applications/queries';
 import { ApplicationHeader } from '@/components/admin/application-header';
 import { Breadcrumbs } from '@/components/admin/breadcrumbs';
 import { CredentialPanel } from '@/components/admin/credential-panel';
+import { DeleteApplicationForm } from '@/components/admin/delete-application-form';
 import { KeyLegend } from '@/components/admin/key-legend';
 import { Tabs } from '@/components/ui/tabs';
 
@@ -70,10 +71,16 @@ export default async function ApplicationDetailPage({
             {
               label: 'Permissions',
               content: (
-                <ApplicationHeader
-                  application={application}
-                  scopes={APPLICATION_SCOPES}
-                />
+                <>
+                  <ApplicationHeader
+                    application={application}
+                    scopes={APPLICATION_SCOPES}
+                  />
+                  <DeleteApplicationForm
+                    applicationId={application.id}
+                    applicationName={application.name}
+                  />
+                </>
               ),
             },
             ...MODES.map((mode) => {

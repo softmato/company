@@ -1,10 +1,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import {
   APPLICATION_SCOPES,
+  applications,
+  db,
   type ApplicationScope,
   type CredentialMode,
 } from '@softmato/db';
@@ -703,4 +707,65 @@ export async function rotateWebhookSecretAction(
   } catch (error) {
     return failure(error);
   }
+}
+
+/**
+ * Deletes an application that never did anything — a test registration, a
+ * duplicate. Its credentials and domains go with it (cascade).
+ *
+ * The database decides what "never did anything" means: every invoice,
+ * session, transaction, webhook event and subscription references the
+ * application without cascade, so one with any history is refused (23503) and
+ * its history stays. Those are revoked, not deleted. Always re-authenticated:
+ * a delete cannot be undone in either mode.
+ */
+export async function deleteApplicationAction(
+  _previous: CredentialResult | undefined,
+  form: FormData,
+): Promise<CredentialResult> {
+  const adminId = await requireAdmin();
+  const applicationId = readId(form, 'applicationId');
+  const gate =
+    applicationId === null ? undefined : await applicationGate(applicationId);
+
+  if (applicationId === null || !gate) {
+    return { ok: false, message: 'Bad application id.' };
+  }
+
+  const mistyped = confirmName(form, gate.name);
+  if (mistyped) return { ...mistyped, message: 'Nothing was deleted.' };
+
+  const refused = await confirmIdentity(adminId, form, applicationId);
+  if (refused) return refused;
+
+  try {
+    await db.delete(applications).where(eq(applications.id, applicationId));
+  } catch (error) {
+    const code =
+      (error as { code?: string }).code ??
+      (error as { cause?: { code?: string } }).cause?.code;
+
+    if (code === '23503') {
+      return {
+        ok: false,
+        message:
+          'This application has payment history, so it stays. Revoke its credentials instead.',
+      };
+    }
+
+    return failure(error);
+  }
+
+  await recordAudit({
+    actorType: 'admin',
+    actorId: adminId,
+    action: 'application.delete',
+    resourceType: 'application',
+    resourceId: String(applicationId),
+    beforeState: { name: gate.name },
+  });
+
+  revalidatePath('/admin/applications');
+  revalidatePath('/admin/products');
+  redirect('/admin/applications');
 }
