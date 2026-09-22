@@ -30,7 +30,12 @@
  * Bare `localhost` can never be stored: `application_domains.hostname` requires
  * two dot-separated labels. Use a subdomain.
  */
-import { applicationCredentials, applications, closeDb, db } from '@softmato/db';
+import {
+  applicationCredentials,
+  applications,
+  closeDb,
+  db,
+} from '@softmato/db';
 import { eq } from 'drizzle-orm';
 
 import {
@@ -99,7 +104,11 @@ const webhookUrl = flag('--webhook-url');
 
 if (add) {
   const created = await addDomain(
-    { credentialId: credential.id, hostname: add, note: flag('--note') ?? null },
+    {
+      credentialId: credential.id,
+      hostname: add,
+      note: flag('--note') ?? null,
+    },
     actor,
     audit,
   );

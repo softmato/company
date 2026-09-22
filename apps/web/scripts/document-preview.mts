@@ -38,11 +38,31 @@ const alsoPdf = argv.includes('--pdf');
 await mkdir(out, { recursive: true });
 
 const documents = [
-  { name: 'invoice-unpaid', document: SAMPLE_INVOICE, html: invoiceHtml(SAMPLE_INVOICE) },
-  { name: 'invoice-part-paid', document: SAMPLE_INVOICE_PART_PAID, html: invoiceHtml(SAMPLE_INVOICE_PART_PAID) },
-  { name: 'invoice-void', document: SAMPLE_INVOICE_VOID, html: invoiceHtml(SAMPLE_INVOICE_VOID) },
-  { name: 'receipt-paid', document: SAMPLE_RECEIPT, html: receiptHtml(SAMPLE_RECEIPT) },
-  { name: 'receipt-partial', document: SAMPLE_RECEIPT_PARTIAL, html: receiptHtml(SAMPLE_RECEIPT_PARTIAL) },
+  {
+    name: 'invoice-unpaid',
+    document: SAMPLE_INVOICE,
+    html: invoiceHtml(SAMPLE_INVOICE),
+  },
+  {
+    name: 'invoice-part-paid',
+    document: SAMPLE_INVOICE_PART_PAID,
+    html: invoiceHtml(SAMPLE_INVOICE_PART_PAID),
+  },
+  {
+    name: 'invoice-void',
+    document: SAMPLE_INVOICE_VOID,
+    html: invoiceHtml(SAMPLE_INVOICE_VOID),
+  },
+  {
+    name: 'receipt-paid',
+    document: SAMPLE_RECEIPT,
+    html: receiptHtml(SAMPLE_RECEIPT),
+  },
+  {
+    name: 'receipt-partial',
+    document: SAMPLE_RECEIPT_PARTIAL,
+    html: receiptHtml(SAMPLE_RECEIPT_PARTIAL),
+  },
 ];
 
 for (const { name, html } of documents) {
