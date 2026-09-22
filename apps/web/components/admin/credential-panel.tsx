@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useActionState, useState, type ReactNode } from 'react';
 
 import type { CredentialMode } from '@softmato/db';
@@ -465,6 +466,7 @@ function CreateForm({
   replacing: boolean;
 }) {
   const [state, action] = useActionState(addCredentialAction, undefined);
+  const router = useRouter();
 
   return (
     <form action={action} className="mt-5 border-t border-border pt-4">
@@ -492,7 +494,16 @@ function CreateForm({
       </div>
 
       {state?.ok && state.secret ? (
-        <SecretReveal secret={state.secret} clientId={state.clientId} />
+        <>
+          <SecretReveal secret={state.secret} clientId={state.clientId} />
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="mt-3 text-sm underline underline-offset-4"
+          >
+            Copied — show the credential
+          </button>
+        </>
       ) : null}
     </form>
   );

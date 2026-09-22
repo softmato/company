@@ -427,8 +427,11 @@ export async function addCredentialAction(
       recordAudit,
     );
 
-    revalidatePath('/admin/applications');
-
+    /*
+     * No revalidatePath here. It re-renders the page with the new credential,
+     * which swaps this form for the credential panel and unmounts the one-time
+     * secret before anyone reads it. The form refreshes once it is copied.
+     */
     return {
       ok: true,
       message:
