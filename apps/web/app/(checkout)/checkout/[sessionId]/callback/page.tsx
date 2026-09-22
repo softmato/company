@@ -64,6 +64,7 @@ export default async function CallbackPage({
         }
         invoiceNo={invoiceNo}
         returnLink={returnLink}
+        autoReturn
       />
     );
   }

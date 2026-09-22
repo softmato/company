@@ -30,6 +30,9 @@ interface CheckoutNoticeProps {
   /** Absent when the session carried no return URL, or its host is no longer
    * registered. The page then renders as it did before this existed. */
   returnLink?: ReturnLink | null;
+  /** Settled only: send the customer back on their own after a beat. Every
+   * other outcome carries a sentence they must read first, so it waits for a click. */
+  autoReturn?: boolean;
 }
 
 export function CheckoutNotice({
@@ -38,6 +41,7 @@ export function CheckoutNotice({
   body,
   invoiceNo,
   returnLink,
+  autoReturn = false,
 }: CheckoutNoticeProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
@@ -58,6 +62,16 @@ export function CheckoutNotice({
             {body}
           </p>
         </div>
+
+        {returnLink && autoReturn ? (
+          <>
+            {/* React hoists this into <head>; no script, so it works with JS off. */}
+            <meta httpEquiv="refresh" content={`3;url=${returnLink.href}`} />
+            <p className="text-xs text-muted-foreground">
+              Taking you back to {returnLink.applicationName}…
+            </p>
+          </>
+        ) : null}
 
         {returnLink ? (
           <p>
