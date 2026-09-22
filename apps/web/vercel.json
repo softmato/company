@@ -1,3 +1,4 @@
 {
-  "regions": ["bom1"]
+  "regions": ["bom1"],
+  "ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- ../.. ':(exclude)../../docs' ':(exclude)../../graphify-out' ':(exclude,glob)../../*.md'"
 }
