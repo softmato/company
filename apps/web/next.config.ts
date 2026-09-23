@@ -96,6 +96,16 @@ const nextConfig: NextConfig = {
     'pg',
     '@neondatabase/serverless',
   ],
+  // The product was renamed HostelHub → HostelPalika; the old URL is indexed.
+  async redirects() {
+    return [
+      {
+        source: '/products/hostelhub',
+        destination: '/products/hostelpalika',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

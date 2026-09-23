@@ -13,20 +13,28 @@ type ProductPageSeed = typeof productPages.$inferInsert;
  * solves and stops short of claiming a screen exists. Add features as they are
  * true.
  */
+/** Also appended to the live row by `scripts/rename-hostelpalika.mts`. */
+export const HOSTELPALIKA_GALLERY = `![HostelPalika hostel admin dashboard on the web and the Android app](/products/hostelpalika/web-and-app.webp)
+
+![HostelPalika Android app: finding a hostel on the map with walking directions](/products/hostelpalika/app-map.webp)`;
+
 export const productPageSeeds: ProductPageSeed[] = [
   {
     productId: 'hostelhub',
-    slug: 'hostelhub',
-    title: 'HostelHub',
+    slug: 'hostelpalika',
+    title: 'HostelPalika',
+    siteUrl: 'https://hostelpalika.com',
+    logoUrl: '/products/hostelpalika/mark.png',
+    screenshotUrl: '/products/hostelpalika/dashboard.webp',
     tagline: 'Hostel management that replaces the register and the group chat.',
     sortOrder: 1,
     metaDescription:
-      'HostelHub — rooms, residents, fees and records for hostels in Nepal, in one place.',
+      'HostelPalika — rooms, residents, fees and records for hostels in Nepal, in one place.',
     body: `Most hostels run on a register, a calculator and a WhatsApp group. It works
 until it doesn't: a room is double-booked, a fee is remembered differently by
 two people, and nobody can say what last month actually came to.
 
-HostelHub is the record everyone works from.
+[HostelPalika](https://hostelpalika.com) is the record everyone works from.
 
 ## What it is for
 
@@ -45,10 +53,15 @@ eSewa, Khalti or bank QR, because that is how people pay. Charges that change
 mid-month, students who leave early, and the fee that was settled in cash —
 all normal, all handled.
 
+## On the web and on Android
+
+${HOSTELPALIKA_GALLERY}
+
 ## Getting it
 
-Sold as a subscription to the hostel, not to the residents — students never pay
-through this system. Talk to us about a trial for your hostel.`,
+Sold as a subscription to the hostel. Hostels sign up and pay for their plan
+on [hostelpalika.com](https://hostelpalika.com), where students also find
+hostels across Nepal.`,
   },
   {
     productId: 'questioncall',

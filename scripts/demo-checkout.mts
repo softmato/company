@@ -217,7 +217,7 @@ async function main(): Promise<void> {
         metadata: {
           presentation: {
             version: 1,
-            plan_name: 'HostelHub Growth — Annual',
+            plan_name: 'HostelPalika Growth — Annual',
             tagline: 'For properties running more than one building.',
             features: [
               'Up to 500 beds across unlimited properties',

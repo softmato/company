@@ -23,7 +23,7 @@ companies who need something built properly.
 
 ## What we do
 
-**We run our own products.** HostelHub and QuestionCall are ours: we designed
+**We run our own products.** HostelPalika and QuestionCall are ours: we designed
 them, we host them, and we answer the phone when something breaks. Running what
 we build is what keeps us honest about how we build it.
 
@@ -56,7 +56,7 @@ working from Kathmandu.
 
 ## Two kinds of work, one company
 
-We started by building products we wanted to exist. HostelHub came out of
+We started by building products we wanted to exist. HostelPalika came out of
 watching hostels run on registers and WhatsApp; QuestionCall came out of the
 same instinct applied to a different problem. Both are live, both are ours, and
 both pay for themselves.
@@ -103,7 +103,7 @@ the source code either way.`,
     slug: 'products',
     title: 'Products',
     metaDescription:
-      'HostelHub and QuestionCall — software Softmato builds, runs and supports.',
+      'HostelPalika and QuestionCall — software Softmato builds, runs and supports.',
     body: `The software we own and operate. We are the ones who host it, patch it,
 and answer when it breaks.
 

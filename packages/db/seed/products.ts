@@ -9,7 +9,7 @@ import type { products } from '../schema/accounts';
 type ProductSeed = typeof products.$inferInsert;
 
 export const productSeeds: ProductSeed[] = [
-  { id: 'hostelhub', name: 'HostelHub', kind: 'saas' },
+  { id: 'hostelhub', name: 'HostelPalika', kind: 'saas' },
   { id: 'questioncall', name: 'QuestionCall', kind: 'saas' },
   { id: 'agency', name: 'Project & Design Work', kind: 'agency' },
   {

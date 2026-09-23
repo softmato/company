@@ -166,6 +166,19 @@ export function Markdown({
             />
           ),
           hr: () => <hr className="mt-8 border-border" />,
+          // Product screenshots. Plain `<img>`: the source is any pasted URL,
+          // and CmsImage's host allowlist needs dimensions a body can't give.
+          img: ({ alt, src }) =>
+            typeof src === 'string' ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={src}
+                alt={alt ?? ''}
+                loading="lazy"
+                decoding="async"
+                className="mt-5 w-full rounded-lg border border-border bg-muted"
+              />
+            ) : null,
         }}
       >
         {children}

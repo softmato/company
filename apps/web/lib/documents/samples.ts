@@ -49,7 +49,7 @@ export const SAMPLE_INVOICE: InvoiceDocument = {
   lines: [
     {
       lineNo: 1,
-      description: 'HostelHub — Annual Plan',
+      description: 'HostelPalika — Annual Plan',
       periodStart: new Date('2026-08-25T00:00:00.000Z'),
       periodEnd: new Date('2027-08-24T00:00:00.000Z'),
       quantity: '1.000',
@@ -67,7 +67,7 @@ export const SAMPLE_INVOICE: InvoiceDocument = {
   status: 'unpaid',
   presentation: {
     version: 1,
-    plan_name: 'HostelHub Growth — Annual',
+    plan_name: 'HostelPalika Growth — Annual',
     tagline: 'For properties running more than one building.',
     features: [
       'Up to 500 beds across unlimited properties',
@@ -135,7 +135,7 @@ export const SAMPLE_RECEIPT: ReceiptDocument = {
   providerName: 'eSewa',
   providerRef: '000GYAH',
   paidAt: new Date('2026-08-26T08:47:00.000Z'),
-  forDescription: 'HostelHub — Annual Plan',
+  forDescription: 'HostelPalika — Annual Plan',
   invoiceTotalMinor: 2_000_000n,
   totalReceivedMinor: 2_000_000n,
   balanceDueMinor: 0n,
