@@ -23,8 +23,6 @@ import { eq, sql, type AnyColumn } from 'drizzle-orm';
 
 import { productPageSeeds } from '../packages/db/seed/marketing/products.ts';
 
-const seed = productPageSeeds.find((p) => p.productId === 'hostelhub');
-if (!seed) throw new Error('No hostelhub product page seed');
 
 const rename = (column: AnyColumn) =>
   sql`replace(${column}, 'HostelHub', 'HostelPalika')`;
@@ -35,19 +33,23 @@ await db.transaction(async (tx) => {
     .set({ name: 'HostelPalika' })
     .where(eq(products.id, 'hostelhub'));
 
-  await tx
-    .update(productPages)
-    .set({
-      slug: seed.slug,
-      title: seed.title,
-      tagline: seed.tagline,
-      metaDescription: seed.metaDescription,
-      body: seed.body,
-      siteUrl: seed.siteUrl,
-      logoUrl: seed.logoUrl,
-      screenshotUrl: seed.screenshotUrl,
-    })
-    .where(eq(productPages.productId, 'hostelhub'));
+  // Both product pages: HostelPalika's rename, and QuestionCall's site link
+  // and logo. Their live copy was still the seed copy, so the seed wins.
+  for (const seed of productPageSeeds) {
+    await tx
+      .update(productPages)
+      .set({
+        slug: seed.slug,
+        title: seed.title,
+        tagline: seed.tagline,
+        metaDescription: seed.metaDescription,
+        body: seed.body,
+        siteUrl: seed.siteUrl,
+        logoUrl: seed.logoUrl,
+        screenshotUrl: seed.screenshotUrl ?? null,
+      })
+      .where(eq(productPages.productId, seed.productId));
+  }
 
   for (const table of [pages, services, blogPosts]) {
     await tx.update(table).set({
@@ -59,10 +61,11 @@ await db.transaction(async (tx) => {
   await tx.update(blogPosts).set({ excerpt: rename(blogPosts.excerpt) });
 });
 
-const [page] = await db
-  .select({ slug: productPages.slug, title: productPages.title })
-  .from(productPages)
-  .where(eq(productPages.productId, 'hostelhub'));
-console.log('Product page now:', page);
+console.log(
+  'Product pages now:',
+  await db
+    .select({ slug: productPages.slug, siteUrl: productPages.siteUrl })
+    .from(productPages),
+);
 
 await closeDb();

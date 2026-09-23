@@ -97,6 +97,7 @@ export async function ProductsSection() {
                   <DeviceScreen
                     title={product.title}
                     screenshotUrl={product.screenshotUrl}
+                    logoUrl={product.logoUrl}
                   />
                 </Parallax>
               </div>

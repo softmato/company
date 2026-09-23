@@ -67,6 +67,8 @@ hostels across Nepal.`,
     productId: 'questioncall',
     slug: 'questioncall',
     title: 'QuestionCall',
+    siteUrl: 'https://questioncall.com',
+    logoUrl: '/products/questioncall/logo.png',
     tagline: 'Practice, questions and live help for students preparing.',
     sortOrder: 2,
     metaDescription:
@@ -74,7 +76,7 @@ hostels across Nepal.`,
     body: `Preparation is mostly two things: enough questions to practise on, and
 someone to ask when a question will not come apart.
 
-QuestionCall puts both in one place.
+[QuestionCall](https://questioncall.com) puts both in one place.
 
 ## What it is for
 

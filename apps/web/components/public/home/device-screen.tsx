@@ -21,9 +21,12 @@ import { CmsImage } from '@/components/public/cms-image';
 export function DeviceScreen({
   title,
   screenshotUrl,
+  logoUrl,
 }: {
   title: string;
   screenshotUrl?: string | null;
+  /** Shown above the name on the lit screen until a screenshot exists. */
+  logoUrl?: string | null;
 }) {
   return (
     <div className="device">
@@ -40,8 +43,18 @@ export function DeviceScreen({
         ) : (
           <div
             aria-hidden="true"
-            className="grid size-full place-items-center p-6"
+            className="grid size-full place-content-center place-items-center gap-5 p-6"
           >
+            {logoUrl ? (
+              <CmsImage
+                src={logoUrl}
+                alt=""
+                width={240}
+                height={130}
+                sizes="240px"
+                className="h-[clamp(4rem,9vw,7rem)] w-auto object-contain"
+              />
+            ) : null}
             <p className="display text-[clamp(1.5rem,3.4vw,2.4rem)] uppercase tracking-[0.22em] text-white/70">
               {title}
             </p>
