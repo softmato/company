@@ -263,6 +263,12 @@ export {
 } from './refunds/request';
 
 export {
+  recordPaidRefund,
+  type PaidRefund,
+  type RecordPaidRefundInput,
+} from './refunds/record-paid';
+
+export {
   CASH_PROVIDER,
   confirmOfflinePayment,
   recordOfflinePayment,

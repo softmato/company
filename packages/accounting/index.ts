@@ -32,3 +32,5 @@ export type {
 } from './rules/invoice-issued';
 export { paymentReceivedJournal } from './rules/payment-received';
 export type { PaymentReceivedInput } from './rules/payment-received';
+export { REFUNDS_AND_RETURNS, refundIssuedJournal } from './rules/refund-issued';
+export type { RefundIssuedInput } from './rules/refund-issued';

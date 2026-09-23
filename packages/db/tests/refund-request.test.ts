@@ -29,12 +29,14 @@ import { applicationCredentials, applications } from '../schema/applications';
 import { customers } from '../schema/customers';
 import { fiscalPeriods } from '../schema/fiscal';
 import { invoices } from '../schema/invoices';
+import { ledgerEntries } from '../schema/ledger';
 import { paymentSessions, refunds, transactions } from '../schema/payments';
 import { accountSeeds } from '../seed/accounts';
 import {
   completePayment,
   generateSessionId,
   isPaymentError,
+  recordPaidRefund,
   requestRefund,
 } from '../../payment-core/index';
 import type { AuthenticatedApplication } from '../../payment-core/applications/authenticate';
@@ -397,5 +399,92 @@ describe('requestRefund', () => {
 
     expect(filed.amountMinor).toBe(1_000_00n);
     expect(filed.status).toBe('requested');
+  });
+});
+
+describe('recordPaidRefund', () => {
+  const ADMIN = 1;
+
+  function pay(refundNo: string, amountMinor: bigint) {
+    return db.transaction((tx) =>
+      recordPaidRefund(
+        tx,
+        { refundNo, amountMinor, providerRefundId: 'FP-REF-1', adminId: ADMIN },
+        audit,
+        NOW,
+      ),
+    );
+  }
+
+  it('books a partial then a full refund: journal, status and balance move together', async () => {
+    const txnNo = await payment(ours.id);
+    const first = await file(ours, txnNo);
+
+    const paid = await pay(first.refundNo, 2_000_00n);
+    expect(paid.amountMinor).toBe(2_000_00n);
+
+    const [row] = await db
+      .select()
+      .from(refunds)
+      .where(eq(refunds.refundNo, first.refundNo));
+    expect(row!.status).toBe('succeeded');
+    expect(row!.providerRefundId).toBe('FP-REF-1');
+    expect(row!.approvedBy).toBe(ADMIN);
+
+    // Out of the Fonepay balance account, into contra-revenue: the invoice had no service window.
+    const lines = await db
+      .select({
+        account: ledgerEntries.accountCode,
+        direction: ledgerEntries.direction,
+        amount: ledgerEntries.amountMinor,
+      })
+      .from(ledgerEntries)
+      .where(eq(ledgerEntries.journalId, row!.journalId!));
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        { account: '4900', direction: 'debit', amount: 2_000_00n },
+        { account: '1033', direction: 'credit', amount: 2_000_00n },
+      ]),
+    );
+
+    let [txn] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.txnNo, txnNo));
+    expect(txn!.status).toBe('partially_refunded');
+    expect(txn!.refundedAmountMinor).toBe(2_000_00n);
+
+    const second = await file(ours, txnNo);
+    expect(second.amountMinor).toBe(GROSS - 2_000_00n);
+    await pay(second.refundNo, second.amountMinor);
+
+    [txn] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.txnNo, txnNo));
+    expect(txn!.status).toBe('refunded');
+    expect(txn!.refundedAmountMinor).toBe(GROSS);
+  });
+
+  it('refuses to book the same refund twice', async () => {
+    const filed = await file(ours, await payment(ours.id));
+    await pay(filed.refundNo, 1_00n);
+
+    const error = await refusal(pay(filed.refundNo, 1_00n));
+    expect(error.code).toBe('INVALID_STATE');
+  });
+
+  it('refuses more than is still refundable, and books nothing', async () => {
+    const txnNo = await payment(ours.id);
+    const filed = await file(ours, txnNo);
+
+    const error = await refusal(pay(filed.refundNo, GROSS + 1n));
+    expect(error.code).toBe('VALIDATION_FAILED');
+
+    const [row] = await db
+      .select()
+      .from(refunds)
+      .where(eq(refunds.refundNo, filed.refundNo));
+    expect(row!.status).toBe('requested');
   });
 });

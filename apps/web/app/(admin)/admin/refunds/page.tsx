@@ -1,16 +1,13 @@
 /**
- * `/admin/refunds` — refund requests, read-only.
+ * `/admin/refunds` — refund requests raised through the API.
  *
- * Replaces a client component over a hardcoded `MOCK_REFUNDS` array with an
- * approve/reject modal wired to `setState`. Pressing approve there changed a
- * colour and nothing else, which is a worse failure than a missing button:
- * somebody would have believed a refund had been issued.
- *
- * Two things have to exist before approval can. Both are shown on the page,
- * so the gap is legible rather than looking like an unfinished screen.
+ * No adapter can execute a refund, so the money goes back through the
+ * provider's own merchant app and "Record refund" books what happened there
+ * and emails the customer (`recordRefundAction`).
  */
 import type { Metadata } from 'next';
 
+import { RecordRefundDialog } from '@/components/admin/record-refund-dialog';
 import { ProviderBadge } from '@/components/brand/provider-badge';
 import { StatusBadge } from '@/components/admin/status-badge';
 import { formatAdDateTime } from '@/lib/format/date';
@@ -22,9 +19,21 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = { title: 'Refunds' };
 
-export default async function AdminRefundsPage() {
+/** Paisa → "12.00", for the amount field; `formatPaisa` adds commas. */
+function rupees(minor: bigint): string {
+  return `${minor / 100n}.${String(minor % 100n).padStart(2, '0')}`;
+}
+
+export default async function AdminRefundsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
   const mode = await adminMode();
-  const rows = await listRefunds(mode);
+  const [{ message }, rows] = await Promise.all([
+    searchParams,
+    listRefunds(mode),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -36,37 +45,18 @@ export default async function AdminRefundsPage() {
         </p>
       </div>
 
-      <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
-        <p className="font-medium text-foreground">
-          Refunds cannot be approved yet, and this screen deliberately offers no
-          button.
+      <p className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+        No provider can execute a refund from here. Send it from the
+        provider&rsquo;s merchant app first, then{' '}
+        <strong className="text-foreground">Record refund</strong> books it and
+        emails the customer the reference.
+      </p>
+
+      {message ? (
+        <p className="rounded-lg border border-border bg-card p-3 text-sm text-foreground">
+          {message}
         </p>
-        <ul className="mt-2 space-y-1.5 leading-relaxed text-muted-foreground">
-          <li>
-            <strong className="text-foreground">
-              No provider can execute one.
-            </strong>{' '}
-            The adapters&rsquo; <code className="font-mono">refund()</code>{' '}
-            methods were removed — two of them reported success without
-            contacting the provider at all, which would have posted reversing
-            entries for money that never went back.
-          </li>
-          <li>
-            <strong className="text-foreground">
-              Approval needs a second person.
-            </strong>{' '}
-            The <code className="font-mono">refund_needs_second_person</code>{' '}
-            constraint requires the approver to differ from the requester, and
-            there is currently one admin. That is a decision for the founder,
-            recorded in <code className="font-mono">docs/MEMORY.md</code>, not
-            something to design around.
-          </li>
-        </ul>
-        <p className="mt-2 text-muted-foreground">
-          Until both are settled, a refund is issued in the provider&rsquo;s own
-          merchant dashboard and recorded here afterwards.
-        </p>
-      </div>
+      ) : null}
 
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
         <div className="overflow-x-auto">
@@ -80,6 +70,7 @@ export default async function AdminRefundsPage() {
                 <th className="px-4 py-3">Reason</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Requested</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -113,6 +104,20 @@ export default async function AdminRefundsPage() {
                   </td>
                   <td className="numeric px-4 py-3 text-[11px] text-muted-foreground">
                     {formatAdDateTime(refund.requestedAt)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    {refund.status === 'requested' ? (
+                      <RecordRefundDialog
+                        refundNo={refund.refundNo}
+                        txnNo={refund.txnNo}
+                        providerName={refund.providerName}
+                        amount={rupees(refund.amountMinor)}
+                      />
+                    ) : refund.providerRefundId ? (
+                      <span className="numeric text-[11px] text-muted-foreground">
+                        Ref {refund.providerRefundId}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
               ))}

@@ -4,8 +4,8 @@
  * The distinction is the whole point of the file, so it is stated here rather
  * than left to be inferred from a status column: this inserts a `refunds` row
  * at `requested` and stops. No money moves, no journal posts, no provider is
- * contacted. An admin approves it later, in the admin panel, and today that
- * panel is read-only.
+ * contacted. An admin pays it back by hand in the provider's merchant app and
+ * records that in the admin panel (`record-paid.ts`).
  *
  * Two things stand in the way of it being more than this, and both are
  * correct:
