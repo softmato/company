@@ -10,6 +10,79 @@ is lost — fill in the rest as you build.
 
 ## Current status
 
+**Session 2026-09-26 built Phase 8 — the client portal — and the read-only
+half of Phase 7, then (founder's asks, same day) moved the portal onto its own
+host, gave it a vibrant look, a live-preview browser, and a home-page chapter.**
+Committed and pushed to `main` on the founder's word. `tsc`, ESLint,
+`next build`, `drizzle-kit check` and the tests are green (bar the 5 clock-skew
+failures below).
+
+- **Migrations `0016_client_portal` and `0017_project_preview` are applied to
+  `softmato-dev`.** Both purely additive (nine new tables; one nullable column
+  with a unique index) — the deployed code runs on them unchanged, and until
+  they are on production `/admin/clients` and the portal error there.
+- **The portal lives only on the agency host** — `agency.localhost:3000`
+  locally, `agency.softmato.com` in production — at clean paths (`/`,
+  `/projects/7`, `/invoices`, `/documents`, `/login`, `/invite/…`). `proxy.ts`
+  rewrites them onto the `(portal)/portal` routes and 307s any `/portal/…` URL
+  on another host there (`lib/portal/origin.ts`). **Vercel preview deployments
+  (`*.vercel.app`) cannot serve the portal** — no subdomain to put it on.
+- **Live preview (`<slug>.softmato.com`).** A project has an optional
+  `preview_slug`; set it on the admin project page. The portal's project page
+  then frames `https://<slug>.softmato.com` in a browser window (reload,
+  desktop / tablet / phone widths, full screen, new tab). Softmato only stores
+  the slug: the site itself is deployed wherever it is built, with
+  `<slug>.softmato.com` added as a domain there (a CNAME in DNS). That site
+  must allow framing by `agency.softmato.com` (no `X-Frame-Options: DENY`, or
+  `frame-ancestors https://agency.softmato.com`). Slugs are one DNS label and
+  may not be one of our own hosts (`lib/projects/preview.ts`).
+- **Home page chapter "Watch your site take shape, live."**
+  (`preview-section.tsx`, copy in `lib/home/live-preview.ts`) sits after "How we
+  work": a drawn browser at `your-project.softmato.com` with a phone beside it,
+  four points, "Start a project". All drawn, no figures or client names.
+- **Portal auth is its own thing.** DB-backed sessions (`client_sessions`,
+  cookie `softmato_portal`, 14 days), argon2id passwords, invitation links
+  (sha256-stored token, 7 days) that also serve as password reset. Nothing in
+  it touches Auth.js or `admin_users`. Sign-in is throttled at 8 failures per
+  email per 15 minutes, counted from `audit_logs`.
+- **Portal email:** invitations go out when the founder ticks "Email the
+  invitation" (default on) or presses "Email … link"; the link is always also
+  shown once to copy. A client's message or review decision emails
+  `COMPANY_EMAIL`; Softmato's message, and a deliverable newly set to review,
+  email every active client person. All via `sendEmail` in `after()` — never
+  blocking, never throwing, suppressed under vitest. None of it was triggered
+  during the build (it would have mailed real inboxes from dev).
+- **`proxy.ts` changed:** on the agency host `/login` and `/enrol` are now
+  rewritten into the portal. Before, `agency.softmato.com/login` served the
+  _admin_ sign-in form.
+- **Add the `agency` DNS record + Vercel domain.** `PORTAL_URL` is optional
+  now: unset, invitation links use the agency sibling of
+  `NEXT_PUBLIC_APP_URL`.
+- **Client invoices come from `clients.customer_id`** — a `customers` row
+  (product `agency`) created with the client. There is still no way to issue
+  an agency invoice from the admin (Phase 6, and it posts to the ledger), so
+  the portal's Invoices page is empty until one is issued to that customer.
+  The portal takes no payment; it links to an open checkout session if one
+  exists.
+- **Found: journals carry no Sandbox/Production mark.** Payments, invoices and
+  refunds do. `lib/ledger/scope.ts` resolves a journal's mode from its source
+  row; every Phase 7 report filters on it and follows the admin mode switch.
+  On `softmato-dev` every payment journal resolves to Sandbox. Worth a proper
+  `mode` column on `journal_entries` — the founder's call, it is the ledger.
+- **Phase 7 writes are not built, deliberately:** period close, expenses, AP,
+  vendor bills, payroll, adding accounts. The database already refuses
+  postings into a closed period, which is exactly why a close button needs the
+  accountant's cut-off rule first — a payment dated inside a closed month that
+  settles late would fail to post.
+- **This machine's clock is ~9.5 h slow.** Presigned R2 URLs made locally are
+  expired on arrival, and `return-url-allowlist.test.ts` fails 5 tests for the
+  same reason. Not a code fault; verified with a corrected signing date.
+- `pnpm portal:demo -- --email <addr>` builds a sample client with a project in
+  every state and prints an invitation link (refuses `APP_ENV=production`).
+  Sample client 1 ("Himalayan Tea Co. (sample)") exists on `softmato-dev`.
+
+---
+
 **Session 16 (2026-09-08) closed
 `docs/handoff/INTEGRATION_SURFACE_PLAN.md`. All eleven items are `☑`.** On
 `feat/application-credentials`, **eight commits ahead of `main`, nothing
@@ -615,8 +688,8 @@ cannot sign in until they finish it.
 | 4 — Khalti                    | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
 | 5 — eSewa                     | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
 | 6 — Invoicing + subscriptions | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
-| 7 — Accounting depth          | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
-| 8 — Client portal             | ⬜ Not started |                                                                                                                                                                                                                                                                                                                                            |
+| 7 — Accounting depth          | 🟡 In progress | Read-only reports built 2026-09-26: CoA, account ledgers, journals, TB, P&L, balance sheet, product P&L, AR aging, CSV. Writes (close, expenses, AP, payroll) wait on the accountant.                                                                                                                                                      |
+| 8 — Client portal             | 🟡 Built       | 2026-09-26. Acceptance 1–2 by `portal-isolation.test.ts`; 3 by presigned-only files; 4 via `touchProject`. Needs `0016` on production, `PORTAL_URL`, the agency DNS record, and a founder browser pass of `/admin/clients`.                                                                                                                |
 | 9 — Fonepay                   | ⬜ Blocked     | Awaiting bank credentials                                                                                                                                                                                                                                                                                                                  |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ accepted · 🔴 blocked

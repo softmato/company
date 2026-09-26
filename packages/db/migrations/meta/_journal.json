@@ -113,6 +113,20 @@
       "when": 1790052517976,
       "tag": "0015_offline_cash",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790357471983,
+      "tag": "0016_client_portal",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790380622951,
+      "tag": "0017_project_preview",
+      "breakpoints": true
     }
   ]
 }

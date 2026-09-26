@@ -198,6 +198,14 @@ const serverSchema = z.object({
    * public bucket must be usable before the private one exists.
    */
   R2_PRIVATE_BUCKET: z.string().optional(),
+
+  /**
+   * Where the client portal is reached, e.g. https://agency.softmato.com.
+   * Invitation links are built on it. Unset, they fall back to
+   * `NEXT_PUBLIC_APP_URL` + `/portal`, which works on every host — the only
+   * address that exists locally and on a preview.
+   */
+  PORTAL_URL: blankAsUnset(z.string().url()),
 });
 
 const publicSchema = z.object({

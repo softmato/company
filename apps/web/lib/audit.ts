@@ -7,7 +7,8 @@
 import 'server-only';
 import { auditLogs, db, type DbTx } from '@softmato/db';
 
-export type AuditActorType = 'admin' | 'application' | 'system';
+/** `client` is a person signed in to the client portal (`client_users.id`). */
+export type AuditActorType = 'admin' | 'application' | 'system' | 'client';
 
 export interface AuditEntry {
   actorType: AuditActorType;

@@ -14,6 +14,30 @@ this file tracks what was delivered.
 
 ### Added
 
+- **Client portal (Phase 8) at agency.softmato.com.** Clients sign in with an
+  invitation link the founder sends, and see each project's stages as a
+  numbered sequence, its key dates, deliverables they can approve or send back
+  with a note, shared files (upload and download, private bucket, five-minute
+  signed links), a message thread, and their invoices with PDF copies and
+  receipts. Every read is scoped to the signed-in client in SQL; another
+  client's id is a 404. Admin side at `/admin/clients`: create clients and
+  portal accounts, re-issue links, turn access off, archive, and edit projects,
+  stages, milestones, deliverables, files and messages. Migration
+  `0016_client_portal`. Served only on the agency host at clean paths;
+  `/portal/…` elsewhere redirects there.
+- **Live preview in the portal.** A project can carry a preview address,
+  `<slug>.softmato.com`; the client's project page shows that site inside a
+  browser frame with reload, desktop / tablet / phone widths, full screen and
+  open-in-new-tab. Set from the admin project page. Migration
+  `0017_project_preview`.
+- **Home page: "Watch your site take shape, live."** A chapter showing the
+  portal's live preview, after "How we work".
+- **Accounting reports (Phase 7, read only).** Chart of accounts with the
+  year's balances, a ledger per account with running balance, a journal
+  browser with drill-through, trial balance, profit and loss, balance sheet,
+  profit and loss by product, receivables aging, and CSV exports including the
+  full general ledger. All follow the admin's Production/Sandbox switch.
+
 - **Checkout by Fonepay.** A dynamic QR on desktop, banking-app links on
   phones, RSA-signed calls to Fonepay's third-party merchant API, and the status
   API as the only thing that settles a payment. The QR page checks every 3 s
@@ -22,6 +46,10 @@ this file tracks what was delivered.
   against the production merchant (2026-09-21). See `docs/fonepay/README.md`.
 
 ### Changed
+
+- **`agency.softmato.com/login` is the client sign-in.** The proxy used to pass
+  `/login` through unchanged on every host, so the agency host served the
+  staff sign-in form.
 
 - **A credential's mode now picks the gateway it transacts against.** A Sandbox
   credential goes to eSewa's and Khalti's sandbox credentials, a Production one

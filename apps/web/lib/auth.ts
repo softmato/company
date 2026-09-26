@@ -21,7 +21,7 @@ import { adminUsers, db } from '@softmato/db';
 
 import { recordAudit } from './audit';
 import { LoginFailure } from './auth-failure';
-import { verifyPassword } from './password.core';
+import { DUMMY_HASH, verifyPassword } from './password.core';
 import { checkTotp } from './totp';
 
 const credentialsSchema = z.object({
@@ -29,14 +29,6 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
   totp: z.string().regex(/^\d{6}$/),
 });
-
-/**
- * A dummy argon2id hash of a random value. Verifying against it when no user
- * exists keeps the response time of "unknown email" indistinguishable from
- * "wrong password", so login cannot be used to enumerate admins.
- */
-const DUMMY_HASH =
-  '$argon2id$v=19$m=19456,t=2,p=1$c29mdG1hdG9kdW1teXNhbHQ$3S8xdOkQ3xW5xk1Jm0GhIfJmXWJ3Xk1XZ0YQ0Zx2Xk0';
 
 export const authConfig = {
   session: { strategy: 'jwt', maxAge: 60 * 60 * 8 },

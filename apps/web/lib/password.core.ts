@@ -31,6 +31,15 @@ export function passwordMinLength(): number {
   return process.env.APP_ENV === 'local' ? 8 : 12;
 }
 
+/**
+ * A dummy argon2id hash of a random value. Verifying against it when no user
+ * exists keeps the response time of "unknown email" indistinguishable from
+ * "wrong password", so a sign-in form cannot be used to enumerate accounts.
+ * Shared by the admin and the client portal sign-ins.
+ */
+export const DUMMY_HASH =
+  '$argon2id$v=19$m=19456,t=2,p=1$c29mdG1hdG9kdW1teXNhbHQ$3S8xdOkQ3xW5xk1Jm0GhIfJmXWJ3Xk1XZ0YQ0Zx2Xk0';
+
 export function hashPassword(plaintext: string): Promise<string> {
   return argon2Hash(plaintext, ARGON2);
 }

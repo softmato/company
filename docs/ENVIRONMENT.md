@@ -194,8 +194,11 @@ R2_PUBLIC_BASE_URL=           # https://pub-<hash>.r2.dev, or a custom domain
 
 # Optional. Derived from R2_ACCOUNT_ID when unset.
 R2_ENDPOINT=                  # https://<account_id>.r2.cloudflarestorage.com
-# Phase 3 onwards. Presigned access only.
+# Phase 3 onwards. Presigned access only. Also holds client-portal files.
 R2_PRIVATE_BUCKET=softmato-data-private
+
+# ── Client portal (Phase 8) ────────────────────────────────
+PORTAL_URL=https://agency.softmato.com   # invitation links; unset → agency sibling of APP_URL
 
 # ── Services ───────────────────────────────────────────────
 RESEND_API_KEY=

@@ -82,6 +82,16 @@ const nextConfig: NextConfig = {
   // This repository maintains its own CLAUDE.md at the root; Next's generated
   // per-app copies are noise.
   agentRules: false,
+  experimental: {
+    serverActions: {
+      /*
+       * Client-portal documents upload through a server action and are capped
+       * at 4 MB (`lib/projects/document-file.ts`); the default 1 MB would
+       * refuse most PDFs. Multipart overhead is why this sits above the cap.
+       */
+      bodySizeLimit: '4.5mb',
+    },
+  },
   // Workspace packages ship TypeScript source, not build output.
   transpilePackages: [
     '@softmato/accounting',

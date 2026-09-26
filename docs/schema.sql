@@ -887,3 +887,115 @@ FROM ledger_entries
 GROUP BY journal_id, currency
 HAVING SUM(CASE WHEN direction = 'debit' THEN amount_minor
                 ELSE -amount_minor END) <> 0;
+
+-- =============================================================================
+-- SECTION 14 — CLIENT PORTAL (Phase 8, migration 0016_client_portal)
+-- =============================================================================
+-- Every row a client can reach hangs off projects.client_id, so tenant
+-- isolation is one join in the query layer (apps/web/lib/portal/queries.ts).
+-- Client accounts never share a table or a cookie with admin_users.
+
+CREATE TYPE project_status     AS ENUM ('active','on_hold','completed','cancelled');
+CREATE TYPE stage_status       AS ENUM ('upcoming','in_progress','done');
+CREATE TYPE deliverable_status AS ENUM ('in_progress','in_review','approved','changes_requested');
+CREATE TYPE portal_party       AS ENUM ('admin','client');
+
+CREATE TABLE clients (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name        TEXT NOT NULL CHECK (length(trim(name)) > 0),
+    customer_id BIGINT NOT NULL UNIQUE REFERENCES customers(id),  -- product 'agency'
+    archived_at TIMESTAMPTZ,                                      -- closes the portal
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE client_users (
+    id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    client_id         BIGINT NOT NULL REFERENCES clients(id),
+    email             TEXT NOT NULL UNIQUE CHECK (email = lower(email)),
+    name              TEXT NOT NULL,
+    password_hash     TEXT,                    -- argon2id; NULL until invite accepted
+    is_active         BOOLEAN NOT NULL DEFAULT TRUE,
+    invite_token_hash TEXT UNIQUE,             -- sha256 of the link token
+    invite_expires_at TIMESTAMPTZ,
+    last_login_at     TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((invite_token_hash IS NULL) = (invite_expires_at IS NULL))
+);
+
+CREATE TABLE client_sessions (
+    id             TEXT PRIMARY KEY,           -- sha256 of the cookie value
+    client_user_id BIGINT NOT NULL REFERENCES client_users(id) ON DELETE CASCADE,
+    expires_at     TIMESTAMPTZ NOT NULL,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE projects (
+    id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    client_id  BIGINT NOT NULL REFERENCES clients(id),
+    name       TEXT NOT NULL CHECK (length(trim(name)) > 0),
+    summary    TEXT NOT NULL DEFAULT '',
+    status     project_status NOT NULL DEFAULT 'active',
+    starts_on  DATE,
+    due_on     DATE CHECK (due_on IS NULL OR starts_on IS NULL OR due_on >= starts_on),
+    preview_slug TEXT UNIQUE CHECK (preview_slug IS NULL OR preview_slug ~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'),  -- <slug>.softmato.com
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE project_stages (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id   BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    position     SMALLINT NOT NULL,
+    name         TEXT NOT NULL CHECK (length(trim(name)) > 0),
+    description  TEXT NOT NULL DEFAULT '',
+    status       stage_status NOT NULL DEFAULT 'upcoming',
+    completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE project_milestones (
+    id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id   BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    title        TEXT NOT NULL CHECK (length(trim(title)) > 0),
+    due_on       DATE,
+    completed_at TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE project_deliverables (
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id  BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    title       TEXT NOT NULL CHECK (length(trim(title)) > 0),
+    description TEXT NOT NULL DEFAULT '',
+    link_url    TEXT CHECK (link_url IS NULL OR link_url ~ '^https?://'),
+    status      deliverable_status NOT NULL DEFAULT 'in_progress',
+    reviewed_at TIMESTAMPTZ,
+    reviewed_by BIGINT REFERENCES client_users(id),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE project_documents (
+    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id     BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    object_key     TEXT NOT NULL UNIQUE,       -- private bucket; presigned GET only
+    file_name      TEXT NOT NULL,
+    content_type   TEXT NOT NULL,              -- from magic bytes
+    size_bytes     INTEGER NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 5242880),
+    uploaded_by    portal_party NOT NULL,
+    admin_user_id  BIGINT REFERENCES admin_users(id),
+    client_user_id BIGINT REFERENCES client_users(id),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((uploaded_by = 'admin'  AND admin_user_id  IS NOT NULL AND client_user_id IS NULL)
+        OR (uploaded_by = 'client' AND client_user_id IS NOT NULL AND admin_user_id  IS NULL))
+);
+
+CREATE TABLE project_messages (
+    id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    project_id     BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    author         portal_party NOT NULL,
+    admin_user_id  BIGINT REFERENCES admin_users(id),
+    client_user_id BIGINT REFERENCES client_users(id),
+    body           TEXT NOT NULL CHECK (length(trim(body)) BETWEEN 1 AND 5000),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((author = 'admin'  AND admin_user_id  IS NOT NULL AND client_user_id IS NULL)
+        OR (author = 'client' AND client_user_id IS NOT NULL AND admin_user_id  IS NULL))
+);

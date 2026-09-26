@@ -4,7 +4,7 @@
  *   softmato.com            → (public)
  *   admin.softmato.com      → (admin)
  *   payment.softmato.com    → (checkout)
- *   agency.softmato.com     → (portal)
+ *   agency.softmato.com     → (portal) — the only host it is served on
  *   developer.softmato.com  → (public), rooted at /developers
  *
  * Route groups are invisible in URLs, so the rewrite targets a real path
@@ -17,6 +17,8 @@
  * check belongs in the admin layout, which can reach the database.
  */
 import { NextResponse, type NextRequest } from 'next/server';
+
+import { agencyOrigin, hasAgencyHost } from './lib/portal/origin';
 
 type Surface = 'public' | 'admin' | 'checkout' | 'portal';
 
@@ -97,6 +99,26 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.rewrite(url);
   }
 
+  // The client portal lives on its own host at clean paths. `/portal/…`
+  // anywhere else — an old link, a bookmark — goes to that host; on the agency
+  // host itself the prefix is dropped, so every page has one URL.
+  if (pathname === '/portal' || pathname.startsWith('/portal/')) {
+    const rest = pathname.slice('/portal'.length) || '/';
+    const proto =
+      request.headers.get('x-forwarded-proto') ??
+      request.nextUrl.protocol.replace(':', '');
+
+    if (surface === 'portal') {
+      return NextResponse.redirect(`${proto}://${host}${rest}${search}`, 307);
+    }
+    if (hasAgencyHost(host.split(':')[0] ?? '')) {
+      return NextResponse.redirect(
+        `${agencyOrigin(`${proto}://${host}`)}${rest}${search}`,
+        307,
+      );
+    }
+  }
+
   // Auth endpoints, the sign-in page and TOTP enrolment are shared across
   // surfaces and must not be rewritten. Without /login here, the admin layout's
   // redirect('/login') lands on admin.softmato.com/login, gets rewritten to
@@ -105,10 +127,14 @@ export function proxy(request: NextRequest): NextResponse {
   // recipient was sent, and under the admin surface it would become
   // /admin/enrol, hit the layout's session guard, and bounce a new admin to a
   // login they cannot yet pass.
+  //
+  // Except on the client portal: its clients have their own sign-in at
+  // agency.softmato.com/login, and agency.softmato.com/login serving the *admin* form would
+  // hand every client the staff login page. There it is rewritten like any
+  // other path.
   if (
     pathname.startsWith('/api/auth') ||
-    pathname === '/login' ||
-    pathname === '/enrol'
+    (surface !== 'portal' && (pathname === '/login' || pathname === '/enrol'))
   ) {
     return NextResponse.next();
   }

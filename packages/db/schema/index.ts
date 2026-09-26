@@ -18,4 +18,5 @@ export * from './reconciliation';
 export * from './audit';
 export * from './cms';
 export * from './settings';
+export * from './portal';
 export * from './views';

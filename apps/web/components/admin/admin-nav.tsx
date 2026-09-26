@@ -42,10 +42,10 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
   {
     title: 'Accounting',
     items: [
-      { label: 'Chart of accounts', phase: 7 },
-      { label: 'Journals', phase: 7 },
-      { label: 'Reports', phase: 7 },
-      { label: 'Periods', phase: 7 },
+      { label: 'Chart of accounts', href: '/admin/accounts' },
+      { label: 'Journals', href: '/admin/journals' },
+      { label: 'Reports', href: '/admin/reports' },
+      { label: 'Periods', href: '/admin/periods' },
       { label: 'Reconciliation', href: '/admin/reconciliation' },
     ],
   },
@@ -56,7 +56,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
       { label: 'Applications', href: '/admin/applications' },
       { label: 'Providers', phase: 3 },
       { label: 'Content', href: '/admin/cms' },
-      { label: 'Clients', phase: 8 },
+      { label: 'Clients', href: '/admin/clients' },
       { label: 'Audit log', href: '/admin/audit' },
       { label: 'Security', href: '/admin/security' },
       { label: 'Settings', href: '/admin/settings' },

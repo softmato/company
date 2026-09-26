@@ -2,7 +2,11 @@
 
 import { useFormStatus } from 'react-dom';
 
-import { Button, type ButtonVariant } from '@/components/ui/button';
+import {
+  Button,
+  type ButtonSize,
+  type ButtonVariant,
+} from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
 /**
@@ -18,16 +22,31 @@ import { Spinner } from '@/components/ui/spinner';
 export function SubmitButton({
   children,
   variant = 'primary',
+  size = 'default',
+  className,
   pendingLabel = 'Working…',
+  ...rest
 }: {
   children: React.ReactNode;
   variant?: ButtonVariant;
+  size?: ButtonSize;
+  className?: string;
   pendingLabel?: string;
-}) {
+} & Pick<
+  React.ComponentProps<'button'>,
+  'name' | 'value' | 'title' | 'aria-label'
+>) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" variant={variant} disabled={pending}>
+    <Button
+      type="submit"
+      variant={variant}
+      size={size}
+      className={className}
+      disabled={pending}
+      {...rest}
+    >
       {pending ? (
         <>
           <Spinner />

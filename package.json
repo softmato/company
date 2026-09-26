@@ -35,7 +35,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
     "rename:hostelpalika": "tsx --env-file-if-exists=.env.local ./scripts/rename-hostelpalika.mts",
     "app:domains": "tsx --env-file-if-exists=.env.local ./scripts/app-domains.mts",
-    "providers": "tsx --env-file-if-exists=.env.local ./scripts/providers.mts"
+    "providers": "tsx --env-file-if-exists=.env.local ./scripts/providers.mts",
+    "portal:demo": "tsx --env-file-if-exists=.env.local ./scripts/portal-demo.mts"
   },
   "pnpm": {
     "overrides": {
