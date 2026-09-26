@@ -1,35 +1,36 @@
-import { DrawIn } from '@/components/motion/draw-in';
-import { StaggerIn } from '@/components/motion/stagger-in';
 import { ToneReveal } from '@/components/motion/tone-reveal';
-import { MarkUnderline } from '@/components/public/marks';
 import { PRINCIPLES_HEADING } from '@/lib/home/sentences';
-import { PRINCIPLES } from '@/lib/home/statements';
+import { listPublishedServices } from '@/lib/cms/public-queries';
 
-import { QualityPile } from './quality-pile';
+import { BelieveFlow } from './believe-flow';
+import { ServiceCards } from './service-cards';
 
 /**
- * What we believe, over a heap of the words that follow from it.
+ * What we believe, drawn as a route: what a client sees on one side, what has
+ * to be right underneath on the other, Softmato in between.
  *
- * **The pile replaces the eclipse.** This section used to be a WebGL light-form
- * with three cards under it, which is the first reference film's shape and a
- * good one — but it was the third luminous object in five sections, and by then
- * the effect had stopped being an event. The second film puts a physics drop
- * here instead: fifteen coloured pills falling into the bottom of the screen
- * and settling in whatever heap they land in. It earns the position because a
- * heap is *not a list* — nothing is first, nothing is ranked, and the reader
- * takes the shape of it rather than reading fourteen items. Fourteen adjectives
- * in a tidy grid would be read, compared, and correctly identified as
- * marketing.
+ * **The diagram replaces the pile.** The word heap was the second reference
+ * film's physics drop; the founder swapped it for the third film's shape — a
+ * blueprint that draws itself, cards that attach to the ends of its lines,
+ * and a current running along the wires once it is built. See
+ * `BelieveFlow` for the frame and `use-believe-motion.ts` for the order.
  *
- * The three principles keep their cards. They are the part with an argument in
- * them and the part that has to survive being read slowly; the pile above is
- * the part that has to survive being scrolled past.
+ * Under it, the published services as plain cards with a beam round each
+ * border — the founder's reference is a Framer agency's services grid. They
+ * replaced the three principle cards, whose copy lives on the About page.
+ * No services published, no grid: the diagram stands on its own.
  *
- * `MarkUnderline` runs under one word of the heading — the film scribbles over
- * two or three words per headline, but its marks are its brand where ours are
- * punctuation, so there is one on this page and one on the close.
+ * One word of the heading is underlined — "right," — through the sentence's
+ * own `mark`, so the stroke is drawn on the word's line box and follows it
+ * wherever the heading wraps. It used to be an overlay placed by percentage,
+ * which landed on "software that" at desktop widths and read as a strike.
+ * The film scribbles over two or three words per headline, but its marks are
+ * its brand where ours are punctuation, so there is one on this page and one
+ * on the close.
  */
-export function PrinciplesSection() {
+export async function PrinciplesSection() {
+  const services = await listPublishedServices();
+
   return (
     <section className="stage px-6 pb-24 pt-20 sm:pb-32 sm:pt-28">
       <div
@@ -47,44 +48,31 @@ export function PrinciplesSection() {
           six-word heading into a column of single words. Measures in `ch` only
           go on the element whose font they are meant to measure.
         */}
-        <div className="mx-auto max-w-[40rem] text-center">
+        <div className="relative z-10 mx-auto max-w-[40rem] text-center">
           <p className="eyebrow">What we believe</p>
 
-          <span className="relative mt-6 block">
-            <ToneReveal
-              sentence={PRINCIPLES_HEADING}
-              className="headline mx-auto max-w-[16ch] text-[clamp(2rem,5.2vw,3.75rem)] leading-[1.06]"
-            />
-            {/*
-              The mark is sized and placed against the word "right," which sits
-              at the end of the second visual line at every width the heading
-              takes. Anchored to the heading block rather than wrapped around
-              the word itself: wrapping it would put a positioned element inside
-              the run that `ToneReveal` splits.
-            */}
-            <DrawIn
-              className="pointer-events-none absolute inset-x-[18%] top-[46%] h-4 text-primary"
-              delay={0.35}
-            >
-              <MarkUnderline />
-            </DrawIn>
-          </span>
+          <ToneReveal
+            sentence={PRINCIPLES_HEADING}
+            className="headline mx-auto mt-6 max-w-[16ch] text-[clamp(2rem,5.2vw,3.75rem)] leading-[1.06]"
+          />
         </div>
 
         <div className="mt-14">
-          <QualityPile />
+          <BelieveFlow />
         </div>
 
-        <StaggerIn onScroll className="mt-12 grid gap-4 sm:grid-cols-3">
-          {PRINCIPLES.map((principle) => (
-            <article key={principle.title} className="section-frame p-6">
-              <h3 className="headline text-[18px]">{principle.title}</h3>
-              <p className="mt-3 text-[14.5px] leading-relaxed text-muted-foreground">
-                {principle.body}
-              </p>
-            </article>
-          ))}
-        </StaggerIn>
+        {services.length > 0 && (
+          <div className="mt-16">
+            <p className="mx-auto w-fit rounded-full border border-border bg-card px-3 py-1 text-[12.5px] font-medium">
+              Services
+            </p>
+            <div className="mt-6">
+              <ServiceCards
+                services={services.map(({ slug, title, summary }) => ({ slug, title, summary }))}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

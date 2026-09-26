@@ -2,6 +2,7 @@ import { DrawIn } from '@/components/motion/draw-in';
 import { Parallax } from '@/components/motion/parallax';
 import { CmsImage } from '@/components/public/cms-image';
 import { MarkSquiggle } from '@/components/public/marks';
+import { ElasticPhoto } from '@/components/three/elastic-photo';
 import { LightForm } from '@/components/three/light-form';
 import { PLACE_COORDINATES, PLACE_PHOTO } from '@/lib/home/place';
 
@@ -26,7 +27,8 @@ import { PLACE_COORDINATES, PLACE_PHOTO } from '@/lib/home/place';
  *
  * It is tilted, and it drifts against the scroll. Both are the film's treatment
  * of a photograph — it never sets one square to the grid — and both cost one
- * property each.
+ * property each. Under the mouse it stretches like an elastic sheet
+ * (`ElasticPhoto`), which costs nothing until someone hovers it.
  */
 export function PlaceSection() {
   return (
@@ -49,9 +51,10 @@ export function PlaceSection() {
             </h2>
 
             <p className="mt-7 max-w-[46ch] text-[16px] leading-relaxed text-muted-foreground">
-              Softmato Technology Pvt Ltd is registered in Nepal and works from
-              Kathmandu. Bikram Sambat dates, eSewa and Khalti, a
-              Sunday-to-Friday week — none of that is an edge case here.
+              Softmato Technology Pvt Ltd is a registered Nepali company,
+              working from Kathmandu. What we build understands how Nepal runs
+              from day one: Nepali calendar dates, eSewa and Khalti payments,
+              and a Sunday-to-Friday week.
             </p>
 
             {/*
@@ -80,7 +83,7 @@ export function PlaceSection() {
 
             <Parallax speed={0.06}>
               <figure className="rotate-[2.5deg]">
-                <div className="overflow-hidden rounded-[1.75rem] border border-border bg-surface shadow-float">
+                <ElasticPhoto radius={28}>
                   <CmsImage
                     src={PLACE_PHOTO.src}
                     alt={PLACE_PHOTO.alt}
@@ -89,7 +92,7 @@ export function PlaceSection() {
                     sizes="(min-width: 1024px) 34vw, 88vw"
                     className="aspect-[4/5] w-full object-cover"
                   />
-                </div>
+                </ElasticPhoto>
                 <figcaption className="mt-4 text-center text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                   {PLACE_PHOTO.credit}
                 </figcaption>

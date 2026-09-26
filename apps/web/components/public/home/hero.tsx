@@ -3,14 +3,14 @@ import Link from 'next/link';
 import { StaggerIn } from '@/components/motion/stagger-in';
 
 import { DarkNavZone } from './dark-nav-zone';
-import { HeroArc } from './hero-arc';
-import { HeroEye } from './hero-eye';
+import { HeroPixelArc } from './hero-pixel-arc';
+import { HeroReady } from './hero-ready';
 import { HERO } from './hero-timing';
 import { HeroWordmark } from './hero-wordmark';
 
 /**
  * The home hero: one band of night on a light site, with the company name
- * across it and a bowl of light opening behind.
+ * across it and a dome of lit pixels behind (`HeroPixelArc`).
  *
  * **Why this section is dark when the rest of the product is not.** The effect
  * the reference gets is a light-form — the brightest object on the screen,
@@ -43,10 +43,13 @@ export function Hero({
   lede?: string | null;
 }) {
   return (
-    <section className="stage dark hero-band flex min-h-[100svh] flex-col justify-center px-6 pb-20 pt-24">
+    <section
+      data-hero-pending=""
+      className="stage dark hero-band flex min-h-[100svh] flex-col justify-center px-6 pb-20 pt-24"
+    >
       {/*
-        Faint, and sitting on the bowl of the arc rather than in the middle of
-        the section.
+        Faint, and sitting under the peak of the pixel dome rather than in the
+        middle of the section.
 
         At full strength and centred it was a green stain across the whole
         band — a `--haze` layer 62vmax across on a section 900px tall is a
@@ -62,9 +65,10 @@ export function Hero({
       <div
         className="bloom opacity-40"
         style={
-          { '--bloom-x': '50%', '--bloom-y': '62%' } as React.CSSProperties
+          { '--bloom-x': '50%', '--bloom-y': '42%' } as React.CSSProperties
         }
       />
+      <HeroPixelArc />
       <DarkNavZone />
 
       <div className="mx-auto w-full max-w-6xl">
@@ -76,21 +80,14 @@ export function Hero({
           a light-form would otherwise lose entirely.
         */}
         <h1>
-          {/*
-            Arc, then name, then lens — which is also the stacking order, and
-            the reason `HeroEye` comes last despite drawing partly *behind* the
-            wordmark. It renders two layers straddling the letters: the
-            coloured half sits at the arc's depth and the filament sits above
-            the type. Painted before `HeroWordmark` its lower layer would still
-            land correctly and its upper one would not.
-          */}
           <span className="hero-mark">
-            <HeroArc />
             <HeroWordmark />
-            <HeroEye />
           </span>
 
-          <StaggerIn delay={HERO.tagline} className="mt-6 text-center sm:mt-8">
+          <StaggerIn
+            delay={HERO.tagline}
+            className="hero-stagger mt-6 text-center sm:mt-8"
+          >
             {/*
               `text-balance` and a bounded measure, because this line comes
               from the CMS and its length is not ours to choose. The
@@ -104,7 +101,7 @@ export function Hero({
           </StaggerIn>
         </h1>
 
-        <StaggerIn delay={HERO.copy} className="text-center">
+        <StaggerIn delay={HERO.copy} className="hero-stagger text-center">
           <div className="mt-11 flex flex-wrap items-center justify-center gap-3">
             <Link href="/contact" className="pill-cta pill-solid">
               Start a project
@@ -121,6 +118,9 @@ export function Hero({
           ) : null}
         </StaggerIn>
       </div>
+
+      {/* Last child on purpose — see `hero-ready.tsx`. */}
+      <HeroReady />
     </section>
   );
 }

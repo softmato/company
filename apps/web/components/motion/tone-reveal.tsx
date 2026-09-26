@@ -7,6 +7,8 @@ import type { ToneSentence } from '@/lib/home/tone';
 import { prefersReducedMotion } from '@/lib/motion/reduced-motion';
 import { gsap, registerMotionPlugins } from '@/lib/motion/register';
 
+import { Highlighter } from './highlighter';
+
 /**
  * A two-tone headline whose words brighten to their final tone as it scrolls.
  *
@@ -105,23 +107,38 @@ export function ToneReveal({
 
   return (
     <Tag ref={ref as Ref<HTMLHeadingElement>} className={cn(className)}>
-      {sentence.map((segment, segmentIndex) => (
-        <Fragment key={`${segment.text}-${segmentIndex}`}>
-          {segment.text.split(' ').map((word, wordIndex) => (
-            <Fragment key={`${word}-${wordIndex}`}>
-              <span
-                data-tone-word=""
-                className={cn(
-                  'inline-block',
-                  segment.tone === 'dim' ? dimClass : undefined,
-                )}
-              >
-                {word}
-              </span>{' '}
-            </Fragment>
-          ))}
-        </Fragment>
-      ))}
+      {sentence.map((segment, segmentIndex) => {
+        /*
+         * Spaces go between words, not after them, so a marked segment's
+         * stroke stops at its last letter instead of running on into the gap.
+         */
+        const words = segment.text.split(' ').map((word, wordIndex) => (
+          <Fragment key={`${word}-${wordIndex}`}>
+            {wordIndex > 0 && ' '}
+            <span
+              data-tone-word=""
+              className={cn(
+                'inline-block',
+                segment.tone === 'dim' ? dimClass : undefined,
+              )}
+            >
+              {word}
+            </span>
+          </Fragment>
+        ));
+
+        return (
+          <Fragment key={`${segment.text}-${segmentIndex}`}>
+            {segment.mark === 'fill' ? (
+              <span className="mark-fill">{words}</span>
+            ) : segment.mark ? (
+              <Highlighter action={segment.mark}>{words}</Highlighter>
+            ) : (
+              words
+            )}{' '}
+          </Fragment>
+        );
+      })}
     </Tag>
   );
 }

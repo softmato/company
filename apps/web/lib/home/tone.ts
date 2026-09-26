@@ -15,6 +15,13 @@ export interface ToneSegment {
   text: string;
   /** `dim` sets the segment in the quiet tone. Default is full contrast. */
   tone?: 'dim';
+  /**
+   * A marker stroke drawn over the segment once it is on screen, or `fill`: a
+   * solid block of the brand green behind it, set in white. For the one or two
+   * phrases the sentence is actually claiming — mark every full-tone word and
+   * the marks stop meaning anything.
+   */
+  mark?: 'highlight' | 'underline' | 'fill';
 }
 
 export type ToneSentence = ToneSegment[];

@@ -47,13 +47,14 @@ export const getPage = cache(async (slug: string) => {
   return row ?? null;
 });
 
-export async function listPublishedServices() {
-  return db
+/** Cached per request: the home page reads it in two sections. */
+export const listPublishedServices = cache(async () =>
+  db
     .select()
     .from(services)
     .where(published(services))
-    .orderBy(asc(services.sortOrder), asc(services.title));
-}
+    .orderBy(asc(services.sortOrder), asc(services.title)),
+);
 
 export const getService = cache(async (slug: string) => {
   const [row] = await db

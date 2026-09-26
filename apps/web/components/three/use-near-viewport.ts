@@ -58,14 +58,12 @@ export function useNearViewport<T extends HTMLElement>(rootMargin = '80% 0px') {
   const [node, setNode] = useState<T | null>(null);
 
   /*
-   * No observer, no gate: an environment without IntersectionObserver starts
-   * latched, so it gets the scene immediately rather than never. The failure
-   * mode here has to be "costs more than it should", never "the section is
-   * empty".
+   * `false` on the server too. Initialising from `typeof IntersectionObserver`
+   * made the server — which has none — render the scene, and the client's
+   * first render then disagreed with it: a hydration error on every page the
+   * footer horizon is on.
    */
-  const [near, setNear] = useState(
-    () => typeof IntersectionObserver === 'undefined',
-  );
+  const [near, setNear] = useState(false);
 
   useEffect(() => {
     if (!node || near || typeof IntersectionObserver === 'undefined') return;
@@ -85,5 +83,15 @@ export function useNearViewport<T extends HTMLElement>(rootMargin = '80% 0px') {
     return () => observer.disconnect();
   }, [node, near, rootMargin]);
 
-  return { ref: setNode, near };
+  /*
+   * No observer, no gate: once the node exists, an environment without
+   * IntersectionObserver counts as near, so it gets the scene immediately
+   * rather than never. The failure mode here has to be "costs more than it
+   * should", never "the section is empty".
+   */
+  return {
+    ref: setNode,
+    near:
+      near || (node !== null && typeof IntersectionObserver === 'undefined'),
+  };
 }

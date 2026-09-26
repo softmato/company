@@ -8,6 +8,10 @@ import { serviceNode } from '@/lib/seo/content';
 import { JsonLd } from '@/lib/seo/json-ld';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
+import { BuildTiers } from '@/components/public/home/build-tiers';
+
+/** The services a website/app scope ladder applies to. */
+const TIERED = new Set(['web-applications', 'mobile-apps']);
 
 export async function generateStaticParams() {
   const slugs = await publishedSlugs('services');
@@ -50,6 +54,7 @@ export default async function ServicePage({
         lead={service.summary}
       />
       <Markdown>{service.body}</Markdown>
+      {TIERED.has(slug) && <BuildTiers />}
     </article>
   );
 }

@@ -19,12 +19,10 @@ import { TierRow } from './tier-row';
  * `lib/home/tiers.ts` for the tests themselves and why the axis is what the
  * software has to answer to rather than how big it is.
  *
- * The shape is a ruled ladder, deliberately the plainest section on the page:
- * it sits between the dark products band and the physics pile, and three
- * sections in a row that all want to be looked at leaves nothing to look at.
- * This one wants to be *read*. It is also the only section here that could be
- * printed and still work, which is about right for the part that describes what
- * a job costs to build.
+ * Shown under the web-applications and mobile-apps service pages, not the home
+ * page. The shape is a ruled ladder, deliberately plain: it wants to be *read*,
+ * and it could be printed and still work, which is about right for the part
+ * that describes what a job costs to build.
  *
  * Placeholder copy pending the founder's confirmation of the three definitions.
  */

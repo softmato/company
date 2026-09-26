@@ -1,28 +1,26 @@
+import Link from 'next/link';
+
 import { Parallax } from '@/components/motion/parallax';
 import { StaggerIn } from '@/components/motion/stagger-in';
+import { RippleAsset } from '@/components/three/ripple-asset';
+import { cn } from '@/lib/cn';
 import { DISCIPLINES } from '@/lib/home/disciplines';
 
 /**
- * The four disciplines, above the services steps.
+ * The four disciplines, above the services steps — after the founder's
+ * reference: each a light card with its title, caption and an arrow at the
+ * bottom-left, and a rendered illustration inside it on the right. The
+ * illustrations carry the colour (emerald, blue and near-black, the founder's
+ * palette for this row); the cards stay quiet.
  *
- * Boxes, not the circles used under the opening statement. The two clusters do
- * the same compositional job in the same page and would blur into one another
- * if they shared a shape; the circles are the loose scatter and these are the
- * catalogue, so these get corners and a straighter row.
+ * Hovering an illustration stirs it like water (`RippleAsset`); hovering the
+ * card lifts it and fills the arrow. The whole card is the link.
  *
- * **Where the parallax lives.** Each box has its own `Parallax` and each
- * satellite has a *second* one at a different speed. Putting the satellite
- * inside its host's wrapper would have been fewer elements and would have
- * looked like nothing: two things translating by the same amount do not move
- * relative to each other, and the whole effect is the small box sliding across
- * the seam of the large one. So they are siblings under a `relative` `li`, and
- * they disagree about how fast the page is moving.
- *
- * The satellite is positioned from its host's edge with a negative inset, so it
- * overhangs onto whatever is beside it, and lifted above the row with `z-10`.
- * Below `sm` the grid is two columns and the overhang would land on top of a
- * box's own text rather than in a gutter, so there it tucks under the corner
- * instead of crossing the seam.
+ * Each card has its own `Parallax` speed, so the row separates into depth as
+ * the section passes. A satellite chip hangs just below its card, inside the
+ * same `Parallax`, so it moves with the card and can never drift onto the
+ * headline or a neighbour (see `lib/home/disciplines.ts`). The row gap below
+ * `lg` is wide enough for it.
  */
 export function DisciplineCluster() {
   return (
@@ -30,47 +28,52 @@ export function DisciplineCluster() {
       as="ul"
       onScroll
       delay={0.1}
-      className="mt-14 grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 sm:gap-y-12 lg:grid-cols-4"
+      className="mt-20 grid grid-cols-2 gap-x-3 gap-y-28 sm:gap-x-5 lg:grid-cols-4"
     >
       {DISCIPLINES.map((discipline) => (
-        /*
-         * `z-10` on the *item*, not just on the satellite inside it.
-         *
-         * The satellite overhangs the box to its right, and that box lives in a
-         * later sibling. `z-10` within its own `li` only orders it against its
-         * own host — between two positioned siblings with `z-index: auto` the
-         * later one in the DOM wins, so the neighbour painted straight over the
-         * satellite and clipped its label in half. Raising the whole item is
-         * what fixes the comparison that actually matters.
-         */
-        <li
-          key={discipline.label}
-          className={discipline.satellite ? 'relative z-10' : 'relative'}
-        >
-          <Parallax speed={discipline.parallax}>
-            <div className="capability">
-              <p className="headline text-[clamp(1.05rem,2.1vw,1.5rem)] leading-[1.15]">
-                {discipline.label}
-              </p>
-              <p className="mt-2 text-[12.5px] leading-snug text-muted-foreground">
-                {discipline.caption}
-              </p>
-            </div>
-          </Parallax>
+        <li key={discipline.label}>
+          <Parallax speed={discipline.parallax} className="relative">
+            <Link href={discipline.href} className="discipline-card group">
+              <RippleAsset
+                src={discipline.asset.src}
+                width={discipline.asset.width}
+                height={discipline.asset.height}
+                className="discipline-asset"
+                style={
+                  { '--ar': discipline.asset.width / discipline.asset.height } as React.CSSProperties
+                }
+              />
 
-          {discipline.satellite ? (
-            <Parallax
-              speed={discipline.satellite.parallax}
-              className="capability-sat-anchor absolute z-10 w-[64%]"
-              style={
-                {
-                  '--sat-top': discipline.satellite.top,
-                  [discipline.satellite.side === 'right' ? 'right' : 'left']:
-                    discipline.satellite.overhang,
-                } as React.CSSProperties
-              }
-            >
-              <div className="capability-sat">
+              <span className="relative lg:max-w-[52%]">
+                <span className="headline block text-[clamp(1.15rem,2.1vw,1.6rem)] leading-[1.12]">
+                  {discipline.label}
+                </span>
+                <span className="mt-2 block text-[12.5px] leading-snug text-muted-foreground">
+                  {discipline.caption}
+                </span>
+                <span className="discipline-arrow mt-4" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.6}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="size-3.5"
+                  >
+                    <path d="M3 8h10M9 4l4 4-4 4" />
+                  </svg>
+                </span>
+              </span>
+            </Link>
+
+            {discipline.satellite ? (
+              <div
+                className={cn(
+                  'capability-sat pointer-events-none absolute top-full mt-3 w-[72%]',
+                  discipline.satellite.side === 'right' ? 'right-0' : 'left-0',
+                )}
+              >
                 <p className="text-[13px] font-medium leading-none">
                   {discipline.satellite.label}
                 </p>
@@ -78,8 +81,8 @@ export function DisciplineCluster() {
                   {discipline.satellite.caption}
                 </p>
               </div>
-            </Parallax>
-          ) : null}
+            ) : null}
+          </Parallax>
         </li>
       ))}
     </StaggerIn>

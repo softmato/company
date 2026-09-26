@@ -4,6 +4,8 @@ import { cn } from '@/lib/cn';
 
 import { listPublishedLegalDocuments } from '@/lib/cms/public-queries';
 import { getSettings } from '@/lib/settings/queries';
+import { FooterHorizon } from '@/components/public/footer-horizon';
+import { FooterStars } from '@/components/public/footer-stars';
 import { NAV_LINKS } from '@/components/public/nav-links';
 import { Wordmark } from '@/components/public/wordmark';
 
@@ -41,18 +43,13 @@ export async function SiteFooter({
   return (
     <footer className={cn('stage border-t border-border', className)}>
       {/*
-        The page's last light, low and wide. It sits under the footer rather
-        than behind it so the ground fades out at the bottom of the document
-        instead of stopping at a border.
+        The page's last light: an emerald horizon rising behind the footer's
+        bottom edge, so the document ends on a glow instead of a border.
       */}
-      <div
-        className="bloom opacity-50"
-        style={
-          { '--bloom-x': '50%', '--bloom-y': '128%' } as React.CSSProperties
-        }
-      />
+      <FooterHorizon />
+      <FooterStars />
 
-      <div className="mx-auto w-full max-w-6xl px-6 py-16">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-28 pt-16">
         <div className="grid gap-12 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <Wordmark className="text-[22px]" />

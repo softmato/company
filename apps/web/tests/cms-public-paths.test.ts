@@ -44,6 +44,11 @@ describe('the routes each kind is rendered into', () => {
     expect(publicPathsFor('products')).toContain('/products');
   });
 
+  test('a kind the home page renders purges the home page', () => {
+    expect(publicPathsFor('services')).toContain('/');
+    expect(publicPathsFor('blog')).toContain('/');
+  });
+
   test('a kind that changes which URLs exist purges the sitemap', () => {
     for (const kind of [
       'pages',

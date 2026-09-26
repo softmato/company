@@ -107,6 +107,15 @@ export const HERO = {
     idle: 2.4,
   },
 
+  /**
+   * The site header, home page only, once the name and the light are up:
+   * wordmark in from the left, the link pill down from above, the action in
+   * from the right. Staggered by a beat each so the three read as one sweep
+   * rather than a single block appearing. The founder's order, 2026-09-24 —
+   * light and name first, then the header.
+   */
+  header: { at: 1.6, duration: 1.1, stagger: 0.08 },
+
   /** The tagline under the name. */
   tagline: 1.8,
 

@@ -8,7 +8,6 @@ import { Eclipse } from './forms/eclipse';
 import { FORM_COLORS } from './forms/palette';
 import { Orb } from './forms/orb';
 import { PointGlobe } from './forms/point-globe';
-import { Showcase } from './forms/showcase';
 import type { FormGround, FormKind } from './light-form';
 
 /**
@@ -96,7 +95,6 @@ export default function LightFormScene({
         {kind === 'orb' ? <Orb /> : null}
         {kind === 'eclipse' ? <Eclipse /> : null}
         {kind === 'globe' ? <PointGlobe /> : null}
-        {kind === 'showcase' ? <Showcase /> : null}
       </Canvas>
     </div>
   );

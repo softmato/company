@@ -5,11 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 import { DrawIn } from '@/components/motion/draw-in';
 import { ToneReveal } from '@/components/motion/tone-reveal';
 import { MarkSpark } from '@/components/public/marks';
+import { serviceArtFor } from '@/lib/home/service-art';
 import { SERVICES_HEADING } from '@/lib/home/sentences';
 
 import { DisciplineCluster } from './discipline-cluster';
+import { ServiceArtPanel } from './service-art-panel';
 import { ServiceStep } from './service-step';
-import { stillFor } from './stills';
 
 /**
  * The services chapter: one panel held still on the left while the services
@@ -72,7 +73,7 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
   }, [services.length]);
 
   return (
-    <section className="stage px-6 pb-24 pt-16 sm:pb-32 sm:pt-24">
+    <section className="stage px-6 pb-16 pt-16 sm:pb-20 sm:pt-24">
       <div className="mx-auto w-full max-w-6xl">
         {/*
           `min-w-0 flex-1` on the heading block, not just a max-width. A flex
@@ -110,26 +111,36 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
 
         <div
           ref={ref}
-          className="mt-24 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-20"
+          className="mt-16 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-20"
         >
           {/*
             `self-start` is what gives the sticky child something to stick
             inside: a grid item stretched to the full row height has no room to
             move within, which is the usual reason a sticky panel does nothing.
-          */}
-          <div className="hidden lg:sticky lg:top-28 lg:block lg:self-start">
-            <div className="relative">
-              {services.map((service, index) => {
-                const Still = stillFor(service.slug);
 
+            The sticky box is a full viewport tall with the panel centred in
+            it, so the picture holds in the *middle* of the screen — where the
+            observer band above decides which step is current — and swaps
+            there, rather than pinned up under the header. (Founder's call.)
+            80vh at a 10vh inset rather than a full screen: same centre, but
+            a tenth of a screen less empty band above the first picture and
+            below the last one.
+          */}
+          <div className="hidden lg:sticky lg:top-[10vh] lg:flex lg:h-[80vh] lg:items-center lg:self-start">
+            <div className="relative w-full">
+              {services.map((service, index) => {
                 return (
                   <div
                     key={service.id}
-                    className={`transition-opacity duration-500 ease-out ${
+                    className={`transition-[opacity,translate,scale] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
                       index === 0 ? 'relative' : 'absolute inset-0'
-                    } ${index === active ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                    } ${
+                      index === active
+                        ? 'opacity-100'
+                        : 'pointer-events-none translate-y-4 scale-[0.97] opacity-0'
+                    }`}
                   >
-                    <Still />
+                    <ServicePicture slug={service.slug} />
                   </div>
                 );
               })}
@@ -138,8 +149,6 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
 
           <div>
             {services.map((service, index) => {
-              const Still = stillFor(service.slug);
-
               return (
                 <ServiceStep
                   key={service.id}
@@ -147,6 +156,7 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
                   active={index === active}
                   title={service.title}
                   summary={service.summary}
+                  points={serviceArtFor(service.slug)?.points}
                   href={`/services/${service.slug}`}
                 >
                   {/*
@@ -156,7 +166,7 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
                     exactly the readers most likely to be on the site — this is
                     Nepal, and the traffic is phones.
                   */}
-                  <Still />
+                  <ServicePicture slug={service.slug} />
                 </ServiceStep>
               );
             })}
@@ -165,4 +175,13 @@ export function ServicesChapter({ services }: { services: ServiceStepData[] }) {
       </div>
     </section>
   );
+}
+
+/**
+ * The picture for a service. `ServicesSection` only passes services that have
+ * art, so the null is the type's, not a case the page meets.
+ */
+function ServicePicture({ slug }: { slug: string }) {
+  const art = serviceArtFor(slug);
+  return art ? <ServiceArtPanel art={art} /> : null;
 }

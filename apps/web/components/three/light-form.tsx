@@ -14,10 +14,10 @@ import {
  * The kinds of light-form the marketing surface has.
  *
  * One name per section, because each section is built around exactly one of
- * them — an orb with a comet, an eclipse, a globe of points, and a carousel of
- * the work itself. Adding a fifth means adding a section, not a variant.
+ * them — an orb with a comet, an eclipse and a globe of points. Adding a fourth
+ * means adding a section, not a variant.
  */
-export type FormKind = 'orb' | 'eclipse' | 'globe' | 'showcase';
+export type FormKind = 'orb' | 'eclipse' | 'globe';
 
 /**
  * Which ground the form is sitting on.

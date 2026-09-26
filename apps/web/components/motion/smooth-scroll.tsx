@@ -29,6 +29,42 @@ import {
  * Renders nothing. Mounted once from the public layout.
  */
 export function SmoothScroll() {
+  /*
+   * Re-measure ScrollTrigger whenever the page changes height.
+   *
+   * ScrollTrigger caches every trigger's position and only re-measures on
+   * load, resize and the font-swap refresh below. Anything that settles later
+   * — a section laid out taller before hydration, a lazily mounted scene —
+   * leaves every trigger beneath it pointing at the old coordinates. Measured
+   * 2026-09-25 on a cold load: the page shrank 2,100px after the triggers were
+   * taken, and the header's dark-zone tint lit up over the white section
+   * above the closing band and went light over the band itself.
+   *
+   * Outside the reduced-motion bail-out below, because `DarkNavZone` runs
+   * there too. No section on the site pins, so a refresh cannot change the
+   * body's height and re-fire this.
+   */
+  useEffect(() => {
+    registerMotionPlugins();
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let height = document.body.offsetHeight;
+
+    const observer = new ResizeObserver(() => {
+      if (document.body.offsetHeight === height) return;
+      height = document.body.offsetHeight;
+      clearTimeout(timer);
+      timer = setTimeout(() => ScrollTrigger.refresh(), 150);
+    });
+
+    observer.observe(document.body);
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     /*
      * Reduced motion gets the browser's own scrolling. Easing the page under
@@ -40,9 +76,15 @@ export function SmoothScroll() {
     registerMotionPlugins();
 
     const lenis = new Lenis({
-      duration: 1.05,
-      /* Exponential ease-out: quick to respond, long settle. */
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      /*
+       * Lerp, not a duration. A duration restarts a 1s glide on every wheel
+       * event, so a flick keeps stacking distance and the page sails past the
+       * section you meant to stop at. Lerp chases the wheel's own target and
+       * settles as soon as the wheel stops; the lower multiplier makes each
+       * notch travel a little less. (Founder: "hard to hold on a section".)
+       */
+      lerp: 0.12,
+      wheelMultiplier: 0.8,
       smoothWheel: true,
       /*
        * Touch scrolling is left to the OS. Smoothing it fights the platform's

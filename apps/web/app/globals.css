@@ -9,6 +9,7 @@
  */
 @import 'lenis/dist/lenis.css';
 @import './marketing.css';
+@import './trusted-wall.css';
 
 /*
  * Design tokens.
@@ -122,6 +123,13 @@
   --ink: #04120d;
 
   /*
+   * The second accent, beside the emerald: electric blue. Added 2026-09-25 on
+   * the founder's call that an all-green page felt flat. Used sparingly, in
+   * badges and illustrations, never for text on white or for the brand mark.
+   */
+  --cobalt: #2563eb;
+
+  /*
    * Money semantics. Not decoration — see the two-halved rule above.
    */
   --credit: #1b6b4a;
@@ -204,6 +212,7 @@
   --haze: #0d2b1f;
 
   --ink: #020705;
+  --cobalt: #3b82f6;
 
   /* Lightened so they still read against a dark ground. */
   --credit: #4bbd8b;
@@ -248,6 +257,7 @@
   --color-glow-deep: var(--glow-deep);
   --color-haze: var(--haze);
   --color-ink: var(--ink);
+  --color-cobalt: var(--cobalt);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);

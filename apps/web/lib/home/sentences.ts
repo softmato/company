@@ -30,7 +30,9 @@ import type { ToneSentence } from './tone';
  * claims a duration instead of a capability: we are still here afterwards.
  */
 export const STATEMENT: ToneSentence = [
-  { text: 'We stay on the software' },
+  { text: 'We' },
+  { text: 'stay', mark: 'fill' },
+  { text: 'on the software' },
   { text: 'we build,', tone: 'dim' },
   { text: 'long after it ships.' },
 ];
@@ -50,11 +52,15 @@ export const SERVICES_HEADING: ToneSentence = [
   { text: 'standard does not.' },
 ];
 
-/** The products chapter, on the dark band. */
-export const PRODUCTS_HEADING: ToneSentence = [
-  { text: 'We run' },
-  { text: 'what we', tone: 'dim' },
-  { text: 'build.' },
+/**
+ * The payments diagram. Describes what the system already does after a wallet
+ * settles — receipt, ledger entry, webhook — and names no count of wallets, so
+ * adding a fourth provider does not make it wrong.
+ */
+export const PAYMENTS_HEADING: ToneSentence = [
+  { text: 'The payment lands,' },
+  { text: 'and the', tone: 'dim' },
+  { text: 'paperwork follows.' },
 ];
 
 /** The scope ladder. */
@@ -64,17 +70,16 @@ export const TIERS_HEADING: ToneSentence = [
   { text: 'three rungs.' },
 ];
 
-/** The principles chapter, over the pile. */
+/** The principles chapter, over the route diagram. */
 export const PRINCIPLES_HEADING: ToneSentence = [
   { text: 'Software that is' },
-  { text: 'right,' },
+  { text: 'right,', mark: 'underline' },
   { text: 'not software that', tone: 'dim' },
   { text: 'looks right.' },
 ];
 
-/** The closing question, on the dark band. */
-export const CLOSING_HEADING: ToneSentence = [
-  { text: 'Have something' },
-  { text: 'that needs', tone: 'dim' },
-  { text: 'building properly?' },
+/** The close, over the wall of names. */
+export const TRUSTED_HEADING: ToneSentence = [
+  { text: 'Trusted by the teams' },
+  { text: 'that run on what we build.', tone: 'dim' },
 ];

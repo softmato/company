@@ -27,34 +27,6 @@ interface MarkProps {
 }
 
 /**
- * A scribbled double underline, for the one word in a headline that carries it.
- * Sits under the text as an absolutely positioned overlay; the two passes are
- * deliberately not parallel, which is the whole difference between a drawn
- * underline and a border-bottom.
- */
-export function MarkUnderline({ className, strokeWidth = 3 }: MarkProps) {
-  return (
-    <svg
-      viewBox="0 0 200 20"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      className={cn('absolute inset-x-0 -bottom-1 h-3 w-full', className)}
-    >
-      <path
-        className="mark-stroke"
-        strokeWidth={strokeWidth}
-        d="M4 12 C 52 4, 118 6, 196 9"
-      />
-      <path
-        className="mark-stroke"
-        strokeWidth={strokeWidth - 1}
-        d="M10 17 C 64 11, 132 14, 192 15"
-      />
-    </svg>
-  );
-}
-
-/**
  * An ellipse circled around a word, drawn as one open loop that overshoots
  * where it started. A closed ellipse reads as a shape; the overshoot is what
  * reads as a pen.

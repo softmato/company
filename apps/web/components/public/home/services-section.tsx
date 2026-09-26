@@ -1,4 +1,5 @@
 import { listPublishedServices } from '@/lib/cms/public-queries';
+import { serviceArtFor } from '@/lib/home/service-art';
 
 import { ServicesChapter } from './services-chapter';
 
@@ -11,11 +12,19 @@ import { ServicesChapter } from './services-chapter';
  * the query, rather than a `use()` and a suspense boundary around three rows
  * that were already on the server.
  *
- * Returns null when nothing is published: an empty "What we take on" heading
- * over a panel with nothing beside it is worse than a shorter page.
+ * **Only services with rendered art are shown here.** The service cards
+ * further down list every published service; this chapter is the three it
+ * has pictures for, told at length, and the founder asked on 2026-09-25 that
+ * the two not repeat each other beyond that. A service gets a step here by
+ * getting an entry in `lib/home/service-art.ts`.
+ *
+ * Returns null when there is nothing to show: an empty "What we take on"
+ * heading over a panel with nothing beside it is worse than a shorter page.
  */
 export async function ServicesSection() {
-  const services = await listPublishedServices();
+  const services = (await listPublishedServices()).filter((service) =>
+    serviceArtFor(service.slug),
+  );
 
   if (services.length === 0) return null;
 

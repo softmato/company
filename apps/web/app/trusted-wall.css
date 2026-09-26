@@ -1,0 +1,137 @@
+/*
+ * TrustedWall (components/public/home/trusted-wall.tsx): columns of tiles
+ * hanging at different heights, each on a dotted string.
+ *
+ * Every size is a fraction of one tile, and a tile is a fraction of the frame
+ * (`cqw`), so the wall keeps the reference's proportions at any width without
+ * a breakpoint per column. Phones get the middle five columns.
+ */
+@layer components {
+  .trusted-frame {
+    container-type: inline-size;
+  }
+
+  .trusted-wall {
+    --cols: 5;
+    --gap: clamp(0.4rem, 1cqw, 0.8rem);
+    --tile-w: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    --tile-h: calc(var(--tile-w) * 1.23);
+    display: flex;
+    justify-content: center;
+    gap: var(--gap);
+    /*
+     * Tall enough for the middle columns only. The outer four hang lower,
+     * down the sides of the copy, which is what lets the copy sit inside the
+     * wall rather than under it.
+     */
+    height: calc(var(--tile-h) * 2.05);
+    padding-top: calc(var(--tile-h) * 0.55);
+  }
+
+  @media (min-width: 768px) {
+    .trusted-wall {
+      --cols: 9;
+    }
+  }
+
+  .trusted-col {
+    flex: none;
+    width: var(--tile-w);
+  }
+
+  .trusted-stack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    padding-top: calc(var(--tile-h) * var(--drop));
+  }
+
+  .trusted-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    height: var(--tile-h);
+    border-radius: clamp(0.5rem, calc(var(--tile-w) * 0.1), 1rem);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent);
+  }
+
+  /* The row above the frame's top edge: the column carries on up and out. */
+  .trusted-ghost {
+    margin-top: calc(-1 * (var(--tile-h) + var(--gap)));
+    background: linear-gradient(to bottom, transparent, var(--surface));
+    box-shadow: none;
+  }
+
+  .trusted-filled {
+    background: var(--card);
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 18px 40px -22px color-mix(in oklab, var(--ink) 45%, transparent);
+    transition: box-shadow 400ms ease-out;
+  }
+
+  .trusted-filled:hover {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--glow) 45%, var(--border)),
+      0 30px 60px -24px color-mix(in oklab, var(--ink) 55%, transparent);
+  }
+
+  /* An icon on a ground in its own colour: pale at the top, full below. */
+  .trusted-art {
+    background:
+      radial-gradient(
+        120% 80% at 50% 0%,
+        color-mix(in oklab, var(--tint) 12%, white),
+        transparent 70%
+      ),
+      linear-gradient(
+        165deg,
+        color-mix(in oklab, var(--tint) 28%, white),
+        color-mix(in oklab, var(--tint) 70%, white)
+      );
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--tint) 30%, transparent),
+      0 22px 40px -24px color-mix(in oklab, var(--tint) 80%, transparent);
+  }
+
+  /*
+   * The picture stands forward of its tile, so a tile leaning under `Tilt`
+   * moves its picture against it, and a hover brings it further out.
+   */
+  .trusted-tile:not(.trusted-ghost) {
+    transform-style: preserve-3d;
+  }
+
+  .trusted-pop {
+    transform: translateZ(24px);
+    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tilt:hover .trusted-pop {
+    transform: translateZ(48px);
+  }
+
+  .trusted-string {
+    position: absolute;
+    top: calc(100% + 0.3rem);
+    left: 50%;
+    width: 1px;
+    height: calc(var(--tile-h) * 1.6);
+    color: var(--border);
+    background: repeating-linear-gradient(
+      to bottom,
+      currentColor 0 2px,
+      transparent 2px 6px
+    );
+    mask-image: linear-gradient(to bottom, black, transparent);
+    transform-origin: top;
+  }
+
+  .trusted-string[data-lit] {
+    color: var(--glow);
+  }
+}

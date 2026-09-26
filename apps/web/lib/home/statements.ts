@@ -24,27 +24,3 @@ export const CRAFT_STATEMENT = [
   'We run it.',
   'We answer for it.',
 ];
-
-export interface Principle {
-  title: string;
-  body: string;
-}
-
-/**
- * The eclipse section. These three are the About page's "What we believe about
- * software" headings, verbatim, with their own first sentences under them.
- */
-export const PRINCIPLES: Principle[] = [
-  {
-    title: 'Correctness is not a feature',
-    body: 'Books that balance, invoices that number without gaps, payments that cannot be recorded twice. These belong in the foundations, not in a later release.',
-  },
-  {
-    title: 'Boring choices age well',
-    body: 'We prefer the database enforcing a rule to a comment asking people to remember it, and a smaller system that works to a larger one that mostly works.',
-  },
-  {
-    title: 'Nepal is not an edge case',
-    body: 'Bikram Sambat dates, eSewa and Khalti, wallet limits and a Sunday-to-Friday week shape the software from the start rather than being bolted on.',
-  },
-];

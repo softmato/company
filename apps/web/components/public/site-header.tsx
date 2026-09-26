@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { NAV_LINKS } from '@/components/public/nav-links';
+import { useHeaderEntrance } from '@/components/public/use-header-entrance';
 import { useScrolled } from '@/components/public/use-scrolled';
 import { Wordmark } from '@/components/public/wordmark';
 
@@ -33,6 +34,8 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [openedAt, setOpenedAt] = useState(pathname);
   const scrolled = useScrolled();
+  const bar = useRef<HTMLDivElement>(null);
+  const entering = useHeaderEntrance(bar);
 
   /*
    * Close on navigation. Adjusting state during render rather than in an
@@ -53,11 +56,15 @@ export function SiteHeader() {
   return (
     <header
       data-scrolled={scrolled ? '' : undefined}
+      data-entrance={entering ? '' : undefined}
       className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5"
     >
       <div aria-hidden="true" className="header-veil" />
 
-      <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <div
+        ref={bar}
+        className="relative mx-auto flex max-w-6xl items-center justify-between gap-4"
+      >
         {/*
           The wordmark sits on the page, not in a pill.
 
@@ -70,6 +77,7 @@ export function SiteHeader() {
         */}
         <Link
           href="/"
+          data-enter="left"
           className="flex h-11 items-center rounded-full px-1 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <Wordmark />
@@ -77,6 +85,7 @@ export function SiteHeader() {
 
         <nav
           aria-label="Primary"
+          data-enter="down"
           className="nav-pill hidden h-11 items-center px-1.5 md:flex"
         >
           <ul className="flex items-center gap-0.5">
@@ -100,7 +109,7 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div data-enter="right" className="flex items-center gap-2">
           <Link
             href="/contact"
             className="hidden h-11 items-center rounded-full bg-foreground px-5 text-[13px] font-medium text-background transition-colors duration-200 hover:bg-foreground/85 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:inline-flex"

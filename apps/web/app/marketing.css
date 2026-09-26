@@ -215,43 +215,6 @@
   }
 
   /*
-   * A device frame. Near-black shell with a thin lit edge, and an interior
-   * glow so an empty one reads as a screen that is switched on — which matters,
-   * because until product screenshots are uploaded every one of these is empty.
-   */
-  .device {
-    position: relative;
-    border-radius: 1.75rem;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.14),
-      rgba(255, 255, 255, 0.02) 30%
-    );
-    padding: 1px;
-    box-shadow: 0 50px 110px -40px rgba(47, 232, 154, 0.4);
-  }
-
-  .device-inner {
-    border-radius: calc(1.75rem - 1px);
-    background: var(--ink);
-    padding: 0.5rem;
-  }
-
-  .device-screen {
-    position: relative;
-    overflow: hidden;
-    border-radius: 1.4rem;
-    background:
-      radial-gradient(
-        120% 95% at 50% 122%,
-        color-mix(in oklab, var(--glow) 55%, transparent) 0%,
-        color-mix(in oklab, var(--glow-deep) 45%, transparent) 40%,
-        transparent 70%
-      ),
-      #04100b;
-  }
-
-  /*
    * Word-by-word reveal. The dimmed state is applied by JS (see
    * `word-reveal.tsx`), so the default here is the final one: full contrast,
    * readable with no bundle.
@@ -271,6 +234,54 @@
    */
   .hero-band {
     background: var(--ink);
+  }
+
+  /*
+   * A white veil across the top of the section under the hero.
+   *
+   * `.header-veil`'s eased tint and blur, laid from this section's top edge
+   * down, so the ground meets the hero's night as clean white rather than
+   * with the bloom's haze running into the join. It sits inside the section,
+   * so the hero is untouched and the page no taller. `::after` so it paints
+   * over the bloom (same `z-index`, later in the tree) and under the copy.
+   */
+  .hero-seam::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: clamp(5rem, 10vw, 9rem);
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--background) 98%, transparent) 0%,
+      color-mix(in oklab, var(--background) 96%, transparent) 38%,
+      color-mix(in oklab, var(--background) 82%, transparent) 52%,
+      color-mix(in oklab, var(--background) 52%, transparent) 66%,
+      color-mix(in oklab, var(--background) 24%, transparent) 80%,
+      color-mix(in oklab, var(--background) 7%, transparent) 91%,
+      transparent 100%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 46%,
+      rgba(0, 0, 0, 0.72) 64%,
+      rgba(0, 0, 0, 0.36) 80%,
+      rgba(0, 0, 0, 0.12) 91%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 46%,
+      rgba(0, 0, 0, 0.72) 64%,
+      rgba(0, 0, 0, 0.36) 80%,
+      rgba(0, 0, 0, 0.12) 91%,
+      transparent 100%
+    );
   }
 
   /*
@@ -430,6 +441,49 @@
   }
 
   /*
+   * The hero's animated pieces, hidden from the first paint until the
+   * timelines take over (`hero-ready.tsx` removes `data-hero-pending` once
+   * their start states are on). The server HTML is the finished hero, so
+   * without this a refresh painted it complete, blanked it, and animated it
+   * back in.
+   *
+   * The animation is the failsafe: if the script never runs, the copy appears
+   * at 6s. `forwards` only, so it never applies during the delay, and the
+   * attribute is gone long before then whenever JavaScript is working.
+   * Reduced motion never hides anything — nothing animates there.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-hero-pending] .hero-letter,
+    [data-hero-pending] .hero-stagger > * {
+      opacity: 0;
+      animation: hero-pending-failsafe 0s 6s forwards;
+    }
+  }
+
+  @keyframes hero-pending-failsafe {
+    to {
+      opacity: 1;
+    }
+  }
+
+  /*
+   * A letter turning to glowing liquid where the arc is bright behind it.
+   * `hero-melt.ts` sets `data-melt` and the three variables every frame while
+   * it lasts: blur, then the `#hero-melt` alpha threshold to put a hard edge
+   * back (the liquid part), a hair of blur so that edge is not aliased, and a
+   * mint glow around the result.
+   *
+   * Only while `data-melt` is set, so the other letters carry no filter at
+   * all, and reduced motion's `filter: none !important` above cancels it.
+   */
+  .hero-letter[data-melt] {
+    filter: blur(var(--melt-blur, 0px)) url(#hero-melt) blur(0.4px)
+      drop-shadow(
+        0 0 var(--melt-glow, 0px) rgb(140 255 200 / var(--melt-glow-alpha, 0))
+      );
+  }
+
+  /*
    * The lens at the centre, in two layers that straddle the wordmark.
    *
    * Every positioning declaration here is copied from `.hero-arc` on purpose,
@@ -525,6 +579,30 @@ html[data-nav='over-dark'] header {
 }
 
 /*
+ * The header's entrance on the home page (`use-header-entrance.ts`): its three
+ * pieces are hidden from the first paint while `data-entrance` is set, which
+ * the server renders on `/` only. GSAP's inline `visibility` overrides this as
+ * it slides them in, and the attribute comes off when they land.
+ *
+ * The animation is the failsafe, not the entrance. If the script never runs,
+ * it reveals them at 6s — `forwards` only, never `backwards`, so it does not
+ * apply during the delay and cannot fight GSAP's inline styles while the real
+ * entrance is playing. Reduced motion never hides them at all.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  header[data-entrance] [data-enter] {
+    visibility: hidden;
+    animation: header-enter-failsafe 0s 6s forwards;
+  }
+}
+
+@keyframes header-enter-failsafe {
+  to {
+    visibility: visible;
+  }
+}
+
+/*
  * Reduced motion: the choreography is decorative, so it goes away entirely
  * rather than being sped up. Every animated element already carries its final
  * styling (see the note at the top), so removing the motion leaves a complete,
@@ -578,36 +656,6 @@ html[data-nav='over-dark'] header {
  */
 @layer components {
   /*
-   * A dark chapter on a light page.
-   *
-   * The join is the point. The film never butts a dark section against a light
-   * one on a straight edge — the dark panel has a large top radius and reads as
-   * a sheet sliding up over the section above, which is what makes two dark
-   * bands on one page read as chapters rather than as stripes. A hard edge at
-   * the same two positions reads as a striped page, which is why the earlier
-   * build allowed only one.
-   *
-   * `margin-top: -1px` closes the hairline the radius otherwise leaves against
-   * the section above at fractional device pixel ratios.
-   */
-  .band-dark {
-    position: relative;
-    margin-top: -1px;
-    border-start-start-radius: clamp(1.5rem, 4vw, 3.5rem);
-    border-start-end-radius: clamp(1.5rem, 4vw, 3.5rem);
-    background: var(--ink);
-  }
-
-  /*
-   * The closing chapter has no section under it — the footer follows — so it
-   * keeps its top radius and squares off at the bottom.
-   */
-  .band-dark-end {
-    border-end-start-radius: 0;
-    border-end-end-radius: 0;
-  }
-
-  /*
    * A word set in the quiet tone.
    *
    * The film's headlines alternate between full-contrast and washed-out words
@@ -625,107 +673,301 @@ html[data-nav='over-dark'] header {
   }
 
   /*
-   * A soft disc holding one short label — the film's stat bubbles.
-   *
-   * Ours carry no figures. Nothing on this site states a number about the
-   * business that the founder has not given, and the film's "800 schools" is
-   * exactly that kind of number. What the disc is actually doing is
-   * typographic: a large word floating in a circle of slightly warmer ground,
-   * set at a height its neighbours do not share. A craft name does that job and
-   * is true.
-   *
-   * It used to be `--surface` at 78% opacity, which on `--background` is a
-   * four-point difference in lightness: on a laptop screen at an angle the
-   * circles were not there at all, and a scatter you cannot see is four labels
-   * at odd heights. So the fill is opaque `--surface-strong` now, lit from the
-   * top by a trace of the interface green and closed with a hairline ring —
-   * the ring is what actually draws the edge, and it survives being viewed
-   * badly in a way a soft fill never does.
+   * ElectricBorder (components/motion/electric-border.tsx). The canvas draws
+   * the arcing line; these layers are the steady glow under it. React Bits
+   * builds them with `filter: blur()` — here they are box-shadows and a
+   * gradient, per rule 3, because the cards they sit on never stop moving.
    */
-  .disc {
-    display: grid;
-    place-content: center;
-    aspect-ratio: 1;
-    border-radius: 999px;
-    padding: 1.5rem;
-    text-align: center;
+  .electric-border {
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+  }
 
+  .eb-canvas-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* Preflight caps canvas at `max-width: 100%` of a half-width container. */
+  .eb-canvas {
+    display: block;
+    max-width: none;
+  }
+
+  .eb-content {
+    position: relative;
+    border-radius: inherit;
+    z-index: 1;
+  }
+
+  .eb-layers,
+  .eb-glow-1,
+  .eb-glow-2,
+  .eb-background-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .eb-layers {
+    z-index: 0;
+  }
+
+  .eb-glow-1 {
+    box-shadow: inset 0 0 1px 2px
+      color-mix(in oklab, var(--electric-border-color) 60%, transparent);
+  }
+
+  .eb-glow-2 {
+    box-shadow:
+      0 0 5px 1px var(--electric-border-color),
+      inset 0 0 5px 1px var(--electric-border-color);
+  }
+
+  .eb-background-glow {
+    inset: -12%;
+    z-index: -1;
+    /* A halo round the rim, not a tint over the label: the edge sits at ~80%. */
     background: radial-gradient(
-      110% 110% at 50% 0%,
-      color-mix(in oklab, var(--primary) 6%, var(--surface-strong)) 0%,
-      var(--surface-strong) 62%,
-      color-mix(in oklab, var(--surface-strong) 82%, var(--background)) 100%
+      closest-side,
+      transparent 66%,
+      color-mix(in oklab, var(--electric-border-color) 18%, transparent) 81%,
+      transparent
     );
-    box-shadow:
-      inset 0 0 0 1px var(--border),
-      0 24px 48px -32px color-mix(in oklab, var(--foreground) 45%, transparent);
-
-    /*
-     * Transform is free here — `Drift` floats the wrapper, not this. Both the
-     * lift and the float are transform-only so a hover mid-bob composites
-     * rather than relaying out.
-     */
-    transition:
-      transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .disc:hover {
-    transform: scale(1.025);
-    box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, var(--primary) 26%, var(--border)),
-      0 30px 56px -30px color-mix(in oklab, var(--foreground) 55%, transparent);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .disc {
-      transition: box-shadow 420ms ease;
-    }
-
-    .disc:hover {
-      transform: none;
-    }
   }
 
   /*
-   * A discipline box in the services chapter, and the small satellite that
-   * overhangs two of them.
-   *
-   * Same construction as `.disc` — opaque fill, hairline ring, a shadow that
-   * lifts it off the ground — because they are the same family of object seen
-   * two sections apart, and a ring that reads on one ground reads on the other.
-   * The difference is the corner: the scatter under the opening statement is
-   * circles, this is the catalogue, and the two clusters need to be tellable
-   * apart at a glance or the page looks like it is repeating itself.
-   *
-   * The box is bottom-aligned. Four labels of different lengths hung from the
-   * top of four boxes leave four different amounts of air underneath, and the
-   * row stops looking like a row.
+   * A glyph badge: the three glow stops the light-forms are lit with, lit from
+   * the top-left, with a bright rim on top and a green halo under it so it
+   * reads as a lit object and not a sticker. Used on the payments feed's
+   * non-wallet rows and the Live step of "How we work". Sized by the caller.
    */
-  .capability {
+  .craft-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    color: var(--background);
+
+    background: linear-gradient(
+      150deg,
+      var(--glow-core) 0%,
+      var(--glow) 48%,
+      var(--glow-deep) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 55%, transparent),
+      0 8px 18px -8px color-mix(in oklab, var(--glow) 70%, transparent);
+  }
+
+  /*
+   * A discipline card in the services chapter (discipline-cluster.tsx), and
+   * the small satellite that overhangs two of them.
+   *
+   * A near-white card with a hairline ring and a long soft shadow: the
+   * illustrations standing in it carry the colour, so the card stays quiet.
+   * Copy is bottom-aligned — four titles of different lengths hung from the
+   * top leave four different amounts of air, and the row stops being a row —
+   * which also leaves the top of the card for the illustration to stand in.
+   */
+  .discipline-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     min-height: clamp(8.5rem, 15vw, 11.5rem);
     border-radius: calc(var(--radius) * 1.75);
     padding: 1.35rem 1.25rem 1.5rem;
+    color: inherit;
 
-    background: radial-gradient(
-      120% 120% at 50% 0%,
-      color-mix(in oklab, var(--primary) 6%, var(--surface-strong)) 0%,
-      var(--surface-strong) 62%,
-      color-mix(in oklab, var(--surface-strong) 82%, var(--background)) 100%
+    background: linear-gradient(
+      160deg,
+      var(--card) 0%,
+      color-mix(in oklab, var(--surface) 70%, var(--card)) 100%
     );
     box-shadow:
-      inset 0 0 0 1px var(--border),
-      0 24px 48px -34px color-mix(in oklab, var(--foreground) 45%, transparent);
+      inset 0 0 0 1px color-mix(in oklab, var(--border) 80%, transparent),
+      0 2px 4px color-mix(in oklab, var(--foreground) 3%, transparent),
+      0 28px 50px -30px color-mix(in oklab, var(--foreground) 32%, transparent);
+    transition:
+      transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 500ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .discipline-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--cobalt) 22%, var(--border)),
+      0 2px 4px color-mix(in oklab, var(--foreground) 4%, transparent),
+      0 36px 60px -30px color-mix(in oklab, var(--foreground) 38%, transparent);
+  }
+
+  .discipline-card:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent),
+      0 28px 50px -30px color-mix(in oklab, var(--foreground) 32%, transparent);
   }
 
   /*
-   * The satellite sits on `--card`, not on the same fill as its host. It is
-   * overhanging one box onto another and it has to read as being *in front of*
-   * both; a third value of the same green would have read as a hole in the row.
-   * The heavier shadow does the rest of that job.
+   * The illustration, inside the card: centred on the right, beside the copy
+   * (which is held to the left half on `lg`). The cards keep the size they had
+   * before the illustrations — the founder's call — so the picture is sized
+   * to fit the card rather than the card to the picture: 8.25rem tall at most,
+   * never wider than 44% of the card. `--ar` is the asset's aspect ratio, set
+   * inline, so a tall phone and a wide laptop carry the same weight.
+   *
+   * Centring uses `translate`, and the hover lift uses `transform` — separate
+   * properties, so the lift does not undo the centring. The ripple canvas
+   * lives inside this element and moves with it.
+   */
+  .discipline-asset {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    translate: 0 -50%;
+    width: min(44%, calc(8.25rem * var(--ar)));
+    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .discipline-card:hover .discipline-asset {
+    transform: translateY(-4px) scale(1.05);
+  }
+
+  /*
+   * Two columns: no room beside the copy, so the illustration sits in the
+   * card's top-right corner and the copy starts below it.
+   */
+  @media (width < 64rem) {
+    .discipline-card {
+      padding-top: 6.25rem;
+    }
+
+    .discipline-asset {
+      top: 1rem;
+      translate: none;
+      width: min(52%, calc(4.5rem * var(--ar)));
+    }
+  }
+
+  /*
+   * The services chapter's picture (service-art-panel.tsx): a soft stage in
+   * the brand's two lights — blue top-right, emerald bottom-left — over a
+   * faint dot grid that fades out toward the edges, so the rendered scene has
+   * somewhere to stand without the panel competing with it. A size container,
+   * so the scene can be sized against the panel in `cq` units.
+   */
+  .service-panel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    border-radius: 2rem;
+    container-type: size;
+    background:
+      radial-gradient(70% 60% at 85% 10%, color-mix(in oklab, var(--cobalt) 12%, transparent), transparent 70%),
+      radial-gradient(70% 60% at 10% 95%, color-mix(in oklab, var(--glow) 16%, transparent), transparent 70%),
+      linear-gradient(160deg, var(--card) 0%, var(--surface) 100%);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--border) 80%, transparent),
+      0 40px 80px -50px color-mix(in oklab, var(--foreground) 35%, transparent);
+  }
+
+  .service-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--foreground) 10%, transparent) 1px,
+      transparent 1.6px
+    );
+    background-size: 22px 22px;
+    mask-image: radial-gradient(closest-side, #000 30%, transparent);
+    -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent);
+  }
+
+  .service-panel__brand {
+    position: absolute;
+    left: 1.25rem;
+    bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem 0.35rem 0.55rem;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+    background: color-mix(in oklab, var(--card) 85%, transparent);
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 8px 20px -12px color-mix(in oklab, var(--foreground) 35%, transparent);
+  }
+
+  /* `Tilt`: two numbers from the pointer, eased by the transition. */
+  .tilt {
+    transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tilt {
+      transform: none;
+    }
+  }
+
+  .discipline-arrow {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--foreground);
+    box-shadow: inset 0 0 0 1px var(--border);
+    transition:
+      background 300ms ease,
+      color 300ms ease;
+  }
+
+  .discipline-arrow svg {
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .discipline-card:hover .discipline-arrow {
+    background: var(--foreground);
+    color: var(--background);
+  }
+
+  .discipline-card:hover .discipline-arrow svg {
+    transform: translateX(2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .discipline-card,
+    .discipline-asset {
+      transition: box-shadow 300ms ease;
+    }
+
+    .discipline-card:hover,
+    .discipline-card:hover .discipline-asset {
+      transform: none;
+    }
+  }
+
+  /*
+   * The satellite chip under a discipline card: plain `--card` with a heavier
+   * shadow than its host, so it reads as a separate object hung beneath it.
    */
   .capability-sat {
     border-radius: calc(var(--radius) * 1.2);
@@ -736,78 +978,136 @@ html[data-nav='over-dark'] header {
       0 20px 38px -22px color-mix(in oklab, var(--foreground) 55%, transparent);
   }
 
+
   /*
-   * Where the satellite sits inside its host, set per satellite in
-   * `lib/home/disciplines.ts`.
+   * The "What we believe" diagram (`components/public/home/believe-flow.tsx`).
+   *
+   * Every loop here is gated twice: `data-live` is set once the entrance has
+   * finished, `data-inview` only while the section is on screen. Off screen
+   * nothing ticks. Each loop animates one cheap property — dash offset on a
+   * few short paths, or opacity/transform — and nothing that moves sits under
+   * a filter (the glows are radial gradients, not blurs).
    */
-  .capability-sat-anchor {
-    top: var(--sat-top, 14%);
+  .believe-dots {
+    background-image: radial-gradient(
+      color-mix(in oklab, var(--foreground) 22%, transparent) 1px,
+      transparent 1.2px
+    );
+    background-size: 14px 14px;
+    mask-image: radial-gradient(closest-side, #000 55%, transparent);
+  }
+
+  .believe-glow {
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--glow) 30%, transparent),
+      transparent
+    );
+  }
+
+  .believe-hub-glow {
+    background: radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--glow) 38%, transparent),
+      transparent
+    );
+  }
+
+  .believe-flow {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .believe-flow path {
+    stroke-dasharray: 3 16;
+  }
+
+  .believe[data-live] .believe-flow {
+    opacity: 0.9;
+  }
+
+  .believe[data-live][data-inview] .believe-flow path {
+    animation: believe-flow 1.1s linear infinite;
+  }
+
+  .believe[data-live][data-inview] .believe-glow {
+    animation: believe-pulse 3.2s ease-in-out infinite;
+  }
+
+  .believe[data-live][data-inview] .believe-float {
+    animation: believe-float 6s ease-in-out infinite;
+  }
+
+  @keyframes believe-flow {
+    to {
+      stroke-dashoffset: -19;
+    }
+  }
+
+  @keyframes believe-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @keyframes believe-float {
+    50% {
+      transform: translateY(-6px);
+    }
   }
 
   /*
-   * Below the four-column layout there is no safe height inside a box.
-   *
-   * At two columns the boxes are barely taller than the words in them, and the
-   * parallax leaves neighbours at different heights, so any percentage that
-   * clears one box's label lands on the other's. Rather than tune a number that
-   * only holds for one viewport, the satellite moves *out* of the row: pinned
-   * to the top edge and lifted half its own height, it overhangs the top
-   * corners of both boxes and can cover nothing, whatever the parallax has done
-   * to either of them.
-   *
-   * The lift is on the satellite itself, not on the anchor — GSAP owns the
-   * anchor's transform for the parallax and would overwrite this on first tick.
+   * `BorderBeam` (components/motion/border-beam.tsx). The span covers its
+   * parent with a transparent border; the mask keeps only that border ring,
+   * so the gradient square riding `offset-path` shows only where it crosses
+   * the edge. Paused unless an ancestor is `[data-inview]`.
    */
-  @media (width < 64rem) {
-    .capability-sat-anchor {
-      top: 0;
-    }
-
-    .capability-sat {
-      transform: translateY(-52%);
-    }
-  }
-
-  /*
-   * A physics pill. See `components/motion/pill-pile.tsx` — these are dropped
-   * and settled by Matter.js, which owns `transform` from the moment it starts.
-   *
-   * Until then the transform comes from `--pill-x/y/r`, set inline by the
-   * section from a pre-computed settled layout. That is what the reader sees
-   * with no bundle, with a failed bundle, and under `prefers-reduced-motion`:
-   * the same heap, already at rest. A pile that only exists once a physics
-   * engine has downloaded is fourteen words stacked in the top-left corner
-   * until it does.
-   */
-  .pill-tag {
+  .border-beam {
+    pointer-events: none;
     position: absolute;
-    left: var(--pill-x, 50%);
-    top: var(--pill-y, 50%);
-    transform: translate(-50%, -50%) rotate(var(--pill-r, 0deg));
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    white-space: nowrap;
-    border-radius: 999px;
-    padding: 0.6rem 1.15rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    line-height: 1;
+    inset: 0;
+    border-radius: inherit;
+    border: var(--beam-width) solid transparent;
+    mask:
+      linear-gradient(transparent, transparent) padding-box,
+      linear-gradient(#000, #000) border-box;
+    mask-composite: intersect;
   }
 
-  .pill-tag-solid {
-    background: var(--glow);
-    color: var(--ink);
+  .border-beam::after {
+    content: '';
+    position: absolute;
+    aspect-ratio: 1;
+    width: var(--beam-size);
+    background: linear-gradient(to left, var(--beam-from), var(--beam-to), transparent);
+    offset-path: rect(0 auto auto 0 round var(--beam-size));
+    offset-anchor: 90% 50%;
+    animation: border-beam var(--beam-duration) linear infinite paused;
+    animation-delay: var(--beam-delay);
   }
 
-  .pill-tag-ink {
-    background: var(--ink);
-    color: #ffffff;
+  [data-inview] .border-beam::after {
+    animation-play-state: running;
   }
 
-  .pill-tag-quiet {
-    background: var(--surface-strong);
-    color: var(--foreground);
+  @keyframes border-beam {
+    to {
+      offset-distance: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .border-beam {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .believe .believe-flow path,
+    .believe .believe-glow,
+    .believe .believe-float {
+      animation: none !important;
+    }
   }
 
   /*
@@ -1077,5 +1377,509 @@ html[data-nav='over-dark'] header {
 
   header[data-scrolled] .header-veil {
     opacity: 1;
+  }
+
+  /*
+   * The payments & integrations bento (components/public/bento): an opaque
+   * soft-green fill, a hairline ring and a long shadow lifting it off the page.
+   */
+  .bento-card {
+    border-radius: calc(var(--radius) * 1.75);
+    background: radial-gradient(
+      120% 120% at 50% 0%,
+      color-mix(in oklab, var(--primary) 5%, var(--surface-strong)) 0%,
+      var(--surface-strong) 62%,
+      color-mix(in oklab, var(--surface-strong) 82%, var(--background)) 100%
+    );
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      0 24px 48px -34px color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+
+  /*
+   * Magic UI's orbit. The resting transform *is* the first frame, so with the
+   * animation off (reduced motion) every child still sits at its own angle on
+   * the ring instead of stacking in the centre.
+   */
+  .orbit {
+    transform: rotate(calc(var(--angle) * 1deg))
+      translateY(calc(var(--radius) * 1px))
+      rotate(calc(var(--angle) * -1deg));
+    animation: orbit calc(var(--duration) * 1s) linear infinite;
+  }
+
+  @keyframes orbit {
+    to {
+      transform: rotate(calc(var(--angle) * 1deg + 360deg))
+        translateY(calc(var(--radius) * 1px))
+        rotate(calc(var(--angle) * -1deg - 360deg));
+    }
+  }
+
+  /*
+   * A new row in `AnimatedList`. The row grows from nothing, which slides the
+   * older rows down (the original's `layout` animation), while its content
+   * scales in from the top (the original's spring). `backwards`, not `both`:
+   * the clip is only needed while the row is growing, and a row left clipped
+   * would cut its own shadow off for good.
+   */
+  .animated-list-enter {
+    animation: list-row 620ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .animated-list-enter > * {
+    transform-origin: 50% 0;
+    animation: list-pop 620ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  @keyframes list-row {
+    from {
+      grid-template-rows: 0fr;
+      overflow: hidden;
+    }
+    to {
+      grid-template-rows: 1fr;
+      overflow: hidden;
+    }
+  }
+
+  @keyframes list-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+  }
+
+  /*
+   * The floating payment cards in the bento's wide tile — stand-ins until the
+   * rendered art arrives (see payment-cards-art.tsx). ID-1 proportions. The
+   * tilt is a custom property so the hover can fan the stack by changing two
+   * numbers in one transition, and the sheen sweeps across on the same hover.
+   */
+  .pay-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    container-type: inline-size;
+    aspect-ratio: 1.586;
+    border-radius: 1.1rem;
+    padding: 7.5% 8%;
+    overflow: hidden;
+    color: var(--background);
+    transform: rotate(var(--tilt));
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 30%, transparent),
+      0 34px 50px -30px color-mix(in oklab, var(--foreground) 65%, transparent);
+    transition: transform 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pay-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 38%,
+      color-mix(in oklab, white 38%, transparent) 50%,
+      transparent 62%
+    );
+    background-size: 260% 100%;
+    background-position: 130% 0;
+    transition: background-position 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .group:hover .pay-card {
+    transform: translate(var(--fan), -8px) rotate(calc(var(--tilt) * 1.3));
+  }
+
+  .group:hover .pay-card::after {
+    background-position: -30% 0;
+  }
+
+  .pay-card--ink {
+    background:
+      radial-gradient(90% 120% at 85% 110%, color-mix(in oklab, var(--glow) 55%, transparent), transparent 60%),
+      linear-gradient(150deg, color-mix(in oklab, var(--glow-deep) 45%, var(--foreground)), var(--foreground));
+  }
+
+  .pay-card--glow {
+    background: linear-gradient(150deg, var(--glow-core) 0%, var(--glow) 45%, var(--glow-deep) 100%);
+  }
+
+  .pay-card--glass {
+    color: var(--glow-deep);
+    background: linear-gradient(
+      150deg,
+      var(--card) 0%,
+      color-mix(in oklab, var(--glow-core) 32%, var(--card)) 100%
+    );
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--glow) 35%, transparent),
+      inset 0 1px 0 white,
+      0 34px 50px -30px color-mix(in oklab, var(--foreground) 50%, transparent);
+  }
+
+  /*
+   * The printing on the cards. Sized in `cqw` of the card (`.pay-card` is an
+   * inline-size container) so the number and the small caps scale with the
+   * card from a phone to a wide screen instead of overflowing it. These sit on
+   * top of the rendered art when it arrives — the art is asked for blank.
+   */
+  .pay-card__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pay-card__brand {
+    display: flex;
+    align-items: center;
+    gap: 2cqw;
+    font-size: 4.8cqw;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .pay-card__brand img {
+    width: 6.5cqw;
+  }
+
+  .pay-card__kind,
+  .pay-card__label {
+    font-size: 2.8cqw;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .pay-card__label {
+    display: block;
+  }
+
+  .pay-card__number {
+    font-size: 6.2cqw;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .pay-card__value {
+    display: block;
+    margin-top: 0.6cqw;
+    font-size: 3.8cqw;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pay-card__chip {
+    width: 15cqw;
+    aspect-ratio: 1.3;
+    border-radius: 1.6cqw;
+    background:
+      linear-gradient(90deg, transparent 32%, color-mix(in oklab, currentColor 18%, transparent) 33% 35%, transparent 36% 64%, color-mix(in oklab, currentColor 18%, transparent) 65% 67%, transparent 68%),
+      linear-gradient(135deg, color-mix(in oklab, white 82%, transparent), color-mix(in oklab, white 32%, transparent));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 25%, transparent);
+  }
+
+  .pay-card__wave {
+    width: 9cqw;
+    opacity: 0.85;
+  }
+
+  /* Two overlapping discs: a network mark that is nobody's network. */
+  .pay-card__network {
+    display: flex;
+  }
+
+  .pay-card__network::before,
+  .pay-card__network::after {
+    content: '';
+    width: 9cqw;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    background: color-mix(in oklab, currentColor 42%, transparent);
+  }
+
+  .pay-card__network::after {
+    margin-left: -3.8cqw;
+    background: color-mix(in oklab, currentColor 24%, transparent);
+  }
+
+  /*
+   * "How we work" (statement.tsx). `.float-card` is the white UI card every
+   * floating piece is built on — the reference's cards, on our tokens. The
+   * shadow is long and soft so the cards read as held above the page, which
+   * is what makes the scatter read as depth rather than as a layout.
+   */
+  .float-card {
+    border-radius: 1.1rem;
+    background: var(--card);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent),
+      0 2px 4px color-mix(in oklab, var(--foreground) 4%, transparent),
+      0 24px 44px -24px color-mix(in oklab, var(--foreground) 30%, transparent);
+  }
+
+  /*
+   * The curved ground the cards stand on. A very wide ellipse whose top edge
+   * is the only part in view; it fades to the page ground at the bottom so the
+   * section meets the next one without a seam.
+   */
+  .work-horizon {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: 170%;
+    height: 180%;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: linear-gradient(
+      to bottom,
+      var(--surface-strong) 0%,
+      var(--surface) 18%,
+      var(--background) 40%
+    );
+    box-shadow: inset 0 1px 0 color-mix(in oklab, white 70%, transparent);
+  }
+
+  /*
+   * The headline's marked word: one solid block of the brand green, set in
+   * white — the reference's highlight, in place of the hand-drawn marker. The
+   * block is on the phrase, not per word, so it reads as one shape; `clone`
+   * keeps its padding and corners on every line if it ever wraps.
+   */
+  .mark-fill {
+    padding: 0 0.14em 0.04em;
+    border-radius: 0.14em;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .mark-fill [data-tone-word] {
+    color: var(--primary-foreground);
+  }
+
+  /* The drawn avatars (work-avatar.tsx). Skin, hair and clothes per role. */
+  /* The client is "You": a neutral silhouette in the brand greens. */
+  .avatar--client {
+    --av-bg: color-mix(in oklab, var(--primary) 16%, var(--card));
+    --av-figure: color-mix(in oklab, var(--primary) 70%, var(--card));
+  }
+
+  .avatar--engineer {
+    --av-bg: #d6f3e5;
+    --av-skin: #c98f68;
+    --av-hair: #1d2621;
+    --av-shirt: var(--primary);
+    --av-ink: #16201b;
+  }
+
+  .live-dot {
+    animation: step-live 2.2s ease-out infinite;
+  }
+
+  /*
+   * The portal card's project bars fill as the card scrolls into view. Tied to
+   * the scroll by the browser (`animation-timeline: view()`), so no script and
+   * no observer; where that is unsupported the bars are simply full, which is
+   * the finished picture anyway.
+   */
+  @supports (animation-timeline: view()) {
+    .portal-bar {
+      transform-origin: left;
+      animation: portal-bar linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 45%;
+    }
+  }
+
+  @keyframes portal-bar {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* The empty slot in the client's checkout, asking to be filled. */
+  .request-slot {
+    animation: request-slot 2.4s ease-in-out infinite;
+  }
+
+  @keyframes request-slot {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 16%, transparent);
+    }
+  }
+
+  /*
+   * The visitor's own cursor inside "How we work" (section-cursor.tsx). The
+   * native pointer is hidden only once the component has confirmed a mouse
+   * and added `.section-cursor-area`, so touch and no-JS keep their own. The
+   * drawn one fades in on the first move and out when the pointer leaves.
+   */
+  .section-cursor-area,
+  .section-cursor-area * {
+    cursor: none !important;
+  }
+
+  .section-cursor {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+
+  .section-cursor[data-active] {
+    opacity: 1;
+  }
+
+  .section-cursor__part {
+    position: fixed;
+    left: 0;
+    top: 0;
+    will-change: transform;
+  }
+
+  /* A live cursor's idle wander: a small loose loop, never a straight line. */
+  .cursor-wander {
+    animation: cursor-wander var(--wander, 9s) ease-in-out infinite;
+  }
+
+  @keyframes cursor-wander {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    30% {
+      transform: translate(10px, -6px);
+    }
+    55% {
+      transform: translate(4px, 7px);
+    }
+    80% {
+      transform: translate(-8px, 2px);
+    }
+  }
+
+  /* A ring breathing out from a dot — the Live badge's `.live-dot`. */
+  @keyframes step-live {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 7px color-mix(in oklab, var(--primary) 0%, transparent);
+    }
+  }
+
+  .bell-bubble {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    aspect-ratio: 1;
+    border-radius: 999px;
+    color: var(--primary);
+    background: var(--card);
+    box-shadow:
+      inset 0 0 0 1.5px var(--primary),
+      0 12px 24px -12px color-mix(in oklab, var(--foreground) 40%, transparent);
+  }
+
+  /* A short ring every few seconds, then still — a notification, not an alarm. */
+  .bell-ring {
+    transform-origin: 50% 10%;
+    animation: bell-ring 4.5s ease-in-out infinite;
+  }
+
+  @keyframes bell-ring {
+    0%,
+    18%,
+    100% {
+      transform: rotate(0);
+    }
+    3% {
+      transform: rotate(16deg);
+    }
+    7% {
+      transform: rotate(-13deg);
+    }
+    11% {
+      transform: rotate(8deg);
+    }
+    15% {
+      transform: rotate(-4deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor-wander,
+    .live-dot,
+    .request-slot,
+    .portal-bar,
+    .bell-ring {
+      animation: none;
+    }
+
+    .orbit {
+      animation: none;
+    }
+
+    .pay-card,
+    .pay-card::after {
+      transition: none;
+    }
+  }
+}
+
+/*
+ * The particles over the footer's horizon — see `footer-stars.tsx`. The mask
+ * is the "fades in the footer" part: full strength along the horizon, gone by
+ * four-fifths of the way up, so they thin out before they reach the links.
+ */
+@layer components {
+  .footer-stars {
+    mask-image: linear-gradient(to top, #000 0%, #000 24%, transparent 80%);
+    -webkit-mask-image: linear-gradient(
+      to top,
+      #000 0%,
+      #000 24%,
+      transparent 80%
+    );
+  }
+
+  .footer-stars-layer {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: calc(var(--loop) * 2);
+    animation: footer-stars-rise linear infinite;
+    will-change: transform;
+  }
+
+  .footer-stars-layer > span {
+    position: absolute;
+    left: 0;
+    border-radius: 999px;
+    box-shadow: var(--stars);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer-stars-layer {
+      animation: none;
+    }
+  }
+}
+
+@keyframes footer-stars-rise {
+  to {
+    transform: translateY(calc(var(--loop) * -1));
   }
 }

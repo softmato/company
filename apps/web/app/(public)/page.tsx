@@ -8,15 +8,15 @@ import { JsonLd } from '@/lib/seo/json-ld';
 import { siteGraph } from '@/lib/seo/organization';
 import { splitLede } from '@/lib/markdown/lede';
 import { homeTagline } from '@/lib/home/tagline';
-import { BuildTiers } from '@/components/public/home/build-tiers';
-import { ClosingCta } from '@/components/public/home/closing-cta';
 import { Hero } from '@/components/public/home/hero';
+import { PaymentsSection } from '@/components/public/home/payments-section';
 import { PlaceSection } from '@/components/public/home/place-section';
+import { PreviewSection } from '@/components/public/home/preview-section';
 import { PrinciplesSection } from '@/components/public/home/principles-section';
-import { ProductsSection } from '@/components/public/home/products-section';
 import { RecentPosts } from '@/components/public/home/recent-posts';
 import { ServicesSection } from '@/components/public/home/services-section';
 import { Statement } from '@/components/public/home/statement';
+import { TrustedSection } from '@/components/public/home/trusted-section';
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage('home');
@@ -33,25 +33,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * The home page: eight chapters under the hero, each a different shape, on one
- * near-white ground with two bands of night in it.
+ * The home page: the chapters under the dark hero, each a different shape, on
+ * one near-white ground.
  *
  * **Every section is a different shape, and that is the rule the page is built
  * on.** This is the portfolio for a company that sells websites; a repeating
- * card grid down the page reads as one work sample shown eight times, however
- * well the cards are made. So: a sentence over a scatter of discs, then a panel
- * held still while copy scrolls past it, then a dark band of product surfaces,
- * then a ruled ladder, then a heap of words dropped under gravity, then a
- * photograph beside a globe, then a plain list, then the close. Each shape is
- * used once.
- *
- * **Two dark bands, not one.** The earlier build allowed exactly one, because a
- * dark section butted against a light one on a straight edge reads as a stripe
- * and two stripes read as a pattern. The second reference film solves it a
- * different way — every dark panel has a large top radius and slides up over
- * the light behind it, so it reads as a chapter rather than a band — and with
- * that join the page can open on night, spend its middle in the light, and
- * close on the ground it started from. See `.band-dark` in marketing.css.
+ * card grid down the page reads as one work sample shown seven times, however
+ * well the cards are made. So: a sentence over a scatter of discs, then a
+ * browser window open on a client's live preview, then a panel
+ * held still while copy scrolls past it, then payments, then a route diagram,
+ * then a photograph beside a globe, then a plain list, then a wall of names
+ * that closes the page. Each shape is used once.
  *
  * The hero is the `home` page row (title and lede are founder-edited). Every
  * section below reads its own content kind and returns null when that kind has
@@ -81,13 +73,13 @@ export default async function HomePage() {
 
       <Hero tagline={homeTagline(page.title, page.metaTitle)} lede={lede} />
       <Statement />
+      <PreviewSection />
       <ServicesSection />
-      <ProductsSection />
-      <BuildTiers />
+      <PaymentsSection />
       <PrinciplesSection />
       <PlaceSection />
       <RecentPosts />
-      <ClosingCta />
+      <TrustedSection />
     </>
   );
 }

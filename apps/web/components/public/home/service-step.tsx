@@ -3,12 +3,16 @@ import Link from 'next/link';
 import { MarkArrow } from '@/components/public/marks';
 
 /**
- * One step in the services chapter: a heading, a line about it, and a way in.
+ * One step in the services chapter: a heading, a line about it, three short
+ * checked points, and a way in — simple enough to take in at a glance while
+ * the picture beside it does the showing.
  *
- * The steps are tall — a viewport-ish `min-height` each — because the panel
- * beside them only swaps when a step reaches the middle of the screen, and
- * steps shorter than that swap it twice on one flick of the wheel. That height
- * is the section's pacing, not padding.
+ * Each step is 80vh on `lg`, the height of the sticky box beside them. The
+ * picture sticks in the middle of the screen and swaps when a step's centre
+ * crosses the middle; at matching heights the first step's copy is level with
+ * the picture the moment it sticks, and the last one is level as it lets go.
+ * Shorter steps also swap it twice on one flick of the wheel. That height is
+ * the section's pacing, not padding.
  *
  * Dimmed until it is the current step. The film does the same thing and it is
  * what makes three headings in one column read as a sequence rather than as a
@@ -19,6 +23,7 @@ export function ServiceStep({
   active,
   title,
   summary,
+  points,
   href,
   children,
 }: {
@@ -26,6 +31,8 @@ export function ServiceStep({
   active: boolean;
   title: string;
   summary?: string | null;
+  /** Three short lines, from `lib/home/service-art.ts`. */
+  points?: readonly string[] | undefined;
   href: string;
   /** The still for this step. Shown inline below `lg`, where the sticky panel
    * beside the column does not exist. */
@@ -34,7 +41,7 @@ export function ServiceStep({
   return (
     <div
       data-step={index}
-      className="flex min-h-0 flex-col justify-center py-10 lg:min-h-[72vh]"
+      className="flex min-h-0 flex-col justify-center py-10 lg:min-h-[80vh]"
     >
       <div
         className={`transition-opacity duration-500 ease-out ${
@@ -53,6 +60,27 @@ export function ServiceStep({
           <p className="mt-4 max-w-[42ch] text-[15.5px] leading-relaxed text-muted-foreground">
             {summary}
           </p>
+        ) : null}
+
+        {points ? (
+          <ul className="mt-7 space-y-3">
+            {points.map((point) => (
+              <li key={point} className="flex items-center gap-3 text-[15px] text-foreground">
+                <svg viewBox="0 0 20 20" className="size-5 flex-none" aria-hidden="true">
+                  <circle cx="10" cy="10" r="10" fill="color-mix(in oklab, var(--primary) 12%, transparent)" />
+                  <path
+                    d="m6.2 10.3 2.6 2.6 5-5.3"
+                    fill="none"
+                    stroke="var(--primary)"
+                    strokeWidth={1.9}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                {point}
+              </li>
+            ))}
+          </ul>
         ) : null}
 
         <Link

@@ -48,7 +48,7 @@ first film. See `docs/reference/README.md`, warning 3.
 | `04-held-panel-first-step.jpg`      | 6.25s  | A panel held still on the left while copy scrolls on the right                                | The services chapter's whole shape                                           |
 | `05-held-panel-mid-swap.jpg`        | 8.5s   | The two panel states cross-fading as the active step changes                                  | Opacity only, 500ms — `services-chapter.tsx`                                 |
 | `06-tags-falling.jpg`               | 12.25s | Pills falling from above under gravity, mid-tumble                                            | `PillPile`, Matter.js — the principles chapter                               |
-| `07-tags-settled.jpg`               | 13.75s | The same pills at rest in a heap                                                              | The resting layout in `lib/home/qualities.ts`, which is also the no-JS state |
+| `07-tags-settled.jpg`               | 13.75s | The same pills at rest in a heap                                                              | Was the pile's resting layout; the pile was replaced by the route diagram (`believe-flow.tsx`) on 2026-09-25 |
 | `08-photo-masonry.jpg`              | 15.75s | Photographs at slight rotations, hand-drawn doodles between them                              | The tilted, drifting photograph in the place section                         |
 | `09-closing-annotated.jpg`          | 20.5s  | Dark close, heading with a drawn underline and a circled word, one link                       | `ClosingCta` and `MarkCircle`                                                |
 

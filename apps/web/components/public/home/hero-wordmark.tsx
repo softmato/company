@@ -59,6 +59,8 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
 
     registerMotionPlugins();
 
+    let live = true;
+
     const ctx = gsap.context(() => {
       const stagger = { each: HERO.letters.stagger, from: 'center' as const };
 
@@ -151,30 +153,60 @@ export function HeroWordmark({ name = 'Softmato' }: { name?: string }) {
         el.setAttribute('data-hero-settled', ''),
       );
 
-      void heroStart().then(() => tl.play());
+      /*
+       * Only if this effect is still live. React mounts effects twice in
+       * development, and playing the first, reverted timeline completes it
+       * instantly — which set `data-hero-settled`, and dropped the layer
+       * hints, before any letter had arrived. Same guard as
+       * `use-header-entrance.ts`.
+       */
+      void heroStart().then(() => {
+        if (live) tl.play();
+      });
     }, el);
 
-    return () => ctx.revert();
+    return () => {
+      live = false;
+      ctx.revert();
+    };
   }, []);
 
   return (
-    /*
-      One label on the wrapper, every letter hidden. A screen reader handed
-      eight separate spans reads the company name out one letter at a time.
-      `role="img"` is what makes the label legal — ARIA ignores `aria-label` on
-      a bare span, which is the letter-by-letter reading again.
-    */
-    <span ref={root} role="img" aria-label={name} className="hero-word">
-      {[...name.toUpperCase()].map((letter, index) => (
-        /* Letters repeat in "SOFTMATO"; the position is the identity. */
-        <span
-          key={`${letter}-${index}`}
-          aria-hidden="true"
-          className="hero-letter"
-        >
-          {letter}
-        </span>
-      ))}
-    </span>
+    <>
+      {/*
+        The melt (`hero-melt.ts`): alpha pushed through a steep ramp, so a
+        blurred glyph gets a hard edge back — rounded, beaded, liquid — instead
+        of staying soft. Magic UI's morphing-text threshold, at the midpoint so
+        a letter keeps its weight. Zero-size and out of flow; only the filter
+        is used.
+      */}
+      <svg aria-hidden="true" className="absolute size-0">
+        <filter id="hero-melt" colorInterpolationFilters="sRGB">
+          <feColorMatrix
+            type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 255 -127"
+          />
+        </filter>
+      </svg>
+
+      {/*
+        One label on the wrapper, every letter hidden. A screen reader handed
+        eight separate spans reads the company name out one letter at a time.
+        `role="img"` is what makes the label legal — ARIA ignores `aria-label`
+        on a bare span, which is the letter-by-letter reading again.
+      */}
+      <span ref={root} role="img" aria-label={name} className="hero-word">
+        {[...name.toUpperCase()].map((letter, index) => (
+          /* Letters repeat in "SOFTMATO"; the position is the identity. */
+          <span
+            key={`${letter}-${index}`}
+            aria-hidden="true"
+            className="hero-letter"
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+    </>
   );
 }

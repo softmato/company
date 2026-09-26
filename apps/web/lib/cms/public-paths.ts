@@ -49,12 +49,17 @@ export function pagePath(slug: string): string {
  *
  * `pages` is deliberately empty. Each of its rows is a separate static route
  * rather than one dynamic route, so its paths are added per row below.
+ *
+ * `/` is listed under `blog` and `services` because the home page renders
+ * both (recent posts; the services chapter and the service cards). Until
+ * 2026-09-25 it was not, so publishing a service left the home page showing
+ * the old list until the next deploy.
  */
 const KIND_ROUTES: Record<ContentKindSlug, readonly string[]> = {
   pages: [],
-  blog: ['/blog', '/blog/[slug]'],
+  blog: ['/', '/blog', '/blog/[slug]'],
   team: ['/team'],
-  services: ['/services', '/services/[slug]'],
+  services: ['/', '/services', '/services/[slug]'],
   products: ['/products', '/products/[slug]'],
   legal: ['/legal/[slug]'],
 };
