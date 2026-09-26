@@ -18,9 +18,9 @@ Committed and pushed to `main` on the founder's word. `tsc`, ESLint,
 failures below).
 
 - **Migrations `0016_client_portal` and `0017_project_preview` are applied to
-  `softmato-dev`.** Both purely additive (nine new tables; one nullable column
-  with a unique index) — the deployed code runs on them unchanged, and until
-  they are on production `/admin/clients` and the portal error there.
+  `softmato-dev` and production** (production 2026-09-26, on the founder's
+  word). Both purely additive. Verified live: `agency.softmato.com/login`
+  serves the portal, `softmato.com/portal` 307s there.
 - **The portal lives only on the agency host** — `agency.localhost:3000`
   locally, `agency.softmato.com` in production — at clean paths (`/`,
   `/projects/7`, `/invoices`, `/documents`, `/login`, `/invite/…`). `proxy.ts`
@@ -55,8 +55,8 @@ failures below).
 - **`proxy.ts` changed:** on the agency host `/login` and `/enrol` are now
   rewritten into the portal. Before, `agency.softmato.com/login` served the
   _admin_ sign-in form.
-- **Add the `agency` DNS record + Vercel domain.** `PORTAL_URL` is optional
-  now: unset, invitation links use the agency sibling of
+- **`agency.softmato.com` already resolves to the app.** `PORTAL_URL` is
+  optional: unset, invitation links use the agency sibling of
   `NEXT_PUBLIC_APP_URL`.
 - **Client invoices come from `clients.customer_id`** — a `customers` row
   (product `agency`) created with the client. There is still no way to issue
