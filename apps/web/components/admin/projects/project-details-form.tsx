@@ -78,7 +78,7 @@ export function ProjectDetailsForm({ project }: { project: Project }) {
       <Field
         id="p-preview"
         label="Preview address"
-        help={`Add ${project.previewSlug ?? suggestSlug(project.name)}.${PREVIEW_DOMAIN} as a domain on the site's own deployment, then save it here. The client sees it in a browser frame on their project page. Leave blank until it is live.`}
+        help="The site in progress, shown to the client in a browser frame on their project page. Previews Softmato builds live in app/(previews)/preview/<name>. Leave blank until there is something to see."
       >
         {(props) => (
           <div className="flex items-center rounded-lg border border-input bg-background focus-within:ring-[3px] focus-within:ring-ring/50">

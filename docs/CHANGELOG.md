@@ -30,6 +30,14 @@ this file tracks what was delivered.
   browser frame with reload, desktop / tablet / phone widths, full screen and
   open-in-new-tab. Set from the admin project page. Migration
   `0017_project_preview`.
+- **Previews served by the platform.** `<slug>.softmato.com` (and
+  `<slug>.localhost` locally) is rewritten onto `app/(previews)/preview/<slug>`,
+  framed only by the agency host, never indexed. A Softmato bar on top shows
+  the build's stages, what it is built with, and the way into the client
+  portal; it hides inside the portal's own frame. First one: the Himalayan Tea
+  Co. sample — a tea shop with basket and a wholesale ordering page, placing no
+  orders. Saving a preview address registers the host with Vercel when
+  `VERCEL_API_TOKEN` and `VERCEL_PROJECT_ID` are set.
 - **Home page: "Watch your site take shape, live."** A chapter showing the
   portal's live preview, after "How we work".
 - **Accounting reports (Phase 7, read only).** Chart of accounts with the

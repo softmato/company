@@ -34,7 +34,8 @@ import { ART } from '@/lib/portal/art';
 import { clientProject } from '@/lib/portal/queries';
 import { requireViewer } from '@/lib/portal/session';
 import { documentStorageConfigured } from '@/lib/projects/document-storage';
-import { previewHost, previewUrl } from '@/lib/projects/preview';
+import { env } from '@/lib/env';
+import { previewUrl } from '@/lib/projects/preview';
 
 export const metadata: Metadata = { title: 'Project' };
 
@@ -75,8 +76,11 @@ export default async function PortalProjectPage({
           bodyClassName="px-3 pb-3 sm:px-4 sm:pb-4"
         >
           <BrowserFrame
-            url={previewUrl(project.previewSlug)}
-            host={previewHost(project.previewSlug)}
+            url={previewUrl(project.previewSlug, env.NEXT_PUBLIC_APP_URL)}
+            host={
+              new URL(previewUrl(project.previewSlug, env.NEXT_PUBLIC_APP_URL))
+                .host
+            }
             title={`${project.name} — preview`}
           />
           <p className="mt-3 px-1 text-xs text-muted-foreground">

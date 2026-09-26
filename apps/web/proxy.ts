@@ -6,6 +6,7 @@
  *   payment.softmato.com    → (checkout)
  *   agency.softmato.com     → (portal) — the only host it is served on
  *   developer.softmato.com  → (public), rooted at /developers
+ *   <slug>.softmato.com     → (previews) — a client's site in progress
  *
  * Route groups are invisible in URLs, so the rewrite targets a real path
  * prefix (`/admin/...`) that lives inside the group's folder. The browser URL
@@ -19,6 +20,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { agencyOrigin, hasAgencyHost } from './lib/portal/origin';
+import { PREVIEW_DOMAIN } from './lib/projects/preview';
 
 type Surface = 'public' | 'admin' | 'checkout' | 'portal';
 
@@ -86,10 +88,56 @@ function isDocumentationHost(hostname: string): boolean {
   return labels.length >= 2 && DOCUMENTATION_HOSTS.has(labels[0] ?? '');
 }
 
+/**
+ * The preview slug of `<slug>.softmato.com` (or `<slug>.localhost`), or null.
+ * Only one label under our own domain — never a `*.vercel.app` deployment URL,
+ * whose first label is not ours to interpret.
+ */
+function previewSlugFor(hostname: string): string | null {
+  const host = hostname.split(':')[0] ?? '';
+  const [label = '', ...rest] = host.split('.');
+  const parent = rest.join('.');
+
+  if (parent !== PREVIEW_DOMAIN && parent !== 'localhost') return null;
+  if (label in SUBDOMAIN_SURFACE) return null;
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/.test(label) ? label : null;
+}
+
+/**
+ * A client's site in progress, rewritten onto `/preview/<slug>/…`. It may be
+ * framed by the portal beside it and by nothing else, and is never indexed.
+ */
+function previewResponse(request: NextRequest, slug: string): NextResponse {
+  const { pathname, search } = request.nextUrl;
+  const url = request.nextUrl.clone();
+  const prefix = `/preview/${slug}`;
+
+  url.pathname = pathname.startsWith(prefix)
+    ? pathname
+    : `${prefix}${pathname === '/' ? '' : pathname}`;
+  url.search = search;
+
+  const [, ...parent] = (request.headers.get('host') ?? '').split('.');
+  const proto =
+    request.headers.get('x-forwarded-proto') ??
+    request.nextUrl.protocol.replace(':', '');
+  const response = NextResponse.rewrite(url);
+
+  response.headers.set(
+    'Content-Security-Policy',
+    `frame-ancestors 'self' ${proto}://agency.${parent.join('.')}`,
+  );
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return response;
+}
+
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const host = request.headers.get('host') ?? '';
   const surface = surfaceFor(host);
+  const previewSlug = previewSlugFor(host);
+
+  if (previewSlug) return previewResponse(request, previewSlug);
 
   if (pathname === '/' && isDocumentationHost(host)) {
     const url = request.nextUrl.clone();

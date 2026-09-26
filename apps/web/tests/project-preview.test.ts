@@ -17,6 +17,12 @@ describe('preview slugs', () => {
     expect(previewUrl('himalayan-tea')).toBe(
       'https://himalayan-tea.softmato.com',
     );
+    expect(previewUrl('himalayan-tea', 'http://localhost:3000')).toBe(
+      'http://himalayan-tea.localhost:3000',
+    );
+    expect(previewUrl('himalayan-tea', 'https://www.softmato.com')).toBe(
+      'https://himalayan-tea.softmato.com',
+    );
   });
 
   it('refuses anything that is not one DNS label', () => {

@@ -206,6 +206,15 @@ const serverSchema = z.object({
    * address that exists locally and on a preview.
    */
   PORTAL_URL: blankAsUnset(z.string().url()),
+
+  /**
+   * Lets saving a project's preview address register `<slug>.softmato.com`
+   * with this Vercel project, so the wildcard DNS record has somewhere to land.
+   * Unset, the domain is added by hand in Vercel → Project → Domains.
+   */
+  VERCEL_API_TOKEN: blankAsUnset(z.string()),
+  VERCEL_PROJECT_ID: blankAsUnset(z.string()),
+  VERCEL_TEAM_ID: blankAsUnset(z.string()),
 });
 
 const publicSchema = z.object({

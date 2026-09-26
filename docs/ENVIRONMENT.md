@@ -199,6 +199,9 @@ R2_PRIVATE_BUCKET=softmato-data-private
 
 # ── Client portal (Phase 8) ────────────────────────────────
 PORTAL_URL=https://agency.softmato.com   # invitation links; unset → agency sibling of APP_URL
+VERCEL_API_TOKEN=     # optional: saving a preview address adds <slug>.softmato.com to the project
+VERCEL_PROJECT_ID=    # the Vercel project those domains go on (prj_…)
+VERCEL_TEAM_ID=       # only if the project belongs to a team
 
 # ── Services ───────────────────────────────────────────────
 RESEND_API_KEY=

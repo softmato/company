@@ -49,6 +49,18 @@ export function previewHost(slug: string): string {
   return `${slug}.${PREVIEW_DOMAIN}`;
 }
 
-export function previewUrl(slug: string): string {
-  return `https://${previewHost(slug)}`;
+/**
+ * The preview's address beside a given site: `https://<slug>.softmato.com` in
+ * production, `http://<slug>.localhost:3000` beside a local one.
+ */
+export function previewUrl(
+  slug: string,
+  siteUrl = `https://${PREVIEW_DOMAIN}`,
+): string {
+  const url = new URL(siteUrl);
+  const labels = url.hostname.split('.');
+
+  if (labels.length > 1 && SURFACE_LABELS.has(labels[0] ?? '')) labels.shift();
+
+  return `${url.protocol}//${slug}.${labels.join('.')}${url.port ? `:${url.port}` : ''}`;
 }

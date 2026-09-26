@@ -36,6 +36,16 @@ failures below).
   must allow framing by `agency.softmato.com` (no `X-Frame-Options: DENY`, or
   `frame-ancestors https://agency.softmato.com`). Slugs are one DNS label and
   may not be one of our own hosts (`lib/projects/preview.ts`).
+- **Previews Softmato builds are served by this app.** `proxy.ts` rewrites
+  `<slug>.softmato.com` onto `app/(previews)/preview/<slug>` with
+  `frame-ancestors 'self' <agency host>` and `X-Robots-Tag: noindex`. Cloudflare
+  already has a wildcard `*.softmato.com` → Vercel, but **Vercel still needs
+  each host added to the project** (a wildcard _domain_ on Vercel requires
+  Vercel nameservers). Saving a preview address does that through the Vercel
+  API when `VERCEL_API_TOKEN` + `VERCEL_PROJECT_ID` (+ `VERCEL_TEAM_ID`) are
+  set; otherwise add it in Vercel → Domains. The Softmato bar on a preview
+  reads stage names and states by slug — public, so nothing else. First
+  preview: `himalayan-tea` (the sample client, which exists on dev only).
 - **Home page chapter "Watch your site take shape, live."**
   (`preview-section.tsx`, copy in `lib/home/live-preview.ts`) sits after "How we
   work": a drawn browser at `your-project.softmato.com` with a phone beside it,

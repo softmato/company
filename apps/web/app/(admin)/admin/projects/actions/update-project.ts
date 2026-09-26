@@ -1,5 +1,6 @@
 'use server';
 
+import { after } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db, projects } from '@softmato/db';
@@ -16,7 +17,8 @@ import {
   type FormState,
 } from '@/lib/clients/action-kit';
 import { PROJECT_STATUSES, type ProjectStatus } from '@/lib/projects/labels';
-import { slugProblem } from '@/lib/projects/preview';
+import { previewHost, slugProblem } from '@/lib/projects/preview';
+import { claimPreviewDomain } from '@/lib/projects/vercel-domain';
 
 export async function updateProjectAction(
   _prev: FormState,
@@ -56,6 +58,10 @@ export async function updateProjectAction(
     resourceId: String(projectId),
     afterState: { name, status, startsOn, dueOn, previewSlug },
   });
+
+  // Idempotent, so every save re-claims it; a failure is logged, not shown —
+  // the address can still be added by hand in Vercel.
+  if (previewSlug) after(() => claimPreviewDomain(previewHost(previewSlug)));
 
   await touchProject(projectId);
   return done();
