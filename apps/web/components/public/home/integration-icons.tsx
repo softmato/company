@@ -89,12 +89,30 @@ function OpenAI() {
 function GoogleDrive() {
   return (
     <svg viewBox="0 0 87.3 78" className="size-full">
-      <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da" />
-      <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47" />
-      <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335" />
-      <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d" />
-      <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc" />
-      <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00" />
+      <path
+        d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z"
+        fill="#0066da"
+      />
+      <path
+        d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z"
+        fill="#00ac47"
+      />
+      <path
+        d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z"
+        fill="#ea4335"
+      />
+      <path
+        d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z"
+        fill="#00832d"
+      />
+      <path
+        d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
+        fill="#2684fc"
+      />
+      <path
+        d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z"
+        fill="#ffba00"
+      />
     </svg>
   );
 }
@@ -124,7 +142,11 @@ function Claude() {
 
 function Grok() {
   return (
-    <svg viewBox="0 0 24 24" className="size-full fill-foreground" fillRule="evenodd">
+    <svg
+      viewBox="0 0 24 24"
+      className="size-full fill-foreground"
+      fillRule="evenodd"
+    >
       <path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815" />
     </svg>
   );
@@ -138,15 +160,36 @@ function Gemini() {
   return (
     <svg viewBox="0 0 24 24" className="size-full">
       <defs>
-        <linearGradient id={`${id}a`} gradientUnits="userSpaceOnUse" x1="7" x2="11" y1="15.5" y2="12">
+        <linearGradient
+          id={`${id}a`}
+          gradientUnits="userSpaceOnUse"
+          x1="7"
+          x2="11"
+          y1="15.5"
+          y2="12"
+        >
           <stop stopColor="#08B962" />
           <stop offset="1" stopColor="#08B962" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={`${id}b`} gradientUnits="userSpaceOnUse" x1="8" x2="11.5" y1="5.5" y2="11">
+        <linearGradient
+          id={`${id}b`}
+          gradientUnits="userSpaceOnUse"
+          x1="8"
+          x2="11.5"
+          y1="5.5"
+          y2="11"
+        >
           <stop stopColor="#F94543" />
           <stop offset="1" stopColor="#F94543" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={`${id}c`} gradientUnits="userSpaceOnUse" x1="3.5" x2="17.5" y1="13.5" y2="12">
+        <linearGradient
+          id={`${id}c`}
+          gradientUnits="userSpaceOnUse"
+          x1="3.5"
+          x2="17.5"
+          y1="13.5"
+          y2="12"
+        >
           <stop stopColor="#FABC12" />
           <stop offset=".46" stopColor="#FABC12" stopOpacity="0" />
         </linearGradient>

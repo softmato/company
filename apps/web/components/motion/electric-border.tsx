@@ -42,11 +42,19 @@ function noise2D(x: number, y: number) {
   const ux = fx * fx * (3 - 2 * fx);
   const uy = fy * fy * (3 - 2 * fy);
   return (
-    a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy
+    a * (1 - ux) * (1 - uy) +
+    b * ux * (1 - uy) +
+    c * (1 - ux) * uy +
+    d * ux * uy
   );
 }
 
-function octavedNoise(x: number, amplitude: number, time: number, seed: number) {
+function octavedNoise(
+  x: number,
+  amplitude: number,
+  time: number,
+  seed: number,
+) {
   let y = 0;
   let amp = amplitude;
   let freq = FREQUENCY;
@@ -65,7 +73,14 @@ function arcPoint(cx: number, cy: number, r: number, start: number, p: number) {
 }
 
 /** A point `t` (0–1) of the way round a rounded rect, clockwise from the top-left. */
-function roundedRectPoint(t: number, l: number, tp: number, w: number, h: number, r: number) {
+function roundedRectPoint(
+  t: number,
+  l: number,
+  tp: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   const sw = w - 2 * r;
   const sh = h - 2 * r;
   const arc = (Math.PI * r) / 2;
@@ -137,8 +152,9 @@ export function ElectricBorder({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
       ctx.strokeStyle =
-        getComputedStyle(container).getPropertyValue('--electric-border-color').trim() ||
-        color;
+        getComputedStyle(container)
+          .getPropertyValue('--electric-border-color')
+          .trim() || color;
       ctx.lineWidth = 1;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -203,7 +219,13 @@ export function ElectricBorder({
     <div
       ref={containerRef}
       className={cn('electric-border', className)}
-      style={{ '--electric-border-color': color, borderRadius, ...style } as React.CSSProperties}
+      style={
+        {
+          '--electric-border-color': color,
+          borderRadius,
+          ...style,
+        } as React.CSSProperties
+      }
     >
       <div className="eb-canvas-container">
         <canvas ref={canvasRef} className="eb-canvas" />

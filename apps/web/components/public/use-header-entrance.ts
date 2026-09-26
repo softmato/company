@@ -53,9 +53,24 @@ export function useHeaderEntrance(scope: RefObject<HTMLElement | null>) {
         onComplete: () => setEntering(false),
       });
 
-      tl.fromTo('[data-enter="left"]', { x: -40, autoAlpha: 0 }, { x: 0, autoAlpha: 1 }, at)
-        .fromTo('[data-enter="down"]', { y: -32, autoAlpha: 0 }, { y: 0, autoAlpha: 1 }, at + stagger)
-        .fromTo('[data-enter="right"]', { x: 40, autoAlpha: 0 }, { x: 0, autoAlpha: 1 }, at + stagger * 2);
+      tl.fromTo(
+        '[data-enter="left"]',
+        { x: -40, autoAlpha: 0 },
+        { x: 0, autoAlpha: 1 },
+        at,
+      )
+        .fromTo(
+          '[data-enter="down"]',
+          { y: -32, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1 },
+          at + stagger,
+        )
+        .fromTo(
+          '[data-enter="right"]',
+          { x: 40, autoAlpha: 0 },
+          { x: 0, autoAlpha: 1 },
+          at + stagger * 2,
+        );
 
       void heroStart().then(() => {
         if (live) tl.play();

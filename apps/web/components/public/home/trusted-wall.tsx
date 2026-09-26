@@ -118,14 +118,19 @@ export function TrustedWall() {
                   className="trusted-stack"
                   style={{ '--drop': column.drop } as CSSProperties}
                 >
-                  <span aria-hidden="true" className="trusted-tile trusted-ghost" />
+                  <span
+                    aria-hidden="true"
+                    className="trusted-tile trusted-ghost"
+                  />
                   {slots.map((slot, tile) => (
                     <TrustedTile key={tile} slot={slot} />
                   ))}
                   <span
                     aria-hidden="true"
                     data-trusted-string=""
-                    data-lit={slots.some((slot) => 'name' in slot) ? '' : undefined}
+                    data-lit={
+                      slots.some((slot) => 'name' in slot) ? '' : undefined
+                    }
                     className="trusted-string"
                   />
                 </div>

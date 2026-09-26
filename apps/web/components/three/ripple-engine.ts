@@ -1,6 +1,19 @@
-import { Geometry, Mesh, Program, Renderer, RenderTarget, Texture, Triangle } from 'ogl';
+import {
+  Geometry,
+  Mesh,
+  Program,
+  Renderer,
+  RenderTarget,
+  Texture,
+  Triangle,
+} from 'ogl';
 
-import { COMPOSITE_FRAGMENT, SCREEN_VERTEX, WAVE_FRAGMENT, WAVE_VERTEX } from './ripple-shaders';
+import {
+  COMPOSITE_FRAGMENT,
+  SCREEN_VERTEX,
+  WAVE_FRAGMENT,
+  WAVE_VERTEX,
+} from './ripple-shaders';
 
 /**
  * The WebGL half of `RippleAsset`: React Bits' RippleDistortion loop, made to
@@ -76,8 +89,14 @@ export function createRipple(mount: HTMLElement, o: RippleOptions) {
   let next = 0;
 
   const geometry = new Geometry(gl, {
-    position: { size: 2, data: new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]) },
-    uv: { size: 2, data: new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]) },
+    position: {
+      size: 2,
+      data: new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+    },
+    uv: {
+      size: 2,
+      data: new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]),
+    },
     iOffset: { instanced: 1, size: 2, data: offsets },
     iScale: { instanced: 1, size: 2, data: scales },
     iOpacity: { instanced: 1, size: 1, data: opacities },
@@ -92,7 +111,11 @@ export function createRipple(mount: HTMLElement, o: RippleOptions) {
     cullFace: false,
   });
   waveProgram.setBlendFunc(gl.ONE, gl.ONE);
-  const waveMesh = new Mesh(gl, { geometry, program: waveProgram, frustumCulled: false });
+  const waveMesh = new Mesh(gl, {
+    geometry,
+    program: waveProgram,
+    frustumCulled: false,
+  });
 
   const field = new RenderTarget(gl, {
     width: 2,

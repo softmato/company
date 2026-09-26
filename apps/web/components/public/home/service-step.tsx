@@ -65,9 +65,21 @@ export function ServiceStep({
         {points ? (
           <ul className="mt-7 space-y-3">
             {points.map((point) => (
-              <li key={point} className="flex items-center gap-3 text-[15px] text-foreground">
-                <svg viewBox="0 0 20 20" className="size-5 flex-none" aria-hidden="true">
-                  <circle cx="10" cy="10" r="10" fill="color-mix(in oklab, var(--primary) 12%, transparent)" />
+              <li
+                key={point}
+                className="flex items-center gap-3 text-[15px] text-foreground"
+              >
+                <svg
+                  viewBox="0 0 20 20"
+                  className="size-5 flex-none"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="10"
+                    cy="10"
+                    r="10"
+                    fill="color-mix(in oklab, var(--primary) 12%, transparent)"
+                  />
                   <path
                     d="m6.2 10.3 2.6 2.6 5-5.3"
                     fill="none"

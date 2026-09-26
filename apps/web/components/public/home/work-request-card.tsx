@@ -38,7 +38,9 @@ export function WorkRequestCard() {
           ))}
           <span className="request-slot flex h-9 items-center justify-center gap-1 rounded-lg border border-dashed border-primary/60 bg-primary/5">
             <BrandMark asset={WALLET_MARKS.esewa} size={20} />
-            <span className="text-[13px] font-semibold leading-none text-primary">+</span>
+            <span className="text-[13px] font-semibold leading-none text-primary">
+              +
+            </span>
           </span>
         </div>
       </div>

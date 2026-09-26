@@ -20,7 +20,11 @@ export function IntegrationOrbit() {
     >
       <div className="z-10 flex size-14 items-center justify-center rounded-full border border-border bg-card p-3 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.35)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/mark.png" alt="" className="size-full object-contain" />
+        <img
+          src="/brand/mark.png"
+          alt=""
+          className="size-full object-contain"
+        />
       </div>
 
       <OrbitingCircles iconSize={42} radius={100} duration={28}>

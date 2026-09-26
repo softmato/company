@@ -68,7 +68,11 @@ export async function PrinciplesSection() {
             </p>
             <div className="mt-6">
               <ServiceCards
-                services={services.map(({ slug, title, summary }) => ({ slug, title, summary }))}
+                services={services.map(({ slug, title, summary }) => ({
+                  slug,
+                  title,
+                  summary,
+                }))}
               />
             </div>
           </div>

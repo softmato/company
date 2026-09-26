@@ -75,7 +75,11 @@ export const DISCIPLINES: Discipline[] = [
     caption: 'How the parts fit before any of it is written',
     parallax: 0.08,
     href: '/services/product-engineering',
-    asset: { src: '/home/disciplines/software-design.webp', width: 574, height: 720 },
+    asset: {
+      src: '/home/disciplines/software-design.webp',
+      width: 574,
+      height: 720,
+    },
     satellite: {
       label: 'Books',
       caption: 'Double-entry, not a spreadsheet',

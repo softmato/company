@@ -35,10 +35,12 @@ const GRID: { d: string; dashed?: boolean }[] = [
 ];
 
 const IN = NODE_CYS.map(
-  (cy) => `M${SEE_RIGHT} ${Y} C${SEE_RIGHT + 30} ${Y} ${NODE_X - 30} ${cy} ${NODE_X} ${cy}`,
+  (cy) =>
+    `M${SEE_RIGHT} ${Y} C${SEE_RIGHT + 30} ${Y} ${NODE_X - 30} ${cy} ${NODE_X} ${cy}`,
 );
 const TO_HUB = NODE_CYS.map(
-  (cy) => `M${NODE_R} ${cy} C${NODE_R + 15} ${cy} ${HUB.x - 15} ${Y} ${HUB.x} ${Y}`,
+  (cy) =>
+    `M${NODE_R} ${cy} C${NODE_R + 15} ${cy} ${HUB.x - 15} ${Y} ${HUB.x} ${Y}`,
 );
 const OUT = `M${HUB.x + HUB.w} ${Y} H${BOXES.right.x}`;
 const DROP = `M${BOXES.chip.x + BOXES.chip.w / 2} ${BOXES.chip.y + BOXES.chip.h} V${BOXES.right.y}`;
@@ -66,7 +68,12 @@ export function BelieveLines() {
                 width={FRAME.w}
                 height={FRAME.h}
               >
-                <path d={line.d} stroke="#fff" strokeWidth="6" data-draw="grid" />
+                <path
+                  d={line.d}
+                  stroke="#fff"
+                  strokeWidth="6"
+                  data-draw="grid"
+                />
               </mask>
             ),
         )}
@@ -87,7 +94,12 @@ export function BelieveLines() {
         )}
       </g>
 
-      <g className="text-primary" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.4">
+      <g
+        className="text-primary"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeOpacity="0.4"
+      >
         {IN.map((d) => (
           <path key={d} d={d} data-draw="in" />
         ))}
@@ -99,7 +111,12 @@ export function BelieveLines() {
       </g>
 
       {/* The current: short dashes running left to right once the wires are up. */}
-      <g className="believe-flow text-glow" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <g
+        className="believe-flow text-glow"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
         {[...IN, ...TO_HUB, OUT].map((d) => (
           <path key={d} d={d} />
         ))}

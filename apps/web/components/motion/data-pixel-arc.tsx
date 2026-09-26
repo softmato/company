@@ -34,7 +34,10 @@ export function DataPixelArc({
    * against. Not in the source.
    */
   onFrame?:
-    | ((intensityAt: (x: number, y: number) => number, host: HTMLElement) => void)
+    | ((
+        intensityAt: (x: number, y: number) => number,
+        host: HTMLElement,
+      ) => void)
     | undefined;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -51,7 +54,10 @@ export function DataPixelArc({
     const host = hostRef.current;
     const canvas = canvasRef.current;
     if (!host || !canvas) return undefined;
-    const renderer = createDataPixelArcRenderer(canvas, () => optionsRef.current);
+    const renderer = createDataPixelArcRenderer(
+      canvas,
+      () => optionsRef.current,
+    );
     if (!renderer) return undefined;
     let frame = 0;
     let visible = true;

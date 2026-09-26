@@ -23,7 +23,9 @@ export function WorkShippedCard() {
       borderRadius={20}
     >
       <div className="flex items-center justify-between">
-        <p className="text-[15px] font-medium text-foreground">{SHIPPED.title}</p>
+        <p className="text-[15px] font-medium text-foreground">
+          {SHIPPED.title}
+        </p>
         <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11.5px] font-medium text-primary">
           <span className="live-dot size-1.5 rounded-full bg-primary" />
           {SHIPPED.status}
@@ -36,14 +38,27 @@ export function WorkShippedCard() {
             key={wallet.label}
             className={cn(
               'relative flex h-14 items-center justify-center rounded-xl border bg-card',
-              i === 0 ? 'border-primary ring-2 ring-primary/20' : 'border-border',
+              i === 0
+                ? 'border-primary ring-2 ring-primary/20'
+                : 'border-border',
             )}
           >
             <BrandMark asset={wallet} size={wallet.ratio ? 20 : 32} />
             {i === 0 && (
-              <svg viewBox="0 0 16 16" className="absolute -right-1.5 -top-1.5 size-4" aria-hidden="true">
+              <svg
+                viewBox="0 0 16 16"
+                className="absolute -right-1.5 -top-1.5 size-4"
+                aria-hidden="true"
+              >
                 <circle cx="8" cy="8" r="7.5" fill="var(--primary)" />
-                <path d="m4.8 8.2 2.1 2.1 4.2-4.4" fill="none" stroke="var(--primary-foreground)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+                <path
+                  d="m4.8 8.2 2.1 2.1 4.2-4.4"
+                  fill="none"
+                  stroke="var(--primary-foreground)"
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             )}
           </span>

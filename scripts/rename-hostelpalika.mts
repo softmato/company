@@ -23,7 +23,6 @@ import { eq, sql, type AnyColumn } from 'drizzle-orm';
 
 import { productPageSeeds } from '../packages/db/seed/marketing/products.ts';
 
-
 const rename = (column: AnyColumn) =>
   sql`replace(${column}, 'HostelHub', 'HostelPalika')`;
 

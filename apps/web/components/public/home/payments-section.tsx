@@ -1,7 +1,11 @@
 import { ToneReveal } from '@/components/motion/tone-reveal';
 import { BentoCard, BentoGrid } from '@/components/public/bento/bento-grid';
 import { Globe } from '@/components/three/globe';
-import { BENTO_COPY, GLOBE_MARKERS, INTEGRATIONS_HEADING } from '@/lib/home/payments-bento';
+import {
+  BENTO_COPY,
+  GLOBE_MARKERS,
+  INTEGRATIONS_HEADING,
+} from '@/lib/home/payments-bento';
 
 import { IntegrationOrbit } from './integration-orbit';
 import { PaymentActivity } from './payment-activity';

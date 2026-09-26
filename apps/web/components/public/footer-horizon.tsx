@@ -23,9 +23,7 @@ export function FooterHorizon() {
       aria-hidden="true"
       className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[clamp(15rem,26vw,20rem)]"
     >
-      {near ? (
-        <EmeraldHorizon speed={prefersReducedMotion() ? 0 : 1} />
-      ) : null}
+      {near ? <EmeraldHorizon speed={prefersReducedMotion() ? 0 : 1} /> : null}
     </div>
   );
 }

@@ -872,8 +872,16 @@ html[data-nav='over-dark'] header {
     border-radius: 2rem;
     container-type: size;
     background:
-      radial-gradient(70% 60% at 85% 10%, color-mix(in oklab, var(--cobalt) 12%, transparent), transparent 70%),
-      radial-gradient(70% 60% at 10% 95%, color-mix(in oklab, var(--glow) 16%, transparent), transparent 70%),
+      radial-gradient(
+        70% 60% at 85% 10%,
+        color-mix(in oklab, var(--cobalt) 12%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        70% 60% at 10% 95%,
+        color-mix(in oklab, var(--glow) 16%, transparent),
+        transparent 70%
+      ),
       linear-gradient(160deg, var(--card) 0%, var(--surface) 100%);
     box-shadow:
       inset 0 0 0 1px color-mix(in oklab, var(--border) 80%, transparent),
@@ -916,7 +924,8 @@ html[data-nav='over-dark'] header {
 
   /* `Tilt`: two numbers from the pointer, eased by the transition. */
   .tilt {
-    transform: perspective(1100px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform: perspective(1100px) rotateX(var(--rx, 0deg))
+      rotateY(var(--ry, 0deg));
     transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -977,7 +986,6 @@ html[data-nav='over-dark'] header {
       inset 0 0 0 1px var(--border),
       0 20px 38px -22px color-mix(in oklab, var(--foreground) 55%, transparent);
   }
-
 
   /*
    * The "What we believe" diagram (`components/public/home/believe-flow.tsx`).
@@ -1079,7 +1087,12 @@ html[data-nav='over-dark'] header {
     position: absolute;
     aspect-ratio: 1;
     width: var(--beam-size);
-    background: linear-gradient(to left, var(--beam-from), var(--beam-to), transparent);
+    background: linear-gradient(
+      to left,
+      var(--beam-from),
+      var(--beam-to),
+      transparent
+    );
     offset-path: rect(0 auto auto 0 round var(--beam-size));
     offset-anchor: 90% 50%;
     animation: border-beam var(--beam-duration) linear infinite paused;
@@ -1403,8 +1416,7 @@ html[data-nav='over-dark'] header {
    */
   .orbit {
     transform: rotate(calc(var(--angle) * 1deg))
-      translateY(calc(var(--radius) * 1px))
-      rotate(calc(var(--angle) * -1deg));
+      translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
     animation: orbit calc(var(--duration) * 1s) linear infinite;
   }
 
@@ -1499,12 +1511,25 @@ html[data-nav='over-dark'] header {
 
   .pay-card--ink {
     background:
-      radial-gradient(90% 120% at 85% 110%, color-mix(in oklab, var(--glow) 55%, transparent), transparent 60%),
-      linear-gradient(150deg, color-mix(in oklab, var(--glow-deep) 45%, var(--foreground)), var(--foreground));
+      radial-gradient(
+        90% 120% at 85% 110%,
+        color-mix(in oklab, var(--glow) 55%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(
+        150deg,
+        color-mix(in oklab, var(--glow-deep) 45%, var(--foreground)),
+        var(--foreground)
+      );
   }
 
   .pay-card--glow {
-    background: linear-gradient(150deg, var(--glow-core) 0%, var(--glow) 45%, var(--glow-deep) 100%);
+    background: linear-gradient(
+      150deg,
+      var(--glow-core) 0%,
+      var(--glow) 45%,
+      var(--glow-deep) 100%
+    );
   }
 
   .pay-card--glass {
@@ -1577,9 +1602,21 @@ html[data-nav='over-dark'] header {
     aspect-ratio: 1.3;
     border-radius: 1.6cqw;
     background:
-      linear-gradient(90deg, transparent 32%, color-mix(in oklab, currentColor 18%, transparent) 33% 35%, transparent 36% 64%, color-mix(in oklab, currentColor 18%, transparent) 65% 67%, transparent 68%),
-      linear-gradient(135deg, color-mix(in oklab, white 82%, transparent), color-mix(in oklab, white 32%, transparent));
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 25%, transparent);
+      linear-gradient(
+        90deg,
+        transparent 32%,
+        color-mix(in oklab, currentColor 18%, transparent) 33% 35%,
+        transparent 36% 64%,
+        color-mix(in oklab, currentColor 18%, transparent) 65% 67%,
+        transparent 68%
+      ),
+      linear-gradient(
+        135deg,
+        color-mix(in oklab, white 82%, transparent),
+        color-mix(in oklab, white 32%, transparent)
+      );
+    box-shadow: inset 0 0 0 1px
+      color-mix(in oklab, currentColor 25%, transparent);
   }
 
   .pay-card__wave {

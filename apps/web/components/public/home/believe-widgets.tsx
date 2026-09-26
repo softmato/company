@@ -2,7 +2,8 @@ import Image from 'next/image';
 
 import { BOXES, SHIELD_SRC, frameVars } from '@/lib/home/believe';
 
-const PLACED = 'lg:absolute lg:left-[var(--fx)] lg:top-[var(--fy)] lg:w-[var(--fw)]';
+const PLACED =
+  'lg:absolute lg:left-[var(--fx)] lg:top-[var(--fy)] lg:w-[var(--fw)]';
 
 /**
  * The headline as a control: "Looks right" switched off, "Is right" on.
@@ -13,7 +14,12 @@ const PLACED = 'lg:absolute lg:left-[var(--fx)] lg:top-[var(--fy)] lg:w-[var(--f
  */
 export function ToggleWidget() {
   return (
-    <div data-widget="" data-step="" className={PLACED} style={frameVars(BOXES.toggle)}>
+    <div
+      data-widget=""
+      data-step=""
+      className={PLACED}
+      style={frameVars(BOXES.toggle)}
+    >
       <div className="believe-float section-frame space-y-3 p-4">
         <ToggleRow label="Looks right" name="looks" on={false} />
         <div className="h-px bg-border" />
@@ -23,7 +29,15 @@ export function ToggleWidget() {
   );
 }
 
-function ToggleRow({ label, name, on }: { label: string; name: string; on: boolean }) {
+function ToggleRow({
+  label,
+  name,
+  on,
+}: {
+  label: string;
+  name: string;
+  on: boolean;
+}) {
   return (
     <div className="flex items-center gap-3">
       <div className="min-w-0 flex-1">
@@ -56,14 +70,22 @@ function ToggleRow({ label, name, on }: { label: string; name: string; on: boole
 /** "Correctness is not a feature", as the reference's protection badge. */
 export function ShieldWidget() {
   return (
-    <div data-widget="" data-step="" className={PLACED} style={frameVars(BOXES.shield)}>
+    <div
+      data-widget=""
+      data-step=""
+      className={PLACED}
+      style={frameVars(BOXES.shield)}
+    >
       <div className="believe-float section-frame p-4 [animation-delay:-3s]">
         <p className="flex items-center gap-2 text-[12.5px] font-medium">
           <span aria-hidden="true" className="size-2 rounded-full bg-glow" />
           Enforced, not remembered
         </p>
         <div className="believe-dots relative mt-3 grid h-32 place-items-center rounded-lg">
-          <span aria-hidden="true" className="believe-glow absolute inset-0 rounded-lg" />
+          <span
+            aria-hidden="true"
+            className="believe-glow absolute inset-0 rounded-lg"
+          />
           <Image
             src={SHIELD_SRC}
             alt=""

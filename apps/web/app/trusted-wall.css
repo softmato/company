@@ -56,7 +56,8 @@
     height: var(--tile-h);
     border-radius: clamp(0.5rem, calc(var(--tile-w) * 0.1), 1rem);
     background: var(--surface);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--border) 70%, transparent);
+    box-shadow: inset 0 0 0 1px
+      color-mix(in oklab, var(--border) 70%, transparent);
   }
 
   /* The row above the frame's top edge: the column carries on up and out. */

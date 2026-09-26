@@ -58,7 +58,11 @@ export const PORTAL = {
  */
 export const OWN_PRODUCTS = [
   { name: 'HostelPalika', src: '/products/hostelpalika/mark.png', ratio: 1 },
-  { name: 'QuestionCall', src: '/products/questioncall/logo.png', ratio: 676 / 369 },
+  {
+    name: 'QuestionCall',
+    src: '/products/questioncall/logo.png',
+    ratio: 676 / 369,
+  },
 ] as const;
 
 /** Bottom-right, where the reference puts a review score. */

@@ -181,7 +181,9 @@ export function PreviewSection() {
               <span className="mx-auto flex min-w-0 max-w-md flex-1 items-center justify-center gap-2 rounded-full bg-white px-3 py-1.5 font-mono text-[12.5px] shadow-inner ring-1 ring-inset ring-slate-200">
                 <Lock className="size-3.5 shrink-0 text-emerald-600" />
                 <span className="truncate">
-                  <span className="hidden text-slate-400 sm:inline">https://</span>
+                  <span className="hidden text-slate-400 sm:inline">
+                    https://
+                  </span>
                   <span className="font-semibold text-slate-900">
                     {PREVIEW_HOST}
                   </span>

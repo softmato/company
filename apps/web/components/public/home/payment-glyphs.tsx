@@ -12,7 +12,9 @@ const PATHS = {
       <path d="m8.5 12 2.5 2.5 4.5-5" />
     </>
   ),
-  notify: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0" />,
+  notify: (
+    <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0" />
+  ),
   webhook: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="2" />

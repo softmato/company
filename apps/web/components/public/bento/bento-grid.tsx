@@ -24,7 +24,10 @@ export function BentoGrid({
 }: ComponentPropsWithoutRef<'div'>) {
   return (
     <div
-      className={cn('grid w-full auto-rows-[26rem] grid-cols-3 gap-4 lg:auto-rows-[24rem]', className)}
+      className={cn(
+        'grid w-full auto-rows-[26rem] grid-cols-3 gap-4 lg:auto-rows-[24rem]',
+        className,
+      )}
       {...props}
     >
       {children}
@@ -84,7 +87,9 @@ export function BentoCard({
             link && 'lg:group-hover:-translate-y-8',
           )}
         >
-          <h3 className="headline text-[clamp(1.15rem,1.7vw,1.4rem)]">{name}</h3>
+          <h3 className="headline text-[clamp(1.15rem,1.7vw,1.4rem)]">
+            {name}
+          </h3>
           <p className="max-w-md text-[14px] leading-relaxed text-muted-foreground">
             {description}
           </p>

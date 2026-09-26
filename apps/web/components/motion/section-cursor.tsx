@@ -58,7 +58,8 @@ export function SectionCursor({
       trail.y += (target.y - trail.y) * ease;
       place(labelEl, trail.x, trail.y);
       const settled =
-        Math.abs(target.x - trail.x) < 0.3 && Math.abs(target.y - trail.y) < 0.3;
+        Math.abs(target.x - trail.x) < 0.3 &&
+        Math.abs(target.y - trail.y) < 0.3;
       frame = settled ? 0 : requestAnimationFrame(tick);
     };
 

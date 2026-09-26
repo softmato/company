@@ -108,5 +108,9 @@ export function RippleAsset({
 function rgb(value: string): [number, number, number] {
   const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(value.trim());
   if (!m) return [0.15, 0.39, 0.92];
-  return [parseInt(m[1]!, 16) / 255, parseInt(m[2]!, 16) / 255, parseInt(m[3]!, 16) / 255];
+  return [
+    parseInt(m[1]!, 16) / 255,
+    parseInt(m[2]!, 16) / 255,
+    parseInt(m[3]!, 16) / 255,
+  ];
 }

@@ -23,7 +23,9 @@ export function ServiceArtPanel({ art }: { art: ServiceArt }) {
           width={art.width}
           height={art.height}
           className="relative"
-          style={{ width: `min(90cqw, calc(78cqh * ${art.width / art.height}))` }}
+          style={{
+            width: `min(90cqw, calc(78cqh * ${art.width / art.height}))`,
+          }}
         />
       </Tilt>
 

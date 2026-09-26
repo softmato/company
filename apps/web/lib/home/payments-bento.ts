@@ -60,17 +60,50 @@ export const BENTO_COPY = {
  */
 export type ActivityItem =
   | { kind: 'payment'; wallet: ProviderId; amount: string; where: string }
-  | { kind: 'order' | 'notify' | 'webhook' | 'refund'; title: string; detail: string };
+  | {
+      kind: 'order' | 'notify' | 'webhook' | 'refund';
+      title: string;
+      detail: string;
+    };
 
 export const ACTIVITY: ActivityItem[] = [
-  { kind: 'payment', wallet: 'esewa', amount: 'NPR 2,400', where: 'Paid on your website' },
-  { kind: 'webhook', title: 'Webhook delivered', detail: 'payment.success · 200' },
+  {
+    kind: 'payment',
+    wallet: 'esewa',
+    amount: 'NPR 2,400',
+    where: 'Paid on your website',
+  },
+  {
+    kind: 'webhook',
+    title: 'Webhook delivered',
+    detail: 'payment.success · 200',
+  },
   { kind: 'order', title: 'Order marked paid', detail: 'In your admin' },
-  { kind: 'payment', wallet: 'khalti', amount: 'NPR 850', where: 'Paid in your app' },
-  { kind: 'notify', title: 'Customer notified', detail: 'Confirmation in your app' },
-  { kind: 'payment', wallet: 'fonepay', amount: 'NPR 12,000', where: 'Paid in your software' },
-  { kind: 'refund', title: 'Refund sent back', detail: 'payment.refunded · 200' },
+  {
+    kind: 'payment',
+    wallet: 'khalti',
+    amount: 'NPR 850',
+    where: 'Paid in your app',
+  },
+  {
+    kind: 'notify',
+    title: 'Customer notified',
+    detail: 'Confirmation in your app',
+  },
+  {
+    kind: 'payment',
+    wallet: 'fonepay',
+    amount: 'NPR 12,000',
+    where: 'Paid in your software',
+  },
+  {
+    kind: 'refund',
+    title: 'Refund sent back',
+    detail: 'payment.refunded · 200',
+  },
 ];
 
 /** Kathmandu, from `place.ts`, as numbers. */
-export const GLOBE_MARKERS = [{ location: [27.7172, 85.324] as [number, number], size: 0.08 }];
+export const GLOBE_MARKERS = [
+  { location: [27.7172, 85.324] as [number, number], size: 0.08 },
+];

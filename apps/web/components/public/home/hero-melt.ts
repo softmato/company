@@ -49,10 +49,12 @@ export function createLetterMelt() {
   let word: HTMLElement | null = null;
   let settledAt = 0;
   let measuredFor = '';
-  let letters: { el: HTMLElement; x: number; ys: number[]; last: string }[] = [];
+  let letters: { el: HTMLElement; x: number; ys: number[]; last: string }[] =
+    [];
 
   return (intensityAt: (x: number, y: number) => number, host: HTMLElement) => {
-    word ??= host.closest('section')?.querySelector<HTMLElement>('.hero-word') ?? null;
+    word ??=
+      host.closest('section')?.querySelector<HTMLElement>('.hero-word') ?? null;
     if (!word?.hasAttribute('data-hero-settled')) return;
 
     /* Letters only move relative to the canvas when the hero resizes. */
@@ -60,16 +62,23 @@ export function createLetterMelt() {
     if (size !== measuredFor) {
       measuredFor = size;
       const origin = host.getBoundingClientRect();
-      letters = Array.from(word.querySelectorAll<HTMLElement>('.hero-letter'), (el) => {
-        const box = el.getBoundingClientRect();
-        const top = box.top - origin.top;
-        return {
-          el,
-          x: box.left - origin.left + box.width / 2,
-          ys: [top + box.height * 0.25, top + box.height * 0.5, top + box.height * 0.75],
-          last: '',
-        };
-      });
+      letters = Array.from(
+        word.querySelectorAll<HTMLElement>('.hero-letter'),
+        (el) => {
+          const box = el.getBoundingClientRect();
+          const top = box.top - origin.top;
+          return {
+            el,
+            x: box.left - origin.left + box.width / 2,
+            ys: [
+              top + box.height * 0.25,
+              top + box.height * 0.5,
+              top + box.height * 0.75,
+            ],
+            last: '',
+          };
+        },
+      );
     }
 
     const now = performance.now();

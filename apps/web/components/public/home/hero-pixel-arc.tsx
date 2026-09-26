@@ -36,7 +36,10 @@ export function HeroPixelArc() {
   }, []);
 
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-1">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 -z-1"
+    >
       {ready ? (
         <DataPixelArc
           onFrame={prefersReducedMotion() ? undefined : melt}

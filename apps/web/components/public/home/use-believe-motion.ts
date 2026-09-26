@@ -2,7 +2,11 @@
 
 import { useEffect, type RefObject } from 'react';
 
-import { gsap, registerMotionPlugins, ScrollTrigger } from '@/lib/motion/register';
+import {
+  gsap,
+  registerMotionPlugins,
+  ScrollTrigger,
+} from '@/lib/motion/register';
 
 /** Everything the entrance moves, cleared once it has landed. */
 const MOVED =
@@ -87,7 +91,12 @@ export function useBelieveMotion(ref: RefObject<HTMLElement | null>) {
         const drop = draw('drop', 0.3);
         const spokes = draw('spoke', 0.4);
         const land = { autoAlpha: 0, y: 18, scale: 0.97, duration: 0.7 };
-        const pop = { autoAlpha: 0, scale: 0.55, duration: 0.5, ease: 'back.out(1.8)' };
+        const pop = {
+          autoAlpha: 0,
+          scale: 0.55,
+          duration: 0.5,
+          ease: 'back.out(1.8)',
+        };
 
         const tl = gsap.timeline({
           defaults: { ease: 'power3.out' },
@@ -112,7 +121,11 @@ export function useBelieveMotion(ref: RefObject<HTMLElement | null>) {
           .from(wiresHub.targets, wiresHub.vars, '-=0.15')
           .from(q('[data-hub]'), { ...pop, scale: 0.7 }, '-=0.1')
           .from(wireOut.targets, wireOut.vars, '-=0.1')
-          .from(q('[data-chip]'), { autoAlpha: 0, y: -10, duration: 0.45 }, '-=0.3')
+          .from(
+            q('[data-chip]'),
+            { autoAlpha: 0, y: -10, duration: 0.45 },
+            '-=0.3',
+          )
           .from(drop.targets, drop.vars, '-=0.15')
           .from(q('[data-card="right"]'), land, '-=0.2')
           .from(q('[data-core]'), pop, '-=0.35')

@@ -58,9 +58,8 @@ export function Statement() {
             />
 
             <p className="mt-7 max-w-[44ch] text-[16px] leading-relaxed text-muted-foreground">
-              Tell us what your website or app needs. The engineer who builds
-              it answers you, and your own portal shows every project as it
-              moves.
+              Tell us what your website or app needs. The engineer who builds it
+              answers you, and your own portal shows every project as it moves.
             </p>
 
             <Link
@@ -81,7 +80,10 @@ export function Statement() {
       */}
       <SectionCursor
         arrow={
-          <svg viewBox="0 0 20 20" className="-ml-1 -mt-1 size-[30px] drop-shadow-sm">
+          <svg
+            viewBox="0 0 20 20"
+            className="-ml-1 -mt-1 size-[30px] drop-shadow-sm"
+          >
             <path
               d="M2.5 2 17 8.2l-6.1 1.9-2 6.1z"
               className="fill-foreground stroke-card"

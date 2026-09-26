@@ -24,20 +24,33 @@ import { WorkRequestCard } from './work-request-card';
  * and the cursor tags add their own wander inside that.
  */
 const ITEMS = [
-  { at: 'left-0 top-0 -rotate-[4deg]', drift: 9, period: 6.2, node: <WorkRequestCard /> },
+  {
+    at: 'left-0 top-0 -rotate-[4deg]',
+    drift: 9,
+    period: 6.2,
+    node: <WorkRequestCard />,
+  },
   {
     at: 'right-[8%] top-[2%]',
     drift: 8,
     period: 5.7,
     node: <WorkCursorTag who="engineer" side="right" period={11} />,
   },
-  { at: 'right-0 top-[36%] rotate-[3deg]', drift: 10, period: 6.9, node: <WorkReplyCard /> },
+  {
+    at: 'right-0 top-[36%] rotate-[3deg]',
+    drift: 10,
+    period: 6.9,
+    node: <WorkReplyCard />,
+  },
 ];
 
 export function WorkFloaters() {
   return (
     /* Decorative: the headline and lede say all of it in words. */
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 hidden lg:block"
+    >
       <StaggerIn onScroll delay={0.35} className="relative size-full">
         {ITEMS.map((item, i) => (
           <div key={i} className={`absolute ${item.at}`}>

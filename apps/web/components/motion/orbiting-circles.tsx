@@ -37,7 +37,10 @@ export function OrbitingCircles({
   return (
     <>
       {path && (
-        <svg className="pointer-events-none absolute inset-0 size-full" aria-hidden="true">
+        <svg
+          className="pointer-events-none absolute inset-0 size-full"
+          aria-hidden="true"
+        >
           <circle
             /* `stroke-border` vanished on the tinted bento card. */
             className="stroke-foreground/20"

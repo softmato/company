@@ -99,7 +99,9 @@ export function ElasticPhoto({
       <div
         className={cn(
           'overflow-hidden border shadow-float',
-          drawn ? 'border-transparent [&_img]:invisible' : 'border-border bg-surface',
+          drawn
+            ? 'border-transparent [&_img]:invisible'
+            : 'border-border bg-surface',
         )}
         style={{ borderRadius: radius }}
       >

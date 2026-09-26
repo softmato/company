@@ -19,9 +19,42 @@ import { cn } from '@/lib/cn';
  * reads, so the fan is one transition rather than a keyframe.
  */
 const LAYERS = [
-  { tone: 'ink', kind: 'Debit', last4: '2400', expiry: '09/29', x: '4%', y: '34%', tilt: -16, fan: -18, drift: 10, period: 6.5 },
-  { tone: 'glow', kind: 'Prepaid', last4: '0850', expiry: '04/28', x: '30%', y: '8%', tilt: 8, fan: 0, drift: 14, period: 7.8 },
-  { tone: 'glass', kind: 'Virtual', last4: '1200', expiry: '12/30', x: '56%', y: '30%', tilt: 20, fan: 22, drift: 8, period: 5.9 },
+  {
+    tone: 'ink',
+    kind: 'Debit',
+    last4: '2400',
+    expiry: '09/29',
+    x: '4%',
+    y: '34%',
+    tilt: -16,
+    fan: -18,
+    drift: 10,
+    period: 6.5,
+  },
+  {
+    tone: 'glow',
+    kind: 'Prepaid',
+    last4: '0850',
+    expiry: '04/28',
+    x: '30%',
+    y: '8%',
+    tilt: 8,
+    fan: 0,
+    drift: 14,
+    period: 7.8,
+  },
+  {
+    tone: 'glass',
+    kind: 'Virtual',
+    last4: '1200',
+    expiry: '12/30',
+    x: '56%',
+    y: '30%',
+    tilt: 20,
+    fan: 22,
+    drift: 8,
+    period: 5.9,
+  },
 ] as const;
 
 export function PaymentCardsArt({ className }: { className?: string }) {
@@ -66,7 +99,9 @@ export function PaymentCardsArt({ className }: { className?: string }) {
                 </svg>
               </div>
 
-              <p className="pay-card__number numeric">•••• •••• •••• {layer.last4}</p>
+              <p className="pay-card__number numeric">
+                •••• •••• •••• {layer.last4}
+              </p>
 
               <div className="pay-card__row items-end">
                 <span>
@@ -75,7 +110,9 @@ export function PaymentCardsArt({ className }: { className?: string }) {
                 </span>
                 <span>
                   <span className="pay-card__label">Valid thru</span>
-                  <span className="pay-card__value numeric">{layer.expiry}</span>
+                  <span className="pay-card__value numeric">
+                    {layer.expiry}
+                  </span>
                 </span>
                 <span className="pay-card__network" />
               </div>

@@ -27,7 +27,10 @@ export function WorkShowcase() {
     <div className="relative mt-16 flex flex-col items-center gap-6 lg:mt-20 lg:block lg:h-[32rem]">
       <div aria-hidden="true" className="work-horizon hidden lg:block" />
 
-      <div aria-hidden="true" className="relative z-20 lg:absolute lg:left-[24%] lg:top-0">
+      <div
+        aria-hidden="true"
+        className="relative z-20 lg:absolute lg:left-[24%] lg:top-0"
+      >
         <Parallax speed={0.06}>
           <WorkShippedCard />
           <span className="bell-bubble absolute -right-4 -top-4">
@@ -48,18 +51,32 @@ export function WorkShowcase() {
       </div>
 
       {/* Web and app: the same change, both places. Icons carry it. */}
-      <div aria-hidden="true" className="relative z-10 hidden lg:absolute lg:left-[58%] lg:top-[2%] lg:block">
+      <div
+        aria-hidden="true"
+        className="relative z-10 hidden lg:absolute lg:left-[58%] lg:top-[2%] lg:block"
+      >
         <Drift distance={8} duration={5.4}>
           <div className="float-card flex gap-2 p-2.5">
             {[
               { label: 'Website', d: 'M3 5h18v14H3zM3 9h18M6 7h.01M8.5 7h.01' },
-              { label: 'App', d: 'M8 2.5h8a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2zM11 18.5h2' },
+              {
+                label: 'App',
+                d: 'M8 2.5h8a2 2 0 0 1 2 2v15a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-15a2 2 0 0 1 2-2zM11 18.5h2',
+              },
             ].map((platform) => (
               <span
                 key={platform.label}
                 className="flex items-center gap-2 rounded-xl bg-surface py-2 pl-2.5 pr-3 text-[12.5px] font-medium text-foreground"
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-primary">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="size-4 text-primary"
+                >
                   <path d={platform.d} />
                 </svg>
                 {platform.label}
@@ -76,7 +93,9 @@ export function WorkShowcase() {
       </div>
 
       <div className="relative z-10 mt-4 text-center lg:absolute lg:bottom-[6%] lg:left-0 lg:mt-0 lg:text-left">
-        <p className="text-[12.5px] text-muted-foreground">Products we build and run</p>
+        <p className="text-[12.5px] text-muted-foreground">
+          Products we build and run
+        </p>
         <ul className="mt-2.5 flex items-center justify-center gap-6 lg:justify-start">
           {OWN_PRODUCTS.map((product) => (
             <li key={product.name} className="flex items-center gap-2">
@@ -88,7 +107,9 @@ export function WorkShowcase() {
                 width={Math.round(26 * product.ratio)}
                 className="h-[26px] w-auto"
               />
-              <span className="text-[15px] font-semibold text-foreground">{product.name}</span>
+              <span className="text-[15px] font-semibold text-foreground">
+                {product.name}
+              </span>
             </li>
           ))}
         </ul>
@@ -100,8 +121,12 @@ export function WorkShowcase() {
           <WorkAvatar who="engineer" className="size-10" />
         </span>
         <span>
-          <span className="block text-[13.5px] font-medium text-foreground">{DIRECT_LINE.title}</span>
-          <span className="block text-[12px] text-muted-foreground">{DIRECT_LINE.body}</span>
+          <span className="block text-[13.5px] font-medium text-foreground">
+            {DIRECT_LINE.title}
+          </span>
+          <span className="block text-[12px] text-muted-foreground">
+            {DIRECT_LINE.body}
+          </span>
         </span>
       </div>
     </div>

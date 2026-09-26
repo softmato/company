@@ -38,10 +38,13 @@ export function BelieveFlow() {
   useBelieveMotion(ref);
 
   return (
-    <figure ref={ref} className="believe relative lg:-mt-60 lg:aspect-[1152/760]">
+    <figure
+      ref={ref}
+      className="believe relative lg:-mt-60 lg:aspect-[1152/760]"
+    >
       <figcaption className="sr-only">
-        What you see — web, app, UI and UX — joined by Softmato to what makes
-        it right underneath: server, database, clients and trust.
+        What you see — web, app, UI and UX — joined by Softmato to what makes it
+        right underneath: server, database, clients and trust.
       </figcaption>
 
       <BelieveLines />
@@ -66,7 +69,9 @@ export function BelieveFlow() {
           className={`section-frame w-full max-w-sm p-4 ${PLACED}`}
           style={frameVars(BOXES.see)}
         >
-          <p className="text-[12.5px] font-medium text-muted-foreground">What you see</p>
+          <p className="text-[12.5px] font-medium text-muted-foreground">
+            What you see
+          </p>
           <ul className="mt-3 grid grid-cols-2 gap-2.5">
             {SEE.map((asset) => (
               <Tile key={asset.label} asset={asset} />
@@ -153,7 +158,13 @@ export function BelieveFlow() {
             aria-hidden="true"
             className="absolute left-1/2 top-1/2 grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl border border-border bg-card shadow-[0_12px_30px_-12px_var(--primary)]"
           >
-            <Image src="/brand/mark.png" alt="" width={40} height={32} className="h-7 w-auto" />
+            <Image
+              src="/brand/mark.png"
+              alt=""
+              width={40}
+              height={32}
+              className="h-7 w-auto"
+            />
           </span>
 
           <ul>
@@ -175,7 +186,9 @@ export function BelieveFlow() {
                     sizes="64px"
                     className="size-14 lg:size-16"
                   />
-                  <span className="text-[12px] text-muted-foreground">{asset.label}</span>
+                  <span className="text-[12px] text-muted-foreground">
+                    {asset.label}
+                  </span>
                 </div>
               </li>
             ))}
@@ -192,7 +205,14 @@ function Tile({ asset }: { asset: Asset }) {
       data-tile=""
       className="flex flex-col items-center justify-center gap-1 rounded-xl bg-surface-strong/60 py-2"
     >
-      <Image src={asset.src} alt="" width={64} height={64} sizes="64px" className="size-14" />
+      <Image
+        src={asset.src}
+        alt=""
+        width={64}
+        height={64}
+        sizes="64px"
+        className="size-14"
+      />
       <span className="text-[12px] font-medium">{asset.label}</span>
     </li>
   );
@@ -200,7 +220,12 @@ function Tile({ asset }: { asset: Asset }) {
 
 /** A short dashed wire between stacked pieces, below `lg` only. */
 function Stub() {
-  return <span aria-hidden="true" className="h-6 border-l border-dashed border-primary/40 lg:hidden" />;
+  return (
+    <span
+      aria-hidden="true"
+      className="h-6 border-l border-dashed border-primary/40 lg:hidden"
+    />
+  );
 }
 
 /** Correct, boring, local: one mark per belief on the About page. */

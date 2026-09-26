@@ -53,8 +53,12 @@ function Row({ item }: { item: ActivityItem }) {
     <figure className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3 shadow-[0_2px_4px_rgba(0,0,0,0.04),0_12px_24px_-12px_rgba(0,0,0,0.12)]">
       {badge}
       <figcaption className="min-w-0">
-        <p className="truncate text-[14px] font-medium text-foreground">{title}</p>
-        <p className="numeric truncate text-[12px] text-muted-foreground">{detail}</p>
+        <p className="truncate text-[14px] font-medium text-foreground">
+          {title}
+        </p>
+        <p className="numeric truncate text-[12px] text-muted-foreground">
+          {detail}
+        </p>
       </figcaption>
     </figure>
   );

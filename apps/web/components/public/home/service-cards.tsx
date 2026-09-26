@@ -109,7 +109,10 @@ export function ServiceCards({ services }: { services: ServiceCard[] }) {
 
             <span className="mt-auto inline-flex items-center gap-1.5 pt-8 text-[14px] font-medium">
               Learn more
-              <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              >
                 →
               </span>
             </span>

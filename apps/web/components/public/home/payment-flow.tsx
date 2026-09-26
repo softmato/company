@@ -56,8 +56,8 @@ export function PaymentFlow({ className }: { className?: string }) {
   return (
     <figure className={className}>
       <figcaption className="sr-only">
-        eSewa, Khalti and Fonepay, wired by Softmato into your website, your
-        app and your software.
+        eSewa, Khalti and Fonepay, wired by Softmato into your website, your app
+        and your software.
       </figcaption>
 
       <div
@@ -84,7 +84,11 @@ export function PaymentFlow({ className }: { className?: string }) {
 
         <div className="flex flex-col gap-3">
           {OUTCOMES.map((outcome, i) => (
-            <Node key={outcome.label} ref={outcomeRefs[i]!} label={outcome.label}>
+            <Node
+              key={outcome.label}
+              ref={outcomeRefs[i]!}
+              label={outcome.label}
+            >
               <PaymentGlyph name={outcome.glyph} className="text-primary" />
             </Node>
           ))}

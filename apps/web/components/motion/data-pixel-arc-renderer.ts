@@ -121,7 +121,10 @@ export function createDataPixelArcRenderer(
       const top = Math.max(0, Math.floor((curveY - thickness) / size));
       const bottom = Math.min(rows - 1, Math.ceil((curveY + thickness) / size));
       for (let y = top; y <= bottom; y += 1) {
-        let intensity = Math.max(0, 1 - Math.abs(y * size - curveY) / thickness);
+        let intensity = Math.max(
+          0,
+          1 - Math.abs(y * size - curveY) / thickness,
+        );
         if (intensity <= 0.01) continue;
         intensity = Math.max(0, Math.min(1, intensity + wave1 + wave2[y]!));
         intensity *= falloff;
@@ -130,7 +133,8 @@ export function createDataPixelArcRenderer(
         const middleStrength = Math.pow(intensity, 1.5);
         const i = (y * cols + x) * 4;
         data[i] = (30 * intensity + 100 * coreStrength) * options.brightness;
-        data[i + 1] = (220 * middleStrength + 40 * coreStrength) * options.brightness;
+        data[i + 1] =
+          (220 * middleStrength + 40 * coreStrength) * options.brightness;
         data[i + 2] = (80 * intensity + 50 * coreStrength) * options.brightness;
         data[i + 3] = intensity * 255;
       }
@@ -147,7 +151,13 @@ export function createDataPixelArcRenderer(
        */
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
-      context.drawImage(cellCanvas, -size / 2, -size / 2, cols * size, rows * size);
+      context.drawImage(
+        cellCanvas,
+        -size / 2,
+        -size / 2,
+        cols * size,
+        rows * size,
+      );
     } else {
       context.imageSmoothingEnabled = false;
       context.drawImage(cellCanvas, 0, 0, cols * size, rows * size);
@@ -212,20 +222,47 @@ export function createDataPixelArcRenderer(
         if (isLight) {
           // Sage edge pixels hold their shape on paper while the emerald core stays vivid.
           const pigment = Math.pow(intensity, 0.78);
-          const inkStrength = Math.max(0.45, Math.min(1.35, options.brightness));
+          const inkStrength = Math.max(
+            0.45,
+            Math.min(1.35, options.brightness),
+          );
           const paper = [238, 242, 237] as const;
           const ink = [
             192 - 172 * pigment - 10 * coreStrength,
             204 - 88 * pigment + 18 * coreStrength,
             193 - 132 * pigment + 4 * coreStrength,
           ] as const;
-          r = Math.max(0, Math.min(255, Math.round(paper[0] + (ink[0] - paper[0]) * inkStrength)));
-          g = Math.max(0, Math.min(255, Math.round(paper[1] + (ink[1] - paper[1]) * inkStrength)));
-          b = Math.max(0, Math.min(255, Math.round(paper[2] + (ink[2] - paper[2]) * inkStrength)));
+          r = Math.max(
+            0,
+            Math.min(
+              255,
+              Math.round(paper[0] + (ink[0] - paper[0]) * inkStrength),
+            ),
+          );
+          g = Math.max(
+            0,
+            Math.min(
+              255,
+              Math.round(paper[1] + (ink[1] - paper[1]) * inkStrength),
+            ),
+          );
+          b = Math.max(
+            0,
+            Math.min(
+              255,
+              Math.round(paper[2] + (ink[2] - paper[2]) * inkStrength),
+            ),
+          );
         } else {
-          r = Math.floor((30 * intensity + 100 * coreStrength) * options.brightness);
-          g = Math.floor((220 * middleStrength + 40 * coreStrength) * options.brightness);
-          b = Math.floor((80 * intensity + 50 * coreStrength) * options.brightness);
+          r = Math.floor(
+            (30 * intensity + 100 * coreStrength) * options.brightness,
+          );
+          g = Math.floor(
+            (220 * middleStrength + 40 * coreStrength) * options.brightness,
+          );
+          b = Math.floor(
+            (80 * intensity + 50 * coreStrength) * options.brightness,
+          );
         }
         context.fillStyle = `rgb(${r}, ${g}, ${b})`;
         context.globalAlpha = isLight
@@ -247,8 +284,12 @@ export function createDataPixelArcRenderer(
     const options = getOptions();
     const nx = (x / width) * 2 - 1;
     const curveY =
-      height * options.arcCenter + Math.pow(Math.abs(nx), 1.8) * height * options.arcDrop;
-    let intensity = Math.max(0, 1 - Math.abs(y - curveY) / (height * options.thickness));
+      height * options.arcCenter +
+      Math.pow(Math.abs(nx), 1.8) * height * options.arcDrop;
+    let intensity = Math.max(
+      0,
+      1 - Math.abs(y - curveY) / (height * options.thickness),
+    );
     if (intensity <= 0.01) return 0;
     const lastTime = time - 0.02 * options.speed;
     const wave1 = Math.sin(nx * 4 - lastTime * 1.5) * 0.1;

@@ -62,7 +62,9 @@ async function deliverReceipt(receipt: Receipt): Promise<void> {
 
   // Committed, a settled payment always has a document. None means the settlement rolled back: no money, no receipt.
   if (!document) {
-    console.warn(`[receipt] ${receipt.receiptNo}: payment not settled; nothing sent`);
+    console.warn(
+      `[receipt] ${receipt.receiptNo}: payment not settled; nothing sent`,
+    );
     return;
   }
 

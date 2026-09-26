@@ -40,7 +40,9 @@ export function DisciplineCluster() {
                 height={discipline.asset.height}
                 className="discipline-asset"
                 style={
-                  { '--ar': discipline.asset.width / discipline.asset.height } as React.CSSProperties
+                  {
+                    '--ar': discipline.asset.width / discipline.asset.height,
+                  } as React.CSSProperties
                 }
               />
 

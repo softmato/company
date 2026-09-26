@@ -142,7 +142,10 @@ export function createElastic(mount: HTMLElement, o: ElasticOptions) {
     uniforms.uSheet.value = [w * FIT, h * FIT];
     if (image.naturalWidth) {
       const ratio = image.naturalWidth / image.naturalHeight;
-      uniforms.uCover.value = [Math.min(aspect / ratio, 1), Math.min(ratio / aspect, 1)];
+      uniforms.uCover.value = [
+        Math.min(aspect / ratio, 1),
+        Math.min(ratio / aspect, 1),
+      ];
     }
     for (let k = 0; k < count; k++) {
       baseX[k] = (aGrid[k * 2]! * 2 - 1) * aspect;
@@ -276,7 +279,11 @@ export function createElastic(mount: HTMLElement, o: ElasticOptions) {
 
         for (let c = 0; c < 3; c++) {
           aOffset[o3 + c] = pos[o3 + c]!;
-          motion = Math.max(motion, Math.abs(pos[o3 + c]!), Math.abs(vel[o3 + c]!) * 10);
+          motion = Math.max(
+            motion,
+            Math.abs(pos[o3 + c]!),
+            Math.abs(vel[o3 + c]!) * 10,
+          );
         }
       }
     }

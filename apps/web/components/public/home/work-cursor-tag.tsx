@@ -21,13 +21,18 @@ export function WorkCursorTag({
 }) {
   return (
     <div
-      className={cn('cursor-wander flex items-center gap-2', side === 'right' && 'flex-row-reverse')}
+      className={cn(
+        'cursor-wander flex items-center gap-2',
+        side === 'right' && 'flex-row-reverse',
+      )}
       style={{ '--wander': `${period}s` } as React.CSSProperties}
     >
       <span
         className={cn(
           'rounded-lg px-3 py-1.5 text-[13px] font-medium shadow-[0_10px_24px_-14px_rgba(0,0,0,0.45)]',
-          who === 'engineer' ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background',
+          who === 'engineer'
+            ? 'bg-primary text-primary-foreground'
+            : 'bg-foreground text-background',
         )}
       >
         {who === 'client' ? 'You' : 'Engineer'}
