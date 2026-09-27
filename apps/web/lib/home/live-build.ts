@@ -4,11 +4,16 @@
  * with the developer's cursor moving to whatever is being built. Midway the
  * client asks for a change, the engineer answers, and the header and hero
  * change to match before the rest of the page and the footer land.
+ * Then the server under it: the orders API, sign-in, the staff guard, the
+ * cached menu and the image config, each typed in the editor beside the
+ * browser (`live-build-code.ts`) while the browser's network panel records it.
  *
  * The café is the drawing's own placeholder, like `your-project` in the
  * address bar: no client, no claim. Prices on its menu are the drawing's
  * data. Photos are Unsplash (a trusted host in `lib/images/trusted-hosts.ts`).
  */
+
+import type { FileKey } from './live-build-code';
 
 export type Region =
   | 'header'
@@ -20,75 +25,119 @@ export type Region =
   | 'visit'
   | 'footer';
 
-type Step = {
+/** The layers of the stack, in the order the build works through them. */
+export type Layer = 'ui' | 'api' | 'auth' | 'roles' | 'cache' | 'perf';
+
+/** One row in the browser's network panel. */
+export type Request = {
+  method: 'GET' | 'POST';
+  path: string;
+  status: number;
+  type: 'document' | 'fetch' | 'avif';
+  ms: number;
+  note?: string;
+  /** The source that answered it; clicking the row opens it. */
+  file: FileKey;
+};
+
+export type Step = {
   scene: string;
   /** How long it holds (ms) before the next. */
   ms: number;
   /** The region the browser scrolls to. */
   focus: Region;
   /** Regions outlined as being edited. */
-  editing?: Region[];
-  /** Where the developer's cursor goes; it stays put when absent. */
+  editing?: readonly Region[];
+  /** The region the developer's cursor works over; it stays put when absent. */
   cursor?: Region;
+  /** Elements (`data-cursor`) it visits instead of the region's own path. */
+  targets?: readonly string[];
   /** What the dev-tools badge logs. */
   log?: string;
+  /** The file the developer opens and types in this scene. */
+  file?: FileKey;
+  /** Lines the editor's terminal prints as the scene starts. */
+  term?: readonly string[];
+  /** A request the browser's network panel records. */
+  request?: Request;
+  /** The layer worked on from this scene on (the interface until set). */
+  layer?: Layer;
 };
 
 export const SCENES = [
-  { scene: 'blank', ms: 1100, focus: 'header', cursor: 'hero' },
+  {
+    scene: 'blank',
+    ms: 2600,
+    focus: 'header',
+    cursor: 'hero',
+    file: 'page',
+    term: ['$ pnpm dev', '✓ ready on your-project.softmato.com'],
+  },
   {
     scene: 'header',
-    ms: 1700,
+    ms: 2900,
     focus: 'header',
     editing: ['header'],
     cursor: 'header',
     log: 'header.tsx — saved',
+    file: 'header',
+    term: ['✓ compiled header.tsx in 212ms'],
   },
   {
     scene: 'hero',
-    ms: 2400,
+    ms: 3000,
     focus: 'header',
     editing: ['hero'],
     cursor: 'hero',
     log: 'hero.tsx — saved',
+    file: 'hero',
+    term: ['✓ compiled hero.tsx in 168ms'],
   },
   {
     scene: 'heroArt',
-    ms: 2300,
+    ms: 2000,
     focus: 'header',
     editing: ['hero'],
     cursor: 'hero',
     log: '4 images optimised',
+    term: ['○ 4 images → avif, 1100w'],
   },
   {
     scene: 'strip',
-    ms: 1500,
+    ms: 2800,
     focus: 'strip',
     editing: ['strip'],
     cursor: 'strip',
     log: 'highlights.tsx — saved',
+    file: 'highlights',
+    term: ['✓ compiled highlights.tsx in 97ms'],
   },
   {
     scene: 'menu',
-    ms: 2500,
+    ms: 2900,
     focus: 'menu',
     editing: ['menu'],
     cursor: 'menu',
     log: 'menu.tsx — saved',
+    file: 'menu',
+    term: ['✓ compiled menu.tsx in 143ms'],
   },
   {
     scene: 'devtools',
-    ms: 1600,
+    ms: 1700,
     focus: 'menu',
     log: 'preview deployed',
+    term: ['$ git push', '→ preview deployed'],
   },
   {
     scene: 'story',
-    ms: 2400,
+    ms: 2800,
     focus: 'story',
     editing: ['story'],
     cursor: 'story',
     log: 'story.tsx — saved',
+    file: 'story',
+    term: ['✓ compiled story.tsx in 121ms'],
   },
   {
     scene: 'client',
@@ -100,51 +149,270 @@ export const SCENES = [
   { scene: 'scrollTop', ms: 1300, focus: 'header', cursor: 'header' },
   {
     scene: 'update',
-    ms: 3400,
+    ms: 3600,
     focus: 'header',
     editing: ['header', 'hero'],
     cursor: 'hero',
     log: 'header + hero — updated live',
+    file: 'heroUpdate',
+    term: ['✓ compiled header.tsx, hero.tsx in 176ms'],
   },
   {
     scene: 'gallery',
-    ms: 2300,
+    ms: 2800,
     focus: 'gallery',
     editing: ['gallery'],
     cursor: 'gallery',
     log: 'gallery.tsx — saved',
+    file: 'gallery',
+    term: ['✓ compiled gallery.tsx in 134ms'],
   },
   {
     scene: 'visit',
-    ms: 2100,
+    ms: 2800,
     focus: 'visit',
     editing: ['visit'],
     cursor: 'visit',
     log: 'visit.tsx — saved',
+    file: 'visit',
+    term: ['✓ compiled visit.tsx in 102ms'],
   },
   {
     scene: 'footer',
-    ms: 2300,
+    ms: 2900,
     focus: 'footer',
     editing: ['footer'],
     cursor: 'footer',
     log: 'footer.tsx — saved',
+    file: 'footer',
+    term: ['✓ compiled footer.tsx in 118ms'],
   },
-  { scene: 'done', ms: 4000, focus: 'footer', log: 'all changes live' },
+  {
+    scene: 'api',
+    ms: 6400,
+    focus: 'header',
+    cursor: 'hero',
+    targets: ['order', 'cta'],
+    layer: 'api',
+    log: 'POST /api/orders — 201',
+    file: 'route',
+    term: [
+      '$ pnpm test orders',
+      '✓ places an order            201',
+      '✓ rejects an empty basket    422',
+    ],
+    request: {
+      method: 'POST',
+      path: '/api/orders',
+      status: 201,
+      type: 'fetch',
+      ms: 84,
+      note: 'order created',
+      file: 'route',
+    },
+  },
+  {
+    scene: 'auth',
+    ms: 7000,
+    focus: 'header',
+    cursor: 'header',
+    targets: ['signin', 'order'],
+    layer: 'auth',
+    log: 'session started',
+    file: 'auth',
+    term: [
+      '$ pnpm test auth',
+      '✓ 401 without a session',
+      '✓ cookie is httpOnly + secure',
+    ],
+    request: {
+      method: 'POST',
+      path: '/api/sign-in',
+      status: 200,
+      type: 'fetch',
+      ms: 61,
+      note: 'Set-Cookie: HttpOnly',
+      file: 'auth',
+    },
+  },
+  {
+    scene: 'roles',
+    ms: 6200,
+    focus: 'header',
+    cursor: 'header',
+    targets: ['nav', 'signin'],
+    layer: 'roles',
+    log: '/staff — staff only',
+    file: 'proxy',
+    term: ['$ curl -I /staff/orders', 'HTTP/1.1 403 Forbidden'],
+    request: {
+      method: 'GET',
+      path: '/staff/orders',
+      status: 403,
+      type: 'document',
+      ms: 6,
+      note: 'role: customer',
+      file: 'proxy',
+    },
+  },
+  {
+    scene: 'cache',
+    ms: 6400,
+    focus: 'header',
+    cursor: 'hero',
+    targets: ['nav', 'cta'],
+    layer: 'cache',
+    log: 'menu served from cache',
+    file: 'menuCache',
+    term: [
+      'GET /api/menu 200 in 142ms',
+      'GET /api/menu 200 in 3ms   (cache hit)',
+    ],
+    request: {
+      method: 'GET',
+      path: '/api/menu',
+      status: 200,
+      type: 'fetch',
+      ms: 3,
+      note: 'cache hit',
+      file: 'menuCache',
+    },
+  },
+  {
+    scene: 'perf',
+    ms: 5200,
+    focus: 'header',
+    cursor: 'hero',
+    targets: ['photo', 'cta'],
+    layer: 'perf',
+    log: 'images → avif',
+    file: 'config',
+    term: ['$ pnpm build', '✓ hero.jpg 1.2 MB → hero.avif 86 kB'],
+    request: {
+      method: 'GET',
+      path: '/hero.avif',
+      status: 200,
+      type: 'avif',
+      ms: 12,
+      note: '86 kB',
+      file: 'config',
+    },
+  },
+  {
+    scene: 'done',
+    ms: 4500,
+    focus: 'footer',
+    log: 'all changes live',
+    term: [
+      '$ git commit -m "orders, sign-in, staff, cache"',
+      '$ git push',
+      '→ preview deployed',
+    ],
+  },
 ] as const satisfies readonly Step[];
+
+/** What the network panel already holds when it opens: the page and its menu. */
+export const BASE_REQUESTS: readonly Request[] = [
+  {
+    method: 'GET',
+    path: '/',
+    status: 200,
+    type: 'document',
+    ms: 38,
+    file: 'page',
+  },
+  {
+    method: 'GET',
+    path: '/api/menu',
+    status: 200,
+    type: 'fetch',
+    ms: 142,
+    note: 'cache miss',
+    file: 'menu',
+  },
+];
+
+export const LAYERS = [
+  {
+    id: 'ui',
+    label: 'Interface',
+    note: 'The pages your customers see, written section by section.',
+  },
+  {
+    id: 'api',
+    label: 'Server & API',
+    note: 'Orders reach a real server and are checked before they are saved.',
+  },
+  {
+    id: 'auth',
+    label: 'Authentication',
+    note: 'Customers sign in, and the session cookie stays out of reach of scripts.',
+  },
+  {
+    id: 'roles',
+    label: 'Authorization',
+    note: 'Staff pages open for staff only; everyone else is turned away.',
+  },
+  {
+    id: 'cache',
+    label: 'Caching',
+    note: 'The menu is served from cache and refreshes the moment a price changes.',
+  },
+  {
+    id: 'perf',
+    label: 'Performance',
+    note: 'Photos go out in modern formats, sized for the screen asking.',
+  },
+] as const satisfies readonly { id: Layer; label: string; note: string }[];
 
 export type Scene = (typeof SCENES)[number]['scene'];
 
-/** Where on a region the cursor lands, as fractions of its box. */
-export const CURSOR_ANCHOR: Record<Region, [number, number]> = {
-  header: [0.72, 0.5],
-  hero: [0.3, 0.3],
-  strip: [0.55, 0.5],
-  menu: [0.42, 0.55],
-  story: [0.68, 0.35],
-  gallery: [0.36, 0.45],
-  visit: [0.28, 0.5],
-  footer: [0.55, 0.4],
+/**
+ * The developer's cursor path over each region as it is built, as fractions
+ * of the region's box — along the parts in the order they are written.
+ */
+export const CURSOR_PATH: Record<Region, readonly (readonly [number, number])[]> = {
+  header: [
+    [0.12, 0.5],
+    [0.45, 0.5],
+    [0.78, 0.5],
+  ],
+  hero: [
+    [0.2, 0.34],
+    [0.22, 0.66],
+    [0.68, 0.45],
+  ],
+  strip: [
+    [0.15, 0.5],
+    [0.5, 0.5],
+    [0.84, 0.5],
+  ],
+  menu: [
+    [0.22, 0.24],
+    [0.25, 0.64],
+    [0.55, 0.64],
+    [0.8, 0.64],
+  ],
+  story: [
+    [0.3, 0.4],
+    [0.68, 0.32],
+    [0.7, 0.68],
+  ],
+  gallery: [
+    [0.32, 0.18],
+    [0.3, 0.55],
+    [0.7, 0.5],
+  ],
+  visit: [
+    [0.25, 0.5],
+    [0.7, 0.32],
+    [0.72, 0.66],
+  ],
+  footer: [
+    [0.15, 0.4],
+    [0.5, 0.4],
+    [0.82, 0.45],
+  ],
 };
 
 const unsplash = (id: string, w = 900) =>

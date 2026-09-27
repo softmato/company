@@ -9,8 +9,9 @@ import { Block, Photo, Pop, Typed, useBuild } from './live-build-parts';
 
 /** The café's header: light at first, dark once the client asks. */
 export function SiteHeader() {
-  const { at } = useBuild();
-  const dark = at('update');
+  const { at, tweaks } = useBuild();
+  const dark = at('update') || tweaks.has('dark');
+  const green = tweaks.has('green');
 
   return (
     <Block region="header" shown={at('header')}>
@@ -27,12 +28,16 @@ export function SiteHeader() {
           <span className="text-[15px] font-semibold tracking-tight">
             <Typed by="char" text={SITE.brand} on={at('header')} />
           </span>
-          <nav className="mx-auto hidden gap-8 text-[13px] opacity-75 @3xl:flex">
+          <nav
+            data-cursor="nav"
+            className="mx-auto hidden gap-8 text-[13px] opacity-75 @3xl:flex"
+          >
             {SITE.nav.map((item) => (
               <span key={item}>{item}</span>
             ))}
           </nav>
           <span
+            data-cursor="signin"
             className={cn(
               'ml-auto hidden rounded-full px-4 py-2 text-[12.5px] font-medium ring-1 ring-inset @xl:inline-flex @3xl:ml-0',
               dark ? 'ring-white/20' : 'ring-slate-300',
@@ -41,9 +46,14 @@ export function SiteHeader() {
             Sign in
           </span>
           <span
+            data-cursor="order"
             className={cn(
               'hidden rounded-full px-4 py-2 text-[12.5px] font-semibold transition-colors duration-700 @xl:inline-flex',
-              dark ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-white',
+              !dark
+                ? 'bg-slate-900 text-white'
+                : green
+                  ? 'bg-emerald-400 text-slate-950'
+                  : 'bg-amber-400 text-slate-950',
             )}
           >
             Order ahead
@@ -78,9 +88,11 @@ function Choice({ label, tone }: { label: string; tone: string }) {
  * cards floating round it.
  */
 export function SiteHero() {
-  const { at } = useBuild();
-  const copy = at('update') ? SITE.after : SITE.before;
+  const { at, tweaks } = useBuild();
+  const after = at('update') || tweaks.has('headline');
+  const copy = after ? SITE.after : SITE.before;
   const art = at('heroArt');
+  const green = tweaks.has('green');
 
   return (
     <Block region="hero" shown={at('hero')} className="overflow-hidden">
@@ -100,7 +112,12 @@ export function SiteHero() {
                 key={copy.lead}
                 text={copy.lead}
                 on={at('hero')}
-                className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent"
+                className={cn(
+                  'bg-gradient-to-r bg-clip-text text-transparent',
+                  green
+                    ? 'from-emerald-500 via-teal-500 to-emerald-700'
+                    : 'from-amber-500 via-orange-500 to-rose-500',
+                )}
               />
             </span>
             <span className="block">
@@ -121,7 +138,15 @@ export function SiteHero() {
             />
           </p>
           <Pop on={at('hero')} index={4} className="mt-7 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-amber-500 to-rose-500 p-1.5 pr-5 text-[13px] font-semibold text-white shadow-lg shadow-rose-500/25">
+            <span
+              data-cursor="cta"
+              className={cn(
+                'inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r p-1.5 pr-5 text-[13px] font-semibold text-white shadow-lg',
+                green
+                  ? 'from-emerald-500 to-teal-600 shadow-emerald-600/25'
+                  : 'from-amber-500 to-rose-500 shadow-rose-500/25',
+              )}
+            >
               <span className="grid size-7 place-items-center rounded-full bg-white/25">
                 <ArrowRight className="size-3.5" />
               </span>
@@ -150,13 +175,16 @@ export function SiteHero() {
           >
             <Photo
               src={PHOTO.heroBefore}
-              className={at('update') ? 'opacity-0' : 'opacity-100'}
+              className={after ? 'opacity-0' : 'opacity-100'}
             />
             <Photo
               src={PHOTO.heroAfter}
-              className={at('update') ? 'opacity-100' : 'opacity-0'}
+              className={after ? 'opacity-100' : 'opacity-0'}
             />
-            <span className="absolute left-1/2 top-1/2 grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-900 shadow-xl">
+            <span
+              data-cursor="photo"
+              className="absolute left-1/2 top-1/2 grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-900 shadow-xl"
+            >
               <Play className="size-5 translate-x-0.5 fill-current" />
             </span>
           </Pop>
@@ -173,7 +201,7 @@ export function SiteHero() {
           <Pop
             on={art}
             index={2}
-            className="absolute right-0 top-[6%] hidden w-[11rem] rounded-2xl bg-white/70 p-3 shadow-xl ring-1 ring-white/70 backdrop-blur-md @md:block"
+            className="absolute right-0 top-[6%] hidden w-[11rem] rounded-2xl bg-white/90 p-3 shadow-xl ring-1 ring-white/70 @md:block"
           >
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Today’s roast
@@ -198,7 +226,7 @@ export function SiteHero() {
           <Pop
             on={art}
             index={3}
-            className="absolute -bottom-2 right-0 flex items-center gap-3 rounded-2xl bg-white/75 p-2.5 pr-4 shadow-xl ring-1 ring-white/70 backdrop-blur-md"
+            className="absolute -bottom-2 right-0 flex items-center gap-3 rounded-2xl bg-white/90 p-2.5 pr-4 shadow-xl ring-1 ring-white/70"
           >
             <span className="relative size-14 overflow-hidden rounded-xl">
               <Photo src={PHOTO.pastry} sizes="56px" />

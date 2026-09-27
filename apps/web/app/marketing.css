@@ -2127,3 +2127,63 @@ html[data-nav='over-dark'] header {
     }
   }
 }
+
+/*
+ * The live build's editor and browser (live-build-editor.tsx and friends):
+ * Shiki's output sits on the editor's own ground, the caret glides between
+ * the chunks it is typed in, the developer's pointer presses on arrival, and
+ * parts of the drawn site outline under the visitor's pointer as dev tools
+ * outline an element.
+ */
+@layer components {
+  .editor-code pre,
+  .editor-code code {
+    margin: 0;
+    font: inherit;
+    background: transparent !important;
+  }
+
+  .editor-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+  }
+
+  .editor-caret {
+    transition: transform 90ms linear;
+  }
+
+  .editor-caret > span:first-child {
+    animation: build-caret 0.9s steps(2) infinite;
+  }
+
+  .build-press {
+    animation: build-press 0.4s ease-out 0.85s both;
+  }
+
+  @keyframes build-press {
+    50% {
+      scale: 0.78;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .build-inspect [data-region] {
+      cursor: pointer;
+    }
+
+    .build-inspect [data-region]:not([data-editing]):hover > .region-inspect {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .editor-caret {
+      transition: none;
+    }
+
+    .editor-caret > span:first-child,
+    .build-press {
+      animation: none;
+    }
+  }
+}

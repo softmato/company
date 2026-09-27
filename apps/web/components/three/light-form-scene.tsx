@@ -2,6 +2,7 @@
 
 import { Canvas } from '@react-three/fiber';
 
+import './quiet-clock';
 import { useInView } from './use-in-view';
 
 import { Eclipse } from './forms/eclipse';

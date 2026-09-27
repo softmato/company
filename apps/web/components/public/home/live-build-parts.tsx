@@ -11,6 +11,8 @@ import {
 
 import { cn } from '@/lib/cn';
 import type { Region, Scene } from '@/lib/home/live-build';
+import type { Tweak } from '@/lib/home/live-build-asks';
+import { fileName, REGION_FILE } from '@/lib/home/live-build-code';
 import { useMotionEnabled } from '@/lib/motion/use-motion-enabled';
 
 export type BuildState = {
@@ -18,11 +20,14 @@ export type BuildState = {
   at: (scene: Scene) => boolean;
   /** Regions outlined as being edited right now. */
   editing: readonly Region[];
+  /** Changes the visitor has asked for, as the client. */
+  tweaks: ReadonlySet<Tweak>;
 };
 
 export const BuildContext = createContext<BuildState>({
   at: () => true,
   editing: [],
+  tweaks: new Set(),
 });
 
 export const useBuild = () => useContext(BuildContext);
@@ -83,7 +88,9 @@ export function Typed({
 /**
  * One region of the drawn site: fades in when built, carries a dashed outline
  * and an "Editing" tag while the developer is on it. `data-region` is what the
- * browser scrolls to and the cursor aims at.
+ * browser scrolls to, the cursor aims at and a click opens in the editor; in
+ * the browser (`.build-inspect`) it outlines under the pointer, as dev tools
+ * do, naming the file it comes from.
  */
 export function Block({
   region,
@@ -97,10 +104,12 @@ export function Block({
   children: ReactNode;
 }) {
   const editing = useBuild().editing.includes(region);
+  const file = fileName(REGION_FILE[region]);
 
   return (
     <div
       data-region={region}
+      data-editing={editing || undefined}
       className={cn(
         'relative transition-[opacity,translate] duration-700',
         shown ? 'opacity-100' : 'translate-y-3 opacity-0',
@@ -115,7 +124,12 @@ export function Block({
         )}
       >
         <span className="absolute -top-3 left-4 rounded-full bg-emerald-600 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-white shadow">
-          editing · {region}.tsx
+          editing · {file}
+        </span>
+      </span>
+      <span className="region-inspect pointer-events-none absolute inset-1.5 z-10 rounded-xl border-2 border-sky-400 bg-sky-400/[0.06] opacity-0 transition-opacity duration-200">
+        <span className="absolute -top-3 right-4 rounded-full bg-sky-500 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-white shadow">
+          {file} · open in editor
         </span>
       </span>
     </div>

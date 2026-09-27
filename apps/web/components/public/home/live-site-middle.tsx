@@ -103,7 +103,7 @@ export function SiteMenu() {
             >
               <div className="relative aspect-[4/3]">
                 <Photo src={item.image} sizes="260px" />
-                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-900 backdrop-blur">
+                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-slate-900">
                   {item.price}
                 </span>
               </div>

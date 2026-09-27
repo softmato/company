@@ -3,7 +3,6 @@
 import { Check, LoaderCircle } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
-import { CHAT } from '@/lib/home/live-build';
 
 import { Typed, useBuild } from './live-build-parts';
 import { WorkAvatar } from './work-avatar';
@@ -19,30 +18,45 @@ function Dots() {
   );
 }
 
-const TASKS = ['Header → dark', 'New headline + photo'];
+/** One exchange: the client's ask, the engineer's answer, what it changes. */
+export type Chat = {
+  client: string;
+  engineer: string;
+  /** How far it has got; the text stays put while a bubble fades out. */
+  stage: 'none' | 'asked' | 'answered';
+  tasks: readonly string[];
+  /** The site behind has changed to match. */
+  done: boolean;
+  /** The visitor sent it, playing the client. */
+  you: boolean;
+};
 
 /**
- * The conversation beside the build. The client's message is lit — amber
- * ring, a pulse — so it is read first; it types in word by word, then the
- * engineer's answer does, with the two changes listed under it. They tick
- * the moment the site behind changes to match.
+ * The conversation beside the build — the scripted client's, or the
+ * visitor's own. The ask is lit — amber ring, a pulse — so it is read first;
+ * it types in word by word, then the engineer's answer does, with the changes
+ * listed under it. They tick the moment the site behind changes to match.
  */
 export function LiveBuildChat({
+  chat,
   className,
   'aria-hidden': hidden,
 }: {
+  chat: Chat;
   className?: string;
   'aria-hidden'?: boolean;
 }) {
-  const { at } = useBuild();
-  const client = at('client') && !at('gallery');
-  const engineer = at('reply') && !at('gallery');
-  const done = at('update');
+  const client = chat.stage !== 'none';
+  const engineer = chat.stage === 'answered';
+  const { done, you } = chat;
 
   return (
     <div
       aria-hidden={hidden}
-      className={cn('grid w-[19rem] max-w-full gap-3', className)}
+      className={cn(
+        'pointer-events-none grid w-[19rem] max-w-full gap-3',
+        className,
+      )}
     >
       <div
         className={cn(
@@ -54,14 +68,19 @@ export function LiveBuildChat({
       >
         <p className="flex items-center gap-2 text-[11.5px] font-semibold text-amber-700">
           <WorkAvatar who="client" className="size-6" />
-          Client
+          {you ? 'You' : 'Client'}
           <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px]">
-            New message
+            {you ? 'Sent' : 'New message'}
           </span>
         </p>
         <p className="relative mt-2.5 rounded-2xl rounded-tl-md bg-amber-50 px-3 py-2.5 text-[13px] leading-snug text-slate-900">
-          {client ? <Dots /> : null}
-          <Typed text={CHAT.client} on={client} delay={900} />
+          {client && !you ? <Dots /> : null}
+          <Typed
+            key={chat.client}
+            text={chat.client}
+            on={client}
+            delay={you ? 0 : 900}
+          />
         </p>
       </div>
 
@@ -77,10 +96,15 @@ export function LiveBuildChat({
         </p>
         <p className="relative mt-2.5 rounded-2xl rounded-tl-md bg-emerald-600 px-3 py-2.5 text-[13px] leading-snug text-white">
           {engineer ? <Dots /> : null}
-          <Typed text={CHAT.engineer} on={engineer} delay={900} />
+          <Typed
+            key={chat.engineer}
+            text={chat.engineer}
+            on={engineer}
+            delay={900}
+          />
         </p>
         <ul className="mt-2.5 space-y-1.5">
-          {TASKS.map((task) => (
+          {chat.tasks.map((task) => (
             <li
               key={task}
               className="flex items-center gap-2 text-[12px] text-slate-600"
@@ -101,14 +125,17 @@ export function LiveBuildChat({
   );
 }
 
-/** The dev-tools badge docked in the preview: "Powered by softmato" + a log. */
-export function LiveBuildBadge({ log }: { log: string }) {
-  const shown = useBuild().at('devtools');
+/**
+ * The dev-tools badge docked in the preview: "Powered by softmato" + a log.
+ * It steps aside while the network panel is open.
+ */
+export function LiveBuildBadge({ log, hidden }: { log: string; hidden: boolean }) {
+  const shown = useBuild().at('devtools') && !hidden;
 
   return (
     <div
       className={cn(
-        'absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full bg-slate-950/95 py-1.5 pl-1.5 pr-4 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur transition-[opacity,translate] duration-500',
+        'pointer-events-none absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 whitespace-nowrap rounded-full bg-slate-950/95 py-1.5 pl-1.5 pr-4 text-white shadow-2xl ring-1 ring-white/10 transition-[opacity,translate] duration-500',
         shown ? 'opacity-100' : 'translate-y-4 opacity-0',
       )}
     >
