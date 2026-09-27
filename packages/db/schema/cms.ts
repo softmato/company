@@ -344,12 +344,6 @@ export const contactSubmissions = pgTable(
     /** SHA-256 of the source IP, for rate limiting only. */
     ipHash: text('ip_hash'),
     userAgent: text('user_agent'),
-    /**
-     * Why the spam check flagged it, or null for a real enquiry. Flagged ones
-     * are kept rather than dropped — out of the inbox and the email, but one
-     * click from being restored (apps/web/lib/contact/spam.ts).
-     */
-    spamReason: text('spam_reason'),
     /** Set when a founder has dealt with it. */
     handledAt: timestamp('handled_at', { withTimezone: true }),
     handledBy: bigint('handled_by', { mode: 'number' }).references(

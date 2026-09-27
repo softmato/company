@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { submitContact } from '@/app/(public)/(site)/contact/actions';
@@ -8,25 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Input, Textarea } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { VoiceRecord } from '@/components/public/voice/voice-record';
-import { useDraft, writeDraft } from '@/lib/contact/draft';
 
 export function ContactForm() {
   const [state, action] = useActionState(submitContact, undefined);
-  // Controlled so voice input can type into it; kept as a draft across reloads.
-  const message = useDraft();
-  const messageBox = useRef<HTMLTextAreaElement>(null);
-
-  // For the spam check: bots send a form faster than anyone can read it.
-  const openedAt = useRef<number | null>(null);
-  useEffect(() => {
-    openedAt.current = performance.now();
-  }, []);
-
-  // Sent means done with it.
-  useEffect(() => {
-    if (state?.ok) writeDraft('');
-  }, [state]);
 
   /*
    * Success replaces the form rather than sitting beside it. Leaving a filled
@@ -49,19 +33,7 @@ export function ContactForm() {
   }
 
   return (
-    <form
-      action={action}
-      onSubmit={(event) => {
-        const field = event.currentTarget.elements.namedItem('elapsed');
-        if (field instanceof HTMLInputElement && openedAt.current !== null) {
-          field.value = String(
-            Math.round(performance.now() - openedAt.current),
-          );
-        }
-      }}
-      className="mt-8 grid max-w-lg gap-4"
-    >
-      <input type="hidden" name="elapsed" />
+    <form action={action} className="mt-8 grid max-w-lg gap-4">
       {/*
        * Honeypot. Hidden from people with CSS and from screen readers with
        * aria-hidden + tabIndex, so it never reaches a real visitor — but it is
@@ -80,82 +52,46 @@ export function ContactForm() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="name" label="Name" required error={state?.fieldErrors?.name}>
-          {(props) => (
-            <Input
-              {...props}
-              name="name"
-              autoComplete="name"
-              required
-              defaultValue={state?.values?.name}
-            />
-          )}
-        </Field>
-
-        <Field
-          id="email"
-          label="Email"
-          required
-          error={state?.fieldErrors?.email}
-        >
-          {(props) => (
-            <Input
-              {...props}
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              defaultValue={state?.values?.email}
-            />
-          )}
-        </Field>
-      </div>
+      <Field id="name" label="Name" required error={state?.fieldErrors?.name}>
+        {(props) => (
+          <Input {...props} name="name" autoComplete="name" required />
+        )}
+      </Field>
 
       <Field
-        id="message"
-        label="Tell us what you want to build"
+        id="email"
+        label="Email"
         required
-        error={state?.fieldErrors?.message}
+        error={state?.fieldErrors?.email}
       >
         {(props) => (
-          <div className="relative">
-            <Textarea
-              {...props}
-              ref={messageBox}
-              name="message"
-              rows={6}
-              required
-              value={message}
-              onChange={(event) => writeDraft(event.target.value)}
-              placeholder="A few sentences is plenty — or record it and just talk."
-              className="resize-none pb-12"
-            />
-            <VoiceRecord
-              field={messageBox}
-              text={message}
-              onText={writeDraft}
-              onDone={() => {
-                const box = messageBox.current;
-                box?.focus();
-                box?.setSelectionRange(box.value.length, box.value.length);
-              }}
-              className="absolute bottom-2.5 right-2.5"
-            />
-          </div>
+          <Input
+            {...props}
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+          />
         )}
       </Field>
 
       <Field id="phone" label="Phone" error={state?.fieldErrors?.phone}>
         {(props) => (
-          <Input
-            {...props}
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            defaultValue={state?.values?.phone}
-          />
+          <Input {...props} name="phone" type="tel" autoComplete="tel" />
         )}
+      </Field>
+
+      <Field id="subject" label="Subject" error={state?.fieldErrors?.subject}>
+        {(props) => <Input {...props} name="subject" />}
+      </Field>
+
+      <Field
+        id="message"
+        label="What are you building?"
+        required
+        error={state?.fieldErrors?.message}
+      >
+        {(props) => <Textarea {...props} name="message" rows={6} required />}
       </Field>
 
       {/*

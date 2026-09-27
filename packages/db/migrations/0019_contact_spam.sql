@@ -1,1 +1,0 @@
-ALTER TABLE "contact_submissions" ADD COLUMN "spam_reason" text;
