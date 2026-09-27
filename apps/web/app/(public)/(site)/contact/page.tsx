@@ -8,6 +8,7 @@ import { JsonLd } from '@/lib/seo/json-ld';
 import { CmsPage } from '@/components/public/cms-page';
 import { ContactDetails } from '@/components/public/contact-details';
 import { ContactForm } from '@/components/public/contact-form';
+import { PageArt } from '@/components/public/page-art';
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage('contact');
@@ -22,7 +23,15 @@ export default async function ContactPage() {
       <JsonLd id="breadcrumbs" data={breadcrumbList([{ name: 'Contact' }])} />
       <JsonLd id="page" data={contactPageNode(page?.metaDescription)} />
 
-      <CmsPage slug="contact">
+      <CmsPage
+        slug="contact"
+        art={
+          <PageArt
+            mark="contact"
+            className="size-36 text-foreground/80 [stroke-width:1.2] lg:size-44"
+          />
+        }
+      >
         {/*
         The form leads and the details follow it in source order, so a screen
         reader and a narrow viewport both meet the thing being asked for

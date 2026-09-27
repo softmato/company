@@ -19,7 +19,15 @@ export interface ContactEnquiry {
 
 const DASH = '—';
 
+/** The enquiry's own subject, or its opening words when it has none. */
+export function enquiryTitle(enquiry: ContactEnquiry): string {
+  if (enquiry.subject) return enquiry.subject;
+  const opening = enquiry.message.trim().split('\n')[0] ?? '';
+  return opening.length > 60 ? `${opening.slice(0, 57).trimEnd()}…` : opening;
+}
+
 export function contactEnquiryEmail(enquiry: ContactEnquiry): EmailTemplate {
+  const title = enquiryTitle(enquiry);
   const rows: DetailRow[] = [
     { label: 'Name', value: enquiry.name },
     { label: 'Email', value: enquiry.email },
@@ -36,12 +44,10 @@ export function contactEnquiryEmail(enquiry: ContactEnquiry): EmailTemplate {
      * than to us — see `notify.ts`.
      */
     category: 'support',
-    subject: enquiry.subject
-      ? `Contact: ${enquiry.subject}`
-      : `Contact from ${enquiry.name}`,
+    subject: `New Softmato query from ${enquiry.name}: ${title}`,
     html: layout({
-      eyebrow: 'Contact form',
-      heading: enquiry.subject ?? `New enquiry from ${enquiry.name}`,
+      eyebrow: 'Softmato contact form',
+      heading: title,
       rows,
       body: paragraph(enquiry.message),
       footer,

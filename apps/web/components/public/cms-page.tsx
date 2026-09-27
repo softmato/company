@@ -19,12 +19,15 @@ export async function CmsPage({
   slug,
   marks,
   eyebrow,
+  art,
   children,
 }: {
   slug: string;
   /** Drawings over the body's `##` sections — see `Markdown`. */
   marks?: Record<string, React.ReactNode> | undefined;
   eyebrow?: string | undefined;
+  /** The page's mark, opposite the title — see `PageHeader`. */
+  art?: React.ReactNode;
   /** Rendered under the body, for pages with more than copy on them. */
   children?: React.ReactNode;
 }) {
@@ -36,7 +39,7 @@ export async function CmsPage({
 
   return (
     <article>
-      <PageHeader eyebrow={eyebrow} title={page.title} lead={lede} />
+      <PageHeader eyebrow={eyebrow} title={page.title} lead={lede} art={art} />
       {rest ? (
         <div className="mt-8">
           <Markdown marks={marks}>{rest}</Markdown>

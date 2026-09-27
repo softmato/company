@@ -8,7 +8,10 @@
 import { describe, expect, test } from 'vitest';
 
 import { escapeHtml, paragraph } from '@/lib/email/html';
-import { contactEnquiryEmail } from '@/lib/email/templates/contact-enquiry';
+import {
+  contactEnquiryEmail,
+  enquiryTitle,
+} from '@/lib/email/templates/contact-enquiry';
 import { paymentReceiptEmail } from '@/lib/email/templates/payment-receipt';
 import type { Receipt } from '@softmato/payment-core';
 
@@ -68,16 +71,21 @@ describe('categories', () => {
 });
 
 describe('contactEnquiryEmail', () => {
-  test('subject follows the enquiry subject when there is one', () => {
+  test('subject names the sender and the enquiry subject', () => {
     expect(contactEnquiryEmail(enquiry).subject).toBe(
-      'Contact: Payment integration',
+      'New Softmato query from Ram Bahadur: Payment integration',
     );
   });
 
-  test('falls back to the sender name when there is no subject', () => {
+  test('without a subject, the title is the opening line of the message', () => {
     expect(contactEnquiryEmail({ ...enquiry, subject: null }).subject).toBe(
-      'Contact from Ram Bahadur',
+      'New Softmato query from Ram Bahadur: We need Khalti and eSewa.',
     );
+  });
+
+  test('a long opening line is clipped', () => {
+    const long = { ...enquiry, subject: null, message: 'x'.repeat(200) };
+    expect(enquiryTitle(long)).toHaveLength(58);
   });
 
   test('carries every field into both parts', () => {

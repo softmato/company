@@ -27,6 +27,7 @@ const SECTIONS: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Dashboard', href: '/admin' },
       { label: 'Leads & Bookings', href: '/admin/leads' },
+      { label: 'Enquiries', href: '/admin/enquiries' },
     ],
   },
   {
