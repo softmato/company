@@ -101,6 +101,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: siteUrl('/plans'),
+      changeFrequency: monthly,
+      priority: 0.8,
+    },
+    {
       url: siteUrl('/client-portal'),
       changeFrequency: monthly,
       priority: 0.6,

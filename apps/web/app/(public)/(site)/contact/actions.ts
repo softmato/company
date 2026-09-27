@@ -6,12 +6,19 @@ import { contactSubmissions, db } from '@softmato/db';
 
 import { notifyContact } from '@/lib/contact/notify';
 import { hashIp, isRateLimited } from '@/lib/contact/rate-limit';
+import { spamReason } from '@/lib/contact/spam';
 import { NOT_CONFIGURED } from '@/lib/email/send';
 
 export interface ContactResult {
   ok: boolean;
   message?: string;
   fieldErrors?: Record<string, string>;
+  /**
+   * What was submitted, returned on failure. React resets a form after its
+   * action runs, so the form uses these as default values — otherwise one
+   * field error wipes every field the visitor had already filled in.
+   */
+  values?: Record<string, string>;
 }
 
 const schema = z.object({
@@ -47,13 +54,14 @@ export async function submitContact(
     return { ok: true, message: 'Thanks — we will be in touch.' };
   }
 
-  const parsed = schema.safeParse({
+  const values = {
     name: String(form.get('name') ?? ''),
     email: String(form.get('email') ?? ''),
     phone: String(form.get('phone') ?? ''),
     subject: String(form.get('subject') ?? ''),
     message: String(form.get('message') ?? ''),
-  });
+  };
+  const parsed = schema.safeParse(values);
 
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -61,7 +69,7 @@ export async function submitContact(
       const key = String(issue.path[0] ?? '');
       fieldErrors[key] ??= issue.message;
     }
-    return { ok: false, message: 'Nothing was sent.', fieldErrors };
+    return { ok: false, message: 'Nothing was sent.', fieldErrors, values };
   }
 
   const headerList = await headers();
@@ -73,22 +81,39 @@ export async function submitContact(
     return {
       ok: false,
       message:
-        'That is a few messages in a short time. Please try again a little later.',
+        'You have sent several messages from this connection in a short time. Please try again in about an hour.',
+      values,
     };
   }
+
+  // Set by the form at submit time; blank means the page ran no JavaScript.
+  const elapsed = Number(form.get('elapsed') || NaN);
+  const spam = spamReason({
+    name: parsed.data.name,
+    message: parsed.data.message,
+    elapsedMs: Number.isFinite(elapsed) ? elapsed : null,
+  });
 
   const [saved] = await db
     .insert(contactSubmissions)
     .values({
       ...parsed.data,
+      spamReason: spam,
       ipHash,
       userAgent: headerList.get('user-agent'),
     })
     .returning();
 
   if (!saved) {
-    return { ok: false, message: 'Something went wrong. Please try again.' };
+    return {
+      ok: false,
+      message: 'Something went wrong. Please try again.',
+      values,
+    };
   }
+
+  // Spam gets the same answer as a real enquiry, so a bot learns nothing.
+  if (spam) return { ok: true, message: 'Thanks — we will be in touch.' };
 
   /*
    * Stored first, emailed second, and a failed email does not fail the

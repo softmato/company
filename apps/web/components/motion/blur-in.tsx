@@ -51,8 +51,12 @@ export function BlurIn({
 
     const ctx = gsap.context(() => {
       split = new SplitText(el, {
+        /*
+         * No `overflow-hidden` on the lines: each line moves itself, so the
+         * clip masked nothing but its own descenders — at `.display`'s 1.02
+         * line-height it cut the tail off every "g", "y" and "p".
+         */
         type: 'lines',
-        linesClass: 'overflow-hidden',
         aria: 'auto',
         /* Re-split on resize; the callback re-runs the animation's setup. */
         autoSplit: true,

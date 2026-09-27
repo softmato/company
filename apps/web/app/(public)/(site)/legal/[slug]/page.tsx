@@ -16,6 +16,7 @@ import { legalPageNode } from '@/lib/seo/content';
 import { JsonLd } from '@/lib/seo/json-ld';
 import { extractHeadings } from '@/lib/cms/headings';
 import { formatBsWithAd } from '@/lib/format/date';
+import { LEGAL_MARKS } from '@/components/public/legal/legal-art';
 import { Markdown } from '@/components/public/markdown';
 import { PageHeader } from '@/components/public/page-header';
 import { TocInline } from '@/components/public/toc/toc-inline';
@@ -109,7 +110,9 @@ export default async function LegalDocumentPage({
         <TocInline headings={headings} />
 
         <div className="mt-8">
-          <Markdown anchors>{body}</Markdown>
+          <Markdown anchors marks={LEGAL_MARKS[doc.slug]}>
+            {body}
+          </Markdown>
         </div>
 
         {others.length > 0 ? (

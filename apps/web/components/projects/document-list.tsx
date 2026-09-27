@@ -132,7 +132,7 @@ export function DocumentList({
               >
                 {doc.fileName}
               </a>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 {doc.projectName ? `${doc.projectName} · ` : ''}
                 {who} · <BsDate date={doc.createdAt} /> ·{' '}
                 {fileSize(doc.sizeBytes)}

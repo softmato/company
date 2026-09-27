@@ -5,28 +5,38 @@
  * by small floating cards, over cards stacked on a curved horizon. The
  * founder's brief for the content: **readable in a glance** — a client asks
  * for a change to their website or app, our engineer says how it will be done,
- * and it goes live. So every card is one beat of that story, told with a
+ * and we keep looking after it once it is live. So every card is one beat of that story, told with a
  * picture first and as few words as it takes.
  *
  * The reference fills its cards with named people, photographs, headcounts,
  * salaries, client logos and a review score. Each is a claim about the
  * business and none is stated here until the founder gives it (see
  * `no-invented-business-data`). People are the two roles, drawn; the logos are
- * our own products; the amount on the checkout is the drawing's own datum.
+ * our own products; project names are the drawing's own data.
  */
 
-/** Beat one, top-left: the client asks. */
-export const REQUEST = 'Can you add eSewa to our checkout?';
+/** Beat one, top-left: a client with a live site asks for a change. */
+export const REQUEST = 'Can you add our new branch to the website?';
 
 /** Beat two, right: the engineer answers, with the written scope attached. */
 export const REPLY = 'On it. Scope first, then I build it.';
 export const REPLY_ATTACHMENT = 'Change note';
 
-/** Beat three, the centre card: the change, live. */
-export const SHIPPED = {
-  title: 'Checkout',
-  status: 'Live',
-  amount: 'NPR 2,400',
+/**
+ * The centre card: what we keep doing after launch. The six lines are the
+ * `/plans` "After launch" list, in the founder's words from `/how-we-work`.
+ */
+export const CARE = {
+  title: 'After launch',
+  status: 'Looked after',
+  items: [
+    { kind: 'domain', label: 'Domain' },
+    { kind: 'hosting', label: 'Hosting' },
+    { kind: 'updates', label: 'Updates' },
+    { kind: 'security', label: 'Security' },
+    { kind: 'backups', label: 'Backups' },
+    { kind: 'support', label: 'Support' },
+  ],
 } as const;
 
 /*
@@ -39,17 +49,20 @@ export const SHIPPED = {
  * updates a stage and the client sees it"), which was a placeholder page when
  * this was written — so the domain is printed in a drawn address bar, not
  * linked. Link it once the portal is live. Project names are the drawing's own
- * data, the way the checkout's amount is.
+ * data.
  */
 export const PORTAL = {
   url: 'client.softmato.com',
   title: 'Your projects',
   projects: [
-    { name: 'Checkout · eSewa', kind: 'web', stage: 'Live', progress: 100 },
+    { name: 'Website', kind: 'web', stage: 'Live', progress: 100 },
     { name: 'Mobile app', kind: 'app', stage: 'Building', progress: 64 },
-    { name: 'Website refresh', kind: 'web', stage: 'Scoping', progress: 22 },
+    { name: 'New branch page', kind: 'web', stage: 'Scoping', progress: 22 },
   ],
-  update: { title: 'New update', body: 'eSewa is live on your checkout' },
+  update: {
+    title: 'Security patches applied',
+    body: 'Your website is up to date',
+  },
 } as const;
 
 /**

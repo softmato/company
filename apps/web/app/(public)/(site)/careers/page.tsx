@@ -5,6 +5,7 @@ import { metadataFor } from '@/lib/cms/metadata';
 import { breadcrumbList } from '@/lib/seo/breadcrumbs';
 import { webPageNode } from '@/lib/seo/content';
 import { JsonLd } from '@/lib/seo/json-ld';
+import { CAREERS_MARKS } from '@/components/public/careers/careers-art';
 import { CmsPage } from '@/components/public/cms-page';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +27,7 @@ export default async function CareersPage() {
           description: page?.metaDescription,
         })}
       />
-      <CmsPage slug="careers" />
+      <CmsPage slug="careers" marks={CAREERS_MARKS} />
     </>
   );
 }

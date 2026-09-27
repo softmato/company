@@ -3,13 +3,13 @@ import { Parallax } from '@/components/motion/parallax';
 import { DIRECT_LINE, OWN_PRODUCTS } from '@/lib/home/how-we-work';
 
 import { WorkAvatar } from './work-avatar';
-import { WorkShippedCard } from './work-shipped-card';
+import { WorkCareCard } from './work-care-card';
 import { WorkPortalCard } from './work-portal-card';
 
 /**
  * The composition under the headline: cards stacked on a curved horizon, as in
- * the reference. It is the story's third beat — the checkout from the request
- * card, finished and live — with the client portal beside it, where that and
+ * the reference. It is the story's third beat — what we keep doing once the
+ * software is live — with the client portal beside it, where that and
  * every other project the client has with us is followed stage by stage, and
  * a small card saying the same change lands on the website and the app.
  *
@@ -32,7 +32,7 @@ export function WorkShowcase() {
         className="relative z-20 lg:absolute lg:left-[24%] lg:top-0"
       >
         <Parallax speed={0.06}>
-          <WorkShippedCard />
+          <WorkCareCard />
           <span className="bell-bubble absolute -right-4 -top-4">
             <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-destructive ring-2 ring-card" />
             <svg

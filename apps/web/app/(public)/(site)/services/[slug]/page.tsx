@@ -1,17 +1,19 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { getService, publishedSlugs } from '@/lib/cms/public-queries';
+import {
+  getService,
+  listPublishedServices,
+  publishedSlugs,
+} from '@/lib/cms/public-queries';
 import { metadataFor } from '@/lib/cms/metadata';
 import { breadcrumbList } from '@/lib/seo/breadcrumbs';
 import { serviceNode } from '@/lib/seo/content';
 import { JsonLd } from '@/lib/seo/json-ld';
-import { Markdown } from '@/components/public/markdown';
-import { PageHeader } from '@/components/public/page-header';
-import { BuildTiers } from '@/components/public/home/build-tiers';
-
-/** The services a website/app scope ladder applies to. */
-const TIERED = new Set(['web-applications', 'mobile-apps']);
+import { ScopeBand } from '@/components/public/services/scope-band';
+import { ServiceGrid } from '@/components/public/services/service-grid';
+import { ServiceHero } from '@/components/public/services/service-hero';
+import { ServiceSections } from '@/components/public/services/service-sections';
 
 export async function generateStaticParams() {
   const slugs = await publishedSlugs('services');
@@ -33,9 +35,14 @@ export default async function ServicePage({
   params,
 }: PageProps<'/services/[slug]'>) {
   const { slug } = await params;
-  const service = await getService(slug);
+  const [service, all] = await Promise.all([
+    getService(slug),
+    listPublishedServices(),
+  ]);
 
   if (!service) notFound();
+
+  const others = all.filter((other) => other.slug !== slug).slice(0, 3);
 
   return (
     <article>
@@ -48,13 +55,22 @@ export default async function ServicePage({
       />
       <JsonLd id="service" data={serviceNode(service)} />
 
-      <PageHeader
-        eyebrow="Service"
+      <ServiceHero
+        slug={slug}
         title={service.title}
-        lead={service.summary}
+        summary={service.summary}
       />
-      <Markdown>{service.body}</Markdown>
-      {TIERED.has(slug) && <BuildTiers />}
+      <ServiceSections body={service.body} />
+      <ScopeBand />
+
+      {others.length ? (
+        <section aria-labelledby="other-services" className="mt-20">
+          <h2 id="other-services" className="headline mb-6 text-[22px]">
+            Other services
+          </h2>
+          <ServiceGrid services={others} compact />
+        </section>
+      ) : null}
     </article>
   );
 }

@@ -63,13 +63,6 @@ export const PAYMENTS_HEADING: ToneSentence = [
   { text: 'paperwork follows.' },
 ];
 
-/** The scope ladder. */
-export const TIERS_HEADING: ToneSentence = [
-  { text: 'Every project' },
-  { text: 'lands on one of', tone: 'dim' },
-  { text: 'three rungs.' },
-];
-
 /** The principles chapter, over the route diagram. */
 export const PRINCIPLES_HEADING: ToneSentence = [
   { text: 'Software that is' },

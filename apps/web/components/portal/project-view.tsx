@@ -28,6 +28,7 @@ import { UploadForm } from '@/components/projects/upload-form';
 import { formatAdDateTime } from '@/lib/format/date';
 import { ART } from '@/lib/portal/art';
 import type { ProjectBundle } from '@/lib/projects/bundle';
+import { DEMO_BRIEF_HREF } from '@/lib/portal/demo';
 import { documentStorageConfigured } from '@/lib/projects/document-storage';
 
 import { BrowserFrame } from './browser-frame';
@@ -176,7 +177,9 @@ export function ProjectView({
             <DocumentList
               documents={documents}
               side="client"
-              hrefFor={(id) => (demo ? '#files' : `/api/portal/files/${id}`)}
+              hrefFor={(id) =>
+                demo ? DEMO_BRIEF_HREF : `/api/portal/files/${id}`
+              }
             />
             {documentStorageConfigured && !demo ? (
               <div className="border-t border-border px-2 pt-4">

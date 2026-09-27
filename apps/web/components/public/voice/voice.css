@@ -1,0 +1,420 @@
+/*
+ * The voice overlay (voice-overlay.tsx).
+ *
+ * The page dims, the screen's edge picks up a *little* green, and the message
+ * box stays lit where it already was, with the bar — language, waveform,
+ * Done — right under it. `--fx / --fy / --fw / --fh` are the real box's
+ * rectangle, measured by the overlay; everything is placed from them.
+ *
+ * Every animated property is `transform`, `opacity` or a small `clip-path`.
+ * The glows are shadows and gradients painted once and then faded — never a
+ * `filter: blur()`, never an animated shadow (marketing.css rule 3).
+ */
+
+.voice {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.voice::backdrop {
+  background: transparent;
+}
+
+.voice button {
+  cursor: pointer;
+}
+
+.voice button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--glow) 55%, transparent);
+}
+
+/* ----------------------------------------------------------- ground ---- */
+
+.voice-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(3 9 6 / 0.88);
+  animation: voice-fade-in 380ms ease-out both;
+}
+
+/* -------------------------------------------------------- edge light ---- */
+
+.voice-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: voice-edge-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.voice-edge > * {
+  position: absolute;
+  inset: 0;
+}
+
+.voice-edge-glow {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--glow-core) 30%, transparent),
+    inset 0 0 26px 0 color-mix(in oklab, var(--glow) 26%, transparent),
+    inset 0 0 110px 0 color-mix(in oklab, var(--glow-deep) 28%, transparent);
+}
+
+/*
+ * A thin light travelling round the edge: a conic gradient spinning behind a
+ * mask that only lets a narrow band along the four sides through.
+ */
+.voice-edge-flow {
+  overflow: hidden;
+  opacity: 0.5;
+  -webkit-mask:
+    linear-gradient(
+      to right,
+      #000,
+      transparent 4vmin,
+      transparent calc(100% - 4vmin),
+      #000
+    ),
+    linear-gradient(
+      to bottom,
+      #000,
+      transparent 4vmin,
+      transparent calc(100% - 4vmin),
+      #000
+    );
+  mask:
+    linear-gradient(
+      to right,
+      #000,
+      transparent 4vmin,
+      transparent calc(100% - 4vmin),
+      #000
+    ),
+    linear-gradient(
+      to bottom,
+      #000,
+      transparent 4vmin,
+      transparent calc(100% - 4vmin),
+      #000
+    );
+}
+
+.voice-edge-flow::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160vmax;
+  height: 160vmax;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--glow-core) 40deg,
+    transparent 95deg,
+    transparent 180deg,
+    var(--glow) 230deg,
+    transparent 290deg
+  );
+  animation: voice-spin 8s linear infinite;
+}
+
+/* One soft swell as the edge lands, then gone. */
+.voice-edge-flash {
+  opacity: 0;
+  box-shadow: inset 0 0 12vmin 1vmin
+    color-mix(in oklab, var(--glow) 32%, transparent);
+  animation: voice-flash 1200ms ease-out 100ms both;
+}
+
+/* -------------------------------------------------------------- field ---- */
+
+/* The lit copy of the message box, exactly over the real one. */
+.voice-field {
+  position: absolute;
+  left: var(--fx);
+  top: var(--fy);
+  width: var(--fw);
+  height: var(--fh);
+}
+
+/* Its halo; opacity follows the microphone (voice-wave.tsx). */
+.voice-field-halo {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  opacity: 0.45;
+  box-shadow:
+    0 0 0 1.5px color-mix(in oklab, var(--glow) 75%, transparent),
+    0 0 0 6px color-mix(in oklab, var(--glow) 14%, transparent),
+    0 12px 48px -8px color-mix(in oklab, var(--glow) 50%, transparent);
+  /* Backwards only, so the inline opacity takes over once it has played. */
+  animation: voice-fade-in 500ms ease-out 120ms backwards;
+}
+
+.voice-langs {
+  flex: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 3px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 85%, transparent);
+  border: 1px solid color-mix(in oklab, var(--glow) 20%, transparent);
+}
+
+.voice-langs button {
+  position: relative;
+  min-width: 76px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  transition: color 200ms ease-out;
+}
+
+.voice-langs button[aria-pressed='true'] {
+  color: var(--primary-foreground);
+}
+
+.voice-langs-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: var(--primary);
+  transition: transform 320ms cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.voice-langs-thumb[data-second] {
+  transform: translateX(100%);
+}
+
+/* ------------------------------------------------- below the field ---- */
+
+.voice-bar {
+  position: absolute;
+  left: var(--fx);
+  width: var(--fw);
+  top: calc(var(--fy) + var(--fh) + 12px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 6px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  border: 1px solid color-mix(in oklab, var(--glow) 24%, transparent);
+  box-shadow: 0 18px 50px -20px
+    color-mix(in oklab, var(--glow) 45%, transparent);
+  /* Opens from its centre out, like a waveform drawing itself. */
+  animation: voice-bar-in 700ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both;
+}
+
+.voice-wave {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+}
+
+.voice-wave span {
+  width: 3px;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(var(--glow-core), var(--glow), var(--glow-core));
+  transform: scaleY(0.2);
+  will-change: transform;
+}
+
+.voice-trouble {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+
+.voice-done {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  transition:
+    background-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+.voice-done:hover {
+  background: var(--primary-hover);
+}
+
+.voice-done:active {
+  transform: scale(0.96);
+}
+
+.voice-done svg {
+  width: 17px;
+  height: 17px;
+}
+
+.voice-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out;
+  animation: voice-fade-in 400ms ease-out 200ms both;
+}
+
+.voice-close:hover {
+  color: var(--foreground);
+  background: var(--surface-strong);
+}
+
+.voice-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 480px) {
+  .voice-wave span:nth-child(-n + 10),
+  .voice-wave span:nth-last-child(-n + 10) {
+    display: none;
+  }
+
+  .voice-langs button {
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  .voice-done {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .voice-done span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* --------------------------------------------------------------- exit ---- */
+
+.voice[data-state='closing'] .voice-scrim {
+  animation: voice-scrim-out 340ms ease-in both;
+}
+
+.voice[data-state='closing'] .voice-edge {
+  animation: voice-edge-out 300ms ease-in both;
+}
+
+.voice[data-state='closing'] :is(.voice-close, .voice-field-halo) {
+  animation: voice-fade-out 180ms ease-in both;
+}
+
+.voice[data-state='closing'] .voice-bar {
+  animation: voice-bar-out 240ms ease-in both;
+}
+
+/* --------------------------------------------------------- keyframes ---- */
+
+@keyframes voice-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes voice-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes voice-scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Scaled up, the edge sits off-screen; settling to 1 draws it in. */
+@keyframes voice-edge-in {
+  from {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes voice-edge-out {
+  to {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes voice-flash {
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes voice-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes voice-bar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    clip-path: inset(0 42% round 999px);
+  }
+  to {
+    clip-path: inset(0 0 round 999px);
+  }
+}
+
+@keyframes voice-bar-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

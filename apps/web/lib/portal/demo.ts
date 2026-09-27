@@ -9,6 +9,9 @@ import type { ProjectBundle } from '@/lib/projects/bundle';
 
 export const DEMO_PREVIEW_SLUG = 'himalayan-tea';
 
+/** The one sample file, served by `client-portal/sample-brief.pdf/route.ts`. */
+export const DEMO_BRIEF_HREF = '/client-portal/sample-brief.pdf';
+
 export function demoBundle(now = new Date()): ProjectBundle {
   const at = (days: number, hours = 0) =>
     new Date(now.getTime() + days * 86_400_000 + hours * 3_600_000);
@@ -105,7 +108,7 @@ export function demoBundle(now = new Date()): ProjectBundle {
         id: 1,
         fileName: 'sample-brief.pdf',
         contentType: 'application/pdf',
-        sizeBytes: 184_000,
+        sizeBytes: 2_053,
         uploadedBy: 'client',
         uploaderName: 'Asha',
         createdAt: at(-38),

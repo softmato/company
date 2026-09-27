@@ -1,14 +1,12 @@
-import { BrandMark } from '@/components/brand/brand-mark';
-import { WALLET_MARKS } from '@/lib/brand/wallet-marks';
 import { REQUEST } from '@/lib/home/how-we-work';
 
 import { WorkAvatar } from './work-avatar';
 
 /**
- * Beat one: the client asks for a change. The message, and under it the
- * thing they are asking about — their checkout, with the two wallets it takes
- * today and an empty dashed slot where eSewa should go. The picture says
- * "add this here" before the words are read.
+ * Beat one: a client whose site we built and still run asks for a change.
+ * The message, and under it their website, drawn — two pages that are there
+ * and a dashed slot where the new one goes. The picture says "add this here"
+ * before the words are read.
  */
 export function WorkRequestCard() {
   return (
@@ -20,7 +18,7 @@ export function WorkRequestCard() {
         </p>
       </div>
 
-      {/* Their checkout, drawn. */}
+      {/* Their website, drawn. */}
       <div className="mt-3 overflow-hidden rounded-xl border border-border">
         <div className="flex gap-1 border-b border-border bg-surface px-2.5 py-1.5">
           <span className="size-1.5 rounded-full bg-foreground/15" />
@@ -28,19 +26,17 @@ export function WorkRequestCard() {
           <span className="size-1.5 rounded-full bg-foreground/15" />
         </div>
         <div className="grid grid-cols-3 gap-1.5 p-2.5">
-          {[WALLET_MARKS.khalti, WALLET_MARKS.fonepay].map((wallet) => (
+          {[0, 1].map((i) => (
             <span
-              key={wallet.label}
-              className="flex h-9 items-center justify-center rounded-lg border border-border bg-card"
+              key={i}
+              className="flex h-9 flex-col justify-center gap-1 rounded-lg border border-border bg-card px-2"
             >
-              <BrandMark asset={wallet} size={wallet.ratio ? 14 : 24} />
+              <span className="block h-1.5 w-4/5 rounded-full bg-surface-strong" />
+              <span className="block h-1.5 w-1/2 rounded-full bg-surface-strong" />
             </span>
           ))}
-          <span className="request-slot flex h-9 items-center justify-center gap-1 rounded-lg border border-dashed border-primary/60 bg-primary/5">
-            <BrandMark asset={WALLET_MARKS.esewa} size={20} />
-            <span className="text-[13px] font-semibold leading-none text-primary">
-              +
-            </span>
+          <span className="request-slot flex h-9 items-center justify-center rounded-lg border border-dashed border-primary/60 bg-primary/5 text-[15px] font-semibold leading-none text-primary">
+            +
           </span>
         </div>
       </div>

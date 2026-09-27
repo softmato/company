@@ -19,12 +19,12 @@ import { WorkShowcase } from './work-showcase';
  *
  * **It tells one story, readable at a glance** (the founder's brief): a client
  * asks for a change to their website or app, the engineer answers with the
- * plan, and it goes live. Ask and answer float either side of the headline
- * (`WorkFloaters`); the live result sits on the horizon beside the client
- * portal at client.softmato.com, where every project is followed as the
- * engineers post updates (`WorkShowcase`). Every card leads with a picture — a drawn
- * checkout with the real wallet marks, a file, a face — and uses as few words
- * as it can.
+ * plan, and we look after it once it is live. Ask and answer float either
+ * side of the headline (`WorkFloaters`); the after-launch care card sits on the
+ * horizon beside the client portal at client.softmato.com, where every project
+ * is followed as the engineers post updates (`WorkShowcase`). Every card leads
+ * with a picture — the monoline care marks, a file, a face — and uses as few
+ * words as it can.
  *
  * **What the reference has that this does not:** photographs, names,
  * headcounts, salaries, client logos and a review score. Each is a claim about

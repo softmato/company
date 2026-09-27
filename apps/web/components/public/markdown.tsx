@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { headingId } from '@/lib/cms/headings';
+import { Frame } from '@/components/public/services/service-art';
 
 /**
  * Drops the mdast node `react-markdown` hands every component.
@@ -42,6 +43,7 @@ function nodeText(node: ReactNode): string {
 export function Markdown({
   children,
   anchors = false,
+  marks,
 }: {
   children: string;
   /**
@@ -49,6 +51,11 @@ export function Markdown({
    * `extractHeadings`, which walks the same source in the same order.
    */
   anchors?: boolean;
+  /**
+   * Drawings keyed by `##` heading text, a leading "3. " ignored, each set
+   * above its heading in the services hand. A heading with no entry gets none.
+   */
+  marks?: Record<string, ReactNode> | undefined;
 }) {
   const seen = new Set<string>();
 
@@ -76,15 +83,25 @@ export function Markdown({
           h1: (props) => (
             <h2 className="headline mt-8 text-xl" {...withoutNode(props)} />
           ),
-          h2: ({ children: heading, ...props }) => (
-            <h2
-              id={anchorFor(heading)}
-              className="headline mt-10 scroll-mt-24 text-xl"
-              {...withoutNode(props)}
-            >
-              {heading}
-            </h2>
-          ),
+          h2: ({ children: heading, ...props }) => {
+            const mark = marks?.[nodeText(heading).replace(/^\d+\.\s+/, '')];
+            return (
+              <>
+                {mark ? (
+                  <Frame className="mt-14 size-14 text-foreground">
+                    {mark}
+                  </Frame>
+                ) : null}
+                <h2
+                  id={anchorFor(heading)}
+                  className={`headline scroll-mt-24 text-xl ${mark ? 'mt-5' : 'mt-10'}`}
+                  {...withoutNode(props)}
+                >
+                  {heading}
+                </h2>
+              </>
+            );
+          },
           h3: (props) => (
             <h3
               className="mt-6 text-base font-medium"

@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { NAV_LINKS } from '@/components/public/nav-links';
+import { NavTabs } from '@/components/public/nav-tabs';
 import { useHeaderEntrance } from '@/components/public/use-header-entrance';
 import { useScrolled } from '@/components/public/use-scrolled';
 import { Wordmark } from '@/components/public/wordmark';
@@ -88,25 +89,7 @@ export function SiteHeader() {
           data-enter="down"
           className="nav-pill hidden h-11 items-center px-1.5 md:flex"
         >
-          <ul className="flex items-center gap-0.5">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  aria-current={isActive(link.href) ? 'page' : undefined}
-                  className={cn(
-                    'block rounded-full px-4 py-2 text-[13px] transition-colors duration-200',
-                    'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                    isActive(link.href)
-                      ? 'bg-foreground/8 font-medium text-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <NavTabs />
         </nav>
 
         <div data-enter="right" className="flex items-center gap-2">

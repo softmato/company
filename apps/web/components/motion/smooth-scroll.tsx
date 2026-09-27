@@ -92,6 +92,12 @@ export function SmoothScroll() {
        * feeling broken on a phone.
        */
       syncTouch: false,
+      /*
+       * Same-page `#` links (the "On this page" rail) glide there instead of
+       * jumping. Lenis honours the headings' `scroll-mt`, so they land below
+       * the floating header exactly where the native jump put them.
+       */
+      anchors: true,
     });
 
     lenis.on('scroll', ScrollTrigger.update);
