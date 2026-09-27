@@ -16,6 +16,7 @@ import { MilestoneEditor } from '@/components/admin/projects/milestone-editor';
 import { ProjectDetailsForm } from '@/components/admin/projects/project-details-form';
 import { StageEditor } from '@/components/admin/projects/stage-editor';
 import { SubmitButton } from '@/components/admin/submit-button';
+import { DeployList } from '@/components/projects/deploy-list';
 import { DocumentList } from '@/components/projects/document-list';
 import { MessageComposer } from '@/components/projects/message-composer';
 import { MessageThread } from '@/components/projects/message-thread';
@@ -48,6 +49,7 @@ export default async function AdminProjectPage({
     deliverables,
     documents,
     messages,
+    deploys,
     clientName,
   } = data;
 
@@ -128,6 +130,17 @@ export default async function AdminProjectPage({
               <ProjectDetailsForm project={project} />
             </CardBody>
           </Card>
+
+          {project.vercelProjectId ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Deploys</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <DeployList deploys={deploys} />
+              </CardBody>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader>

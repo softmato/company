@@ -19,24 +19,24 @@ describe('portal emails', () => {
       clientName: 'Tea <b>Co</b>',
       projectName: 'Shop',
       body: '<script>alert(1)</script>',
-      url: 'https://agency.softmato.com/projects/1',
+      url: 'https://client.softmato.com/projects/1',
     });
     expect(mail.html).not.toContain('<script>');
     expect(mail.html).toContain('&lt;script&gt;');
-    expect(mail.text).toContain('https://agency.softmato.com/projects/1');
+    expect(mail.text).toContain('https://client.softmato.com/projects/1');
   });
 
   test('an invitation is security mail and says when it expires', () => {
     const mail = portalInvitationEmail({
       name: 'Asha Gurung',
       clientName: 'Himalayan Tea',
-      url: 'https://agency.softmato.com/invite/abc',
+      url: 'https://client.softmato.com/invite/abc',
       expiresIn: 'in 7 days',
       reset: false,
     });
     expect(mail.category).toBe('security');
     expect(mail.text).toContain('Hi Asha');
-    expect(mail.text).toContain('https://agency.softmato.com/invite/abc');
+    expect(mail.text).toContain('https://client.softmato.com/invite/abc');
     expect(mail.text).toContain('in 7 days');
   });
 

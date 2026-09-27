@@ -78,7 +78,7 @@ export function ProjectDetailsForm({ project }: { project: Project }) {
       <Field
         id="p-preview"
         label="Preview address"
-        help="The site in progress, shown to the client in a browser frame on their project page. Previews Softmato builds live in app/(previews)/preview/<name>. Leave blank until there is something to see."
+        help="The site in progress, shown to the client in a browser frame on their project page. Leave blank until there is something to see."
       >
         {(props) => (
           <div className="flex items-center rounded-lg border border-input bg-background focus-within:ring-[3px] focus-within:ring-ring/50">
@@ -98,6 +98,25 @@ export function ProjectDetailsForm({ project }: { project: Project }) {
               .{PREVIEW_DOMAIN}
             </span>
           </div>
+        )}
+      </Field>
+      <Field
+        id="p-vercel"
+        label="Vercel project id"
+        help="The client site's own Vercel project (Settings → General → Project ID). Saving adds the preview address to it, and each production deploy is shown to the client and emailed to them. Leave blank for a preview built inside this app."
+      >
+        {(props) => (
+          <Input
+            {...props}
+            name="vercelProjectId"
+            defaultValue={project.vercelProjectId ?? ''}
+            placeholder="prj_…"
+            maxLength={64}
+            pattern="prj_[A-Za-z0-9]+"
+            autoComplete="off"
+            spellCheck={false}
+            className="font-mono"
+          />
         )}
       </Field>
       <div>

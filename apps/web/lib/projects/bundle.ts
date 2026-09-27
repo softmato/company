@@ -13,6 +13,7 @@ import {
   adminUsers,
   clientUsers,
   db,
+  projectDeployments,
   projectDeliverables,
   projectDocuments,
   projectMessages,
@@ -68,6 +69,12 @@ export interface MessageView {
   createdAt: Date;
 }
 
+export interface DeployView {
+  id: number;
+  summary: string;
+  deployedAt: Date;
+}
+
 export interface ProjectBundle {
   project: Project;
   stages: StageView[];
@@ -75,6 +82,8 @@ export interface ProjectBundle {
   deliverables: DeliverableView[];
   documents: DocumentView[];
   messages: MessageView[];
+  /** Newest first, the last few only. */
+  deploys: DeployView[];
 }
 
 /** Whoever it was — the admin or the client person — by name. */
@@ -85,7 +94,7 @@ export async function projectChildren(
 ): Promise<ProjectBundle> {
   const id = project.id;
 
-  const [stages, milestones, deliverables, documents, messages] =
+  const [stages, milestones, deliverables, documents, messages, deploys] =
     await Promise.all([
       db
         .select({
@@ -164,7 +173,26 @@ export async function projectChildren(
         .leftJoin(clientUsers, eq(clientUsers.id, projectMessages.clientUserId))
         .where(eq(projectMessages.projectId, id))
         .orderBy(asc(projectMessages.createdAt), asc(projectMessages.id)),
+
+      db
+        .select({
+          id: projectDeployments.id,
+          summary: projectDeployments.summary,
+          deployedAt: projectDeployments.deployedAt,
+        })
+        .from(projectDeployments)
+        .where(eq(projectDeployments.projectId, id))
+        .orderBy(desc(projectDeployments.deployedAt))
+        .limit(5),
     ]);
 
-  return { project, stages, milestones, deliverables, documents, messages };
+  return {
+    project,
+    stages,
+    milestones,
+    deliverables,
+    documents,
+    messages,
+    deploys,
+  };
 }

@@ -64,6 +64,8 @@ export function databaseMessage(error: unknown): string {
     return 'The due date must be on or after the start date.';
   if (text.includes('projects_preview_slug_unique'))
     return 'Another project already uses that preview address.';
+  if (text.includes('projects_vercel_project_unique'))
+    return 'Another project is already linked to that Vercel project.';
   if (text.includes('client_users_email_unique'))
     return 'Someone with that email already has a portal account.';
   if (text.includes('_present')) return 'A name is required.';

@@ -94,6 +94,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
 
+    // A page in code, not the CMS, so it is listed by hand like the blog index.
+    {
+      url: siteUrl('/how-we-work'),
+      changeFrequency: monthly,
+      priority: 0.7,
+    },
+    {
+      url: siteUrl('/client-portal'),
+      changeFrequency: monthly,
+      priority: 0.6,
+    },
+
     ...services.map((row) => ({
       url: siteUrl(`/services/${row.slug}`),
       lastModified: row.updatedAt,

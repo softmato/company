@@ -146,6 +146,12 @@ export const projects = pgTable(
     dueOn: date('due_on'),
     /** The `<slug>` of `<slug>.softmato.com`, where the site in progress is shown. */
     previewSlug: text('preview_slug'),
+    /**
+     * The Vercel project (`prj_…`, in Softmato's team) that deploys the site.
+     * The preview domain is added there, and its production deploys are
+     * recorded against this project. Null for a preview built inside this app.
+     */
+    vercelProjectId: text('vercel_project_id'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -156,6 +162,11 @@ export const projects = pgTable(
   (t) => [
     index('projects_client_idx').on(t.clientId),
     uniqueIndex('projects_preview_slug_unique').on(t.previewSlug),
+    uniqueIndex('projects_vercel_project_unique').on(t.vercelProjectId),
+    check(
+      'project_vercel_project_id',
+      sql`${t.vercelProjectId} IS NULL OR ${t.vercelProjectId} ~ '^prj_[A-Za-z0-9]+$'`,
+    ),
     check(
       'project_preview_slug_label',
       sql`${t.previewSlug} IS NULL OR ${t.previewSlug} ~ '^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$'`,
@@ -314,6 +325,29 @@ export const projectMessages = pgTable(
       'message_author_matches',
       sql`(${t.author} = 'admin' AND ${t.adminUserId} IS NOT NULL AND ${t.clientUserId} IS NULL) OR (${t.author} = 'client' AND ${t.clientUserId} IS NOT NULL AND ${t.adminUserId} IS NULL)`,
     ),
+  ],
+);
+
+/**
+ * A production deploy of the project's site, as Vercel reported it. Keyed on
+ * Vercel's deployment id, so a retried webhook is recorded once.
+ */
+export const projectDeployments = pgTable(
+  'project_deployments',
+  {
+    id: bigint('id', { mode: 'number' })
+      .generatedAlwaysAsIdentity()
+      .primaryKey(),
+    projectId: bigint('project_id', { mode: 'number' })
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    vercelDeploymentId: text('vercel_deployment_id').notNull().unique(),
+    /** First line of the commit message; empty when the deploy had none. */
+    summary: text('summary').notNull().default(''),
+    deployedAt: timestamp('deployed_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index('project_deployments_project_idx').on(t.projectId, t.deployedAt),
   ],
 );
 

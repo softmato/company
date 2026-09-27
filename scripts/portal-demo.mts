@@ -22,7 +22,7 @@ import {
   projects,
 } from '@softmato/db';
 import { createClient } from '../apps/web/lib/clients/create';
-import { agencyOrigin } from '../apps/web/lib/portal/origin';
+import { portalOrigin } from '../apps/web/lib/portal/origin';
 import { hashToken, newToken } from '../apps/web/lib/portal/token';
 
 function arg(name: string): string | undefined {
@@ -172,7 +172,7 @@ await db
 
 const base = (
   process.env.PORTAL_URL ??
-  agencyOrigin(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000')
+  portalOrigin(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000')
 ).replace(/\/$/, '');
 
 console.log(`Sample client ${clientId} created for ${email}.`);

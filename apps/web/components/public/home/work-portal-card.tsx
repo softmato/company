@@ -9,7 +9,7 @@ const GLYPH = {
 } as const;
 
 /**
- * The client portal, drawn: a browser window at agency.softmato.com with
+ * The client portal, drawn: a browser window at client.softmato.com with
  * every project the client has with us, each at its stage, and the
  * engineer's latest update landing at the foot of it.
  *

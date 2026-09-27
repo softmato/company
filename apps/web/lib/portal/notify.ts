@@ -1,5 +1,6 @@
 /**
- * Email for the client portal: invitations, new messages, work to review.
+ * Email for the client portal: invitations, new messages, work to review,
+ * and each production deploy of the client's site.
  *
  * The record is always written first; mail is the notification, never the
  * record (`sendEmail` never throws). Message and review mail goes out in
@@ -14,6 +15,7 @@ import { clientUsers, clients, db, projects } from '@softmato/db';
 import { env } from '@/lib/env';
 import { sendEmail, type SendResult } from '@/lib/email/send';
 import {
+  portalDeployEmail,
   portalInvitationEmail,
   portalMessageEmail,
   portalReviewEmail,
@@ -153,6 +155,30 @@ export function notifyReviewRequested(projectId: number, title: string): void {
     if (!result.sent)
       console.warn(
         `[portal] review mail for project ${projectId} not sent — ${result.reason}`,
+      );
+  });
+}
+
+// ponytail: one email per production deploy, as asked; add a cooldown per
+// project if a busy day of pushes starts to read as spam.
+export function notifyClientOfDeploy(projectId: number, summary: string): void {
+  after(async () => {
+    const ctx = await projectContext(projectId);
+    if (!ctx) return;
+    const to = await clientRecipients(ctx.clientId);
+    if (to.length === 0) return;
+
+    const result = await sendEmail({
+      to,
+      template: portalDeployEmail({
+        projectName: ctx.projectName,
+        summary,
+        url: `${projectUrl(projectId)}#preview`,
+      }),
+    });
+    if (!result.sent)
+      console.warn(
+        `[portal] deploy mail for project ${projectId} not sent — ${result.reason}`,
       );
   });
 }

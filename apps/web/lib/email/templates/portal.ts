@@ -1,6 +1,6 @@
 /**
- * Client-portal mail: the invitation, a new message, and work ready for
- * review. Pure — they render, they do not send (`lib/portal/notify.ts` does).
+ * Client-portal mail: the invitation, a new message, work ready for review,
+ * and a new version of the site. Pure — they render, they do not send (`lib/portal/notify.ts` does).
  *
  * Every field a person typed goes through `escapeHtml`/`paragraph`, and each
  * email carries its link as plain text too, for clients who read mail as text.
@@ -94,5 +94,27 @@ export function portalReviewEmail(input: {
       footer: 'Softmato Technology · client portal',
     }),
     text: [lead, '', input.url].join('\n'),
+  };
+}
+
+export function portalDeployEmail(input: {
+  projectName: string;
+  /** The commit's first line; empty when the deploy had none. */
+  summary: string;
+  url: string;
+}): EmailTemplate {
+  const lead = `A new version of ${input.projectName} is live on your preview. Take a look, and tell the team what you think in the portal.`;
+  const change = input.summary ? `What changed: ${input.summary}` : '';
+
+  return {
+    category: 'info',
+    subject: `${input.projectName} was just updated`,
+    html: layout({
+      eyebrow: 'Client portal',
+      heading: 'Your site was updated',
+      body: `${paragraph(lead)}${change ? paragraph(change) : ''}${button(input.url, 'See it in the portal')}`,
+      footer: 'Softmato Technology · client portal',
+    }),
+    text: [lead, ...(change ? ['', change] : []), '', input.url].join('\n'),
   };
 }

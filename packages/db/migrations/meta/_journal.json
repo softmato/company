@@ -127,6 +127,13 @@
       "when": 1790380622951,
       "tag": "0017_project_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790435322503,
+      "tag": "0018_project_deployments",
+      "breakpoints": true
     }
   ]
 }

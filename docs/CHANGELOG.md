@@ -14,6 +14,35 @@ this file tracks what was delivered.
 
 ### Added
 
+- **Deploy tracking for client sites.** A project can be linked to its own
+  Vercel project (`prj_…`, admin project page). A GitHub organisation webhook
+  ("Deployment statuses" → `/api/webhooks/github`, HMAC-SHA256 signed with
+  `GITHUB_WEBHOOK_SECRET`) reports each production deploy; one Vercel API call
+  names the project and the commit, and the deploy is recorded once. Nothing
+  polls, so it costs no Vercel usage between deploys and needs no Pro plan.
+  The portal shows "Updated …" and the recent updates, re-reads itself when
+  the client returns to the tab, and the client is emailed. Migration
+  `0018_project_deployments`.
+- **`/client-portal`** — a public demo of the portal: the real project screen
+  (`ProjectView`, shared with the portal) over a sample project, with every
+  control that writes turned off. Rebuilt daily.
+- **The portal moved to `client.softmato.com`.** `agency.` answers with a 308
+  to the same path there, so links already sent keep working.
+- **`/how-we-work`** — how a client project is handled, for the client: plan and
+  scope, the portal (advanced and custom only), building on Softmato's GitHub
+  and Vercel at a preview address, deploy emails, launch on a domain in the
+  client's name or ours, the repository moved or kept, hosting and care.
+  Linked from the footer, the scope ladder and the sitemap.
+
+### Fixed
+
+- **A preview address went on the wrong Vercel project.** Saving one always
+  added `<slug>.softmato.com` to Softmato's own project, taking it from the
+  client site's project. It now goes on the linked Vercel project, on
+  Softmato's only for previews built in this app (`IN_APP_PREVIEWS`), and
+  nowhere otherwise. Vercel's answers were also misread — 409 means another
+  project holds the domain, not success — and are now shown to the admin.
+
 - **Client portal (Phase 8) at agency.softmato.com.** Clients sign in with an
   invitation link the founder sends, and see each project's stages as a
   numbered sequence, its key dates, deliverables they can approve or send back

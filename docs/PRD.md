@@ -51,7 +51,7 @@ One platform with four surfaces and one financial core.
 | Public site     | `softmato.com`         | Prospects, candidates, customers |
 | Admin panel     | `admin.softmato.com`   | Founders only                    |
 | Hosted checkout | `payment.softmato.com` | Paying customers                 |
-| Client portal   | `agency.softmato.com`  | Agency clients                   |
+| Client portal   | `client.softmato.com`  | Agency clients                   |
 | Payment API     | `/api/v1/*`            | The SaaS products                |
 
 **The central idea:** SaaS products never touch a payment provider. They call

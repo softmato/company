@@ -200,7 +200,7 @@ const serverSchema = z.object({
   R2_PRIVATE_BUCKET: z.string().optional(),
 
   /**
-   * Where the client portal is reached, e.g. https://agency.softmato.com.
+   * Where the client portal is reached, e.g. https://client.softmato.com.
    * Invitation links are built on it. Unset, they fall back to
    * `NEXT_PUBLIC_APP_URL` + `/portal`, which works on every host — the only
    * address that exists locally and on a preview.
@@ -209,12 +209,19 @@ const serverSchema = z.object({
 
   /**
    * Lets saving a project's preview address register `<slug>.softmato.com`
-   * with this Vercel project, so the wildcard DNS record has somewhere to land.
-   * Unset, the domain is added by hand in Vercel → Project → Domains.
+   * with the Vercel project that serves it — the client site's own project, or
+   * `VERCEL_PROJECT_ID` (this app's) for a preview built in this repo. The
+   * token needs access to the team. Unset, domains are added by hand in
+   * Vercel → Project → Domains.
    */
   VERCEL_API_TOKEN: blankAsUnset(z.string()),
   VERCEL_PROJECT_ID: blankAsUnset(z.string()),
   VERCEL_TEAM_ID: blankAsUnset(z.string()),
+  /**
+   * The secret of the GitHub organisation's "Deployment statuses" webhook.
+   * Unset, `/api/webhooks/github` answers 503 and no deploy is recorded.
+   */
+  GITHUB_WEBHOOK_SECRET: blankAsUnset(z.string()),
 });
 
 const publicSchema = z.object({

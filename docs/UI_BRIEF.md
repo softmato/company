@@ -34,7 +34,7 @@ surfaces**, split by subdomain:
 | Public site   | `softmato.com`         | Prospects, candidates | Marketing. Warm, confident, uncluttered. |
 | Admin panel   | `admin.softmato.com`   | The founders only     | Dense, fast, information-first.          |
 | Checkout      | `payment.softmato.com` | Customers paying      | Calm, obvious, zero decoration.          |
-| Client portal | `agency.softmato.com`  | Agency clients        | Reassuring, simple, few choices.         |
+| Client portal | `client.softmato.com`  | Agency clients        | Reassuring, simple, few choices.         |
 
 **The money matters.** This platform keeps double-entry books. Payments run
 through Nepali providers — eSewa, Khalti, Fonepay, and bank QR with a
@@ -399,7 +399,7 @@ in mono, and it must be copyable.
 
 ---
 
-### 3.4 Client portal — `agency.softmato.com`
+### 3.4 Client portal — `client.softmato.com`
 
 Agency clients — non-technical, checking on work they are paying for.
 

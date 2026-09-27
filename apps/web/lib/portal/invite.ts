@@ -17,16 +17,16 @@ import { clientUsers, clients, db } from '@softmato/db';
 import { env } from '@/lib/env';
 import { hashPassword } from '@/lib/password.core';
 
-import { agencyOrigin } from './origin';
+import { portalOrigin } from './origin';
 import { endAllSessionsFor } from './session';
 import { hashToken, isTokenShape, newToken } from './token';
 
 /** A week: long enough to survive a busy client, short enough to go stale. */
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Where clients reach the portal — `PORTAL_URL`, else the `agency.` host. */
+/** Where clients reach the portal — `PORTAL_URL`, else the `client.` host. */
 export function portalBaseUrl(): string {
-  return (env.PORTAL_URL ?? agencyOrigin(env.NEXT_PUBLIC_APP_URL)).replace(
+  return (env.PORTAL_URL ?? portalOrigin(env.NEXT_PUBLIC_APP_URL)).replace(
     /\/$/,
     '',
   );

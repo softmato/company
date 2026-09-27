@@ -10,6 +10,33 @@ is lost — fill in the rest as you build.
 
 ## Current status
 
+**Session 2026-09-26 (later): deploy tracking + preview-domain fix +
+`/how-we-work`.** Migration `0018_project_deployments` (additive) is applied to
+`softmato-dev` and to production (2026-09-27, before the code shipped — every
+project page errors without it).
+
+- Client sites are separate repos under Softmato's GitHub, each its own Vercel
+  project in Softmato's team. The admin pastes that project's id; saving adds
+  `<slug>.softmato.com` to it via the API (needs `VERCEL_API_TOKEN` with team
+  access + `VERCEL_TEAM_ID`). `VERCEL_PROJECT_ID` is now only this app's own
+  project, for previews built here (`IN_APP_PREVIEWS`, kept in step with the
+  folders by `preview-domain.test.ts`).
+- **Vercel is Hobby and already over its free ISR Writes and Active CPU
+  (founder's dashboard, 2026-09-27).** So deploy tracking polls nothing: a
+  GitHub org webhook ("Deployment statuses" → `/api/webhooks/github`) fires
+  per deploy, and one Vercel API call names the project. The portal refreshes
+  only when the client returns to the tab. A Vercel webhook and a 5-minute
+  poll were built first and deleted for this reason.
+- **The portal is `client.softmato.com` now.** `agency.` 308s there. The
+  founder must add `client.softmato.com` in Vercel → Domains and change
+  `PORTAL_URL` if it is set.
+- `/client-portal` is a public demo built on `ProjectView`, the same
+  component the portal's project page renders.
+- The client sees the commit's first line as the update's title. Commit
+  messages on client repos are now client-facing.
+- One email per production deploy, as the founder asked. A cooldown is the
+  upgrade if it reads as spam.
+
 **Session 2026-09-26 built Phase 8 — the client portal — and the read-only
 half of Phase 7, then (founder's asks, same day) moved the portal onto its own
 host, gave it a vibrant look, a live-preview browser, and a home-page chapter.**

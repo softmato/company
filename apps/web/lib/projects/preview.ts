@@ -25,6 +25,17 @@ const RESERVED = new Set([
 /** One DNS label: lowercase letters, digits and inner hyphens, 1–63 long. */
 const LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
+/**
+ * Previews built inside this app, one folder each under
+ * `app/(previews)/preview/`. Only these belong on Softmato's own Vercel
+ * project; every other preview is its own Vercel project. A test keeps this
+ * in step with the folders.
+ */
+export const IN_APP_PREVIEWS: ReadonlySet<string> = new Set(['himalayan-tea']);
+
+/** Vercel's project id, as Settings → General shows it. */
+export const VERCEL_PROJECT_ID = /^prj_[A-Za-z0-9]+$/;
+
 /** `Himalayan Tea Co.` → `himalayan-tea-co`, as a suggestion for the form. */
 export function suggestSlug(name: string): string {
   return name

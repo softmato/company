@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { agencyOrigin } from '@/lib/portal/origin';
+import { portalOrigin } from '@/lib/portal/origin';
 
 import { previewUrl, slugProblem, suggestSlug } from '@/lib/projects/preview';
 
@@ -40,25 +40,25 @@ describe('preview slugs', () => {
   });
 
   it("refuses Softmato's own hosts", () => {
-    for (const own of ['www', 'admin', 'agency', 'payment', 'api']) {
+    for (const own of ['www', 'admin', 'client', 'agency', 'payment', 'api']) {
       expect(slugProblem(own), own).toMatch(/own addresses/);
     }
   });
 });
 
-describe('agencyOrigin', () => {
+describe('portalOrigin', () => {
   it('puts the portal beside whichever host the site is on', () => {
-    expect(agencyOrigin('http://localhost:3000')).toBe(
-      'http://agency.localhost:3000',
+    expect(portalOrigin('http://localhost:3000')).toBe(
+      'http://client.localhost:3000',
     );
-    expect(agencyOrigin('https://softmato.com')).toBe(
-      'https://agency.softmato.com',
+    expect(portalOrigin('https://softmato.com')).toBe(
+      'https://client.softmato.com',
     );
-    expect(agencyOrigin('https://www.softmato.com')).toBe(
-      'https://agency.softmato.com',
+    expect(portalOrigin('https://www.softmato.com')).toBe(
+      'https://client.softmato.com',
     );
-    expect(agencyOrigin('http://admin.localhost:3000')).toBe(
-      'http://agency.localhost:3000',
+    expect(portalOrigin('http://admin.localhost:3000')).toBe(
+      'http://client.localhost:3000',
     );
   });
 });

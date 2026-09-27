@@ -1,5 +1,5 @@
 /**
- * agency.softmato.com — the client portal (Phase 8).
+ * client.softmato.com — the client portal (Phase 8).
  *
  * This outer layout holds no session check: sign-in and invitation pages live
  * under it. The guard is `(signed-in)/layout.tsx`, and every query below that

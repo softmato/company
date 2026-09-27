@@ -20,7 +20,7 @@ No hosts-file entries are needed. Browsers resolve any `*.localhost` name to
 http://localhost:3000            public site   → softmato.com
 http://admin.localhost:3000      admin panel   → admin.softmato.com
 http://payment.localhost:3000    checkout      → payment.softmato.com
-http://agency.localhost:3000     client portal → agency.softmato.com
+http://client.localhost:3000     client portal → client.softmato.com
 ```
 
 `proxy.ts` reads the leftmost label of the `Host` header, so the same code
@@ -198,10 +198,11 @@ R2_ENDPOINT=                  # https://<account_id>.r2.cloudflarestorage.com
 R2_PRIVATE_BUCKET=softmato-data-private
 
 # ── Client portal (Phase 8) ────────────────────────────────
-PORTAL_URL=https://agency.softmato.com   # invitation links; unset → agency sibling of APP_URL
-VERCEL_API_TOKEN=     # optional: saving a preview address adds <slug>.softmato.com to the project
-VERCEL_PROJECT_ID=    # the Vercel project those domains go on (prj_…)
-VERCEL_TEAM_ID=       # only if the project belongs to a team
+PORTAL_URL=https://client.softmato.com   # invitation links; unset → client. sibling of APP_URL
+VERCEL_API_TOKEN=     # optional: saving a preview address adds <slug>.softmato.com to the site's Vercel project
+VERCEL_PROJECT_ID=    # this app's Vercel project (prj_…) — for previews built in this repo only
+VERCEL_TEAM_ID=       # the team the client sites live in
+GITHUB_WEBHOOK_SECRET= # GitHub org webhook, "Deployment statuses" → /api/webhooks/github
 
 # ── Services ───────────────────────────────────────────────
 RESEND_API_KEY=

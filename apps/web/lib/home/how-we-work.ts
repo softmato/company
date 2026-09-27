@@ -32,7 +32,7 @@ export const SHIPPED = {
 /*
  * The client portal, beside the live card: every project a client has with
  * us, each at its stage, and the engineer's latest update. The founder's
- * words: clients get agency.softmato.com, hold several projects there, and
+ * words: clients get client.softmato.com, hold several projects there, and
  * follow them as the engineering team posts updates.
  *
  * Drawn to the Phase 8 spec (docs/PHASES.md: projects and stages, "a founder
@@ -42,7 +42,7 @@ export const SHIPPED = {
  * data, the way the checkout's amount is.
  */
 export const PORTAL = {
-  url: 'agency.softmato.com',
+  url: 'client.softmato.com',
   title: 'Your projects',
   projects: [
     { name: 'Checkout · eSewa', kind: 'web', stage: 'Live', progress: 100 },

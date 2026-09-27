@@ -62,6 +62,14 @@ export function BuildTiers() {
           <span>Not sure which one? Tell us what it has to do</span>
           <MarkArrow className="size-5" />
         </Link>
+
+        <Link
+          href="/how-we-work"
+          className="link-arrow mt-4 !flex w-fit text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        >
+          <span>How we handle your project, from first message to launch</span>
+          <MarkArrow className="size-5" />
+        </Link>
       </div>
     </section>
   );

@@ -18,7 +18,7 @@ describe('preview hosts', () => {
       'https://himalayan-tea.softmato.com/preview/himalayan-tea/shop',
     );
     expect(response.headers.get('content-security-policy')).toBe(
-      "frame-ancestors 'self' https://agency.softmato.com",
+      "frame-ancestors 'self' https://client.softmato.com https://softmato.com https://www.softmato.com",
     );
     expect(response.headers.get('x-robots-tag')).toMatch(/noindex/);
   });
@@ -33,10 +33,13 @@ describe('preview hosts', () => {
     expect(rewrite('https://admin.softmato.com/')).toBe(
       'https://admin.softmato.com/admin',
     );
-    expect(rewrite('https://agency.softmato.com/')).toBe(
-      'https://agency.softmato.com/portal',
+    expect(rewrite('https://client.softmato.com/')).toBe(
+      'https://client.softmato.com/portal',
     );
     expect(rewrite('https://softmato.com/')).toBeNull();
+    expect(
+      hit('https://agency.softmato.com/projects/7?x=1').headers.get('location'),
+    ).toBe('https://client.softmato.com/projects/7?x=1');
     expect(rewrite('https://company-git-main.vercel.app/')).toBeNull();
   });
 });

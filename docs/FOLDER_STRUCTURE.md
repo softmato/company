@@ -73,7 +73,7 @@ apps/web/
 │   │       ├── return/           post-redirect → triggers poll()
 │   │       └── status/
 │   │
-│   ├── (portal)/                 agency.softmato.com
+│   ├── (portal)/                 client.softmato.com
 │   │   ├── page.tsx              project overview
 │   │   ├── projects/[id]/
 │   │   ├── invoices/

@@ -4,7 +4,7 @@
  *   softmato.com            → (public)
  *   admin.softmato.com      → (admin)
  *   payment.softmato.com    → (checkout)
- *   agency.softmato.com     → (portal) — the only host it is served on
+ *   client.softmato.com     → (portal) — the only host it is served on
  *   developer.softmato.com  → (public), rooted at /developers
  *   <slug>.softmato.com     → (previews) — a client's site in progress
  *
@@ -19,7 +19,7 @@
  */
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { agencyOrigin, hasAgencyHost } from './lib/portal/origin';
+import { hasPortalHost, portalOrigin } from './lib/portal/origin';
 import { PREVIEW_DOMAIN } from './lib/projects/preview';
 
 type Surface = 'public' | 'admin' | 'checkout' | 'portal';
@@ -28,6 +28,8 @@ type Surface = 'public' | 'admin' | 'checkout' | 'portal';
 const SUBDOMAIN_SURFACE: Record<string, Surface> = {
   admin: 'admin',
   payment: 'checkout',
+  client: 'portal',
+  /** The portal's first host, redirected to `client.` below. */
   agency: 'portal',
   www: 'public',
   /*
@@ -123,9 +125,12 @@ function previewResponse(request: NextRequest, slug: string): NextResponse {
     request.nextUrl.protocol.replace(':', '');
   const response = NextResponse.rewrite(url);
 
+  // The portal frames it for the client; the public site frames the sample
+  // on its portal demo page.
+  const site = parent.join('.');
   response.headers.set(
     'Content-Security-Policy',
-    `frame-ancestors 'self' ${proto}://agency.${parent.join('.')}`,
+    `frame-ancestors 'self' ${proto}://client.${site} ${proto}://${site} ${proto}://www.${site}`,
   );
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   return response;
@@ -139,6 +144,17 @@ export function proxy(request: NextRequest): NextResponse {
 
   if (previewSlug) return previewResponse(request, previewSlug);
 
+  // The portal's first address. Links already sent out keep working.
+  if (host.startsWith('agency.')) {
+    const proto =
+      request.headers.get('x-forwarded-proto') ??
+      request.nextUrl.protocol.replace(':', '');
+    return NextResponse.redirect(
+      `${portalOrigin(`${proto}://${host}`)}${pathname}${search}`,
+      308,
+    );
+  }
+
   if (pathname === '/' && isDocumentationHost(host)) {
     const url = request.nextUrl.clone();
     url.pathname = '/developers';
@@ -148,7 +164,7 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   // The client portal lives on its own host at clean paths. `/portal/…`
-  // anywhere else — an old link, a bookmark — goes to that host; on the agency
+  // anywhere else — an old link, a bookmark — goes to that host; on the portal
   // host itself the prefix is dropped, so every page has one URL.
   if (pathname === '/portal' || pathname.startsWith('/portal/')) {
     const rest = pathname.slice('/portal'.length) || '/';
@@ -159,9 +175,9 @@ export function proxy(request: NextRequest): NextResponse {
     if (surface === 'portal') {
       return NextResponse.redirect(`${proto}://${host}${rest}${search}`, 307);
     }
-    if (hasAgencyHost(host.split(':')[0] ?? '')) {
+    if (hasPortalHost(host.split(':')[0] ?? '')) {
       return NextResponse.redirect(
-        `${agencyOrigin(`${proto}://${host}`)}${rest}${search}`,
+        `${portalOrigin(`${proto}://${host}`)}${rest}${search}`,
         307,
       );
     }
@@ -177,7 +193,7 @@ export function proxy(request: NextRequest): NextResponse {
   // login they cannot yet pass.
   //
   // Except on the client portal: its clients have their own sign-in at
-  // agency.softmato.com/login, and agency.softmato.com/login serving the *admin* form would
+  // client.softmato.com/login, and client.softmato.com/login serving the *admin* form would
   // hand every client the staff login page. There it is rewritten like any
   // other path.
   if (

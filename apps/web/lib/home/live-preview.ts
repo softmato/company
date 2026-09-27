@@ -22,7 +22,7 @@ export const PREVIEW_LEDE =
 
 export const PREVIEW_HOST = 'your-project.softmato.com';
 
-export const PORTAL_HOST = 'agency.softmato.com';
+export const PORTAL_HOST = 'client.softmato.com';
 
 export const PREVIEW_POINTS = [
   {

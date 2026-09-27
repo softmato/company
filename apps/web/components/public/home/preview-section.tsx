@@ -247,13 +247,19 @@ export function PreviewSection() {
           })}
         </StaggerIn>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Link
             href="/contact"
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-emerald-700/20 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             Start a project
             <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+          <Link
+            href="/client-portal"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            See the portal demo
           </Link>
         </div>
       </div>

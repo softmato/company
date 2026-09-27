@@ -74,15 +74,19 @@ function BarButton({
  * The page is another origin (`<slug>.softmato.com`), so the frame cannot see
  * where inside it the client has navigated — the address bar shows the host,
  * which is the part worth recognising.
+ *
+ * A new `version` (the latest deploy) reloads the frame by itself.
  */
 export function BrowserFrame({
   url,
   host,
   title,
+  version,
 }: {
   url: string;
   host: string;
   title: string;
+  version?: number | undefined;
 }) {
   const [device, setDevice] = useState(DEVICES[0]!);
   const [loaded, setLoaded] = useState(false);
@@ -176,7 +180,7 @@ export function BrowserFrame({
         data-framed={device.id !== 'desktop'}
       >
         <iframe
-          key={round}
+          key={`${round}-${version ?? 0}`}
           src={url}
           title={title}
           onLoad={() => setLoaded(true)}

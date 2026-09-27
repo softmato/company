@@ -85,6 +85,8 @@ export async function SiteFooter({
             <ul className="mt-4 grid gap-2.5">
               {[
                 ...NAV_LINKS,
+                { href: '/how-we-work', label: 'How we work' },
+                { href: '/client-portal', label: 'Client portal demo' },
                 { href: '/careers', label: 'Careers' },
                 { href: '/contact', label: 'Contact' },
                 /*

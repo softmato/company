@@ -14,7 +14,7 @@ const ITEMS = [
 
 /**
  * Pill navigation. A client component only because the active item comes
- * from the path — the browser's path on the agency host, without `/portal`.
+ * from the path — the browser's path on the portal host, without `/portal`.
  */
 export function PortalNav() {
   const pathname = usePathname();
