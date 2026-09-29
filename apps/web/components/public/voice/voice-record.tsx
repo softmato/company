@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type RefObject } from 'react';
-import { Mic } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { joinText, useVoiceSupported } from './use-voice-capture';
@@ -11,8 +11,9 @@ import { VoiceOverlay } from './voice-overlay';
  * "Record your query": opens the listening overlay over `field` and types
  * what it hears into it, after whatever was already there.
  *
- * Renders nothing where the browser has no speech recognition (Firefox), so
- * nobody is offered a button that cannot work.
+ * Where the browser has no speech recognition (Firefox and its forks, like
+ * Zen), a note names the browsers that have it instead, so nobody is offered
+ * a button that cannot work.
  */
 export function VoiceRecord({
   field,
@@ -31,7 +32,21 @@ export function VoiceRecord({
   const [open, setOpen] = useState(false);
   const before = useRef('');
 
-  if (!supported) return null;
+  if (supported === null) return null;
+
+  if (!supported) {
+    return (
+      <p
+        className={cn(
+          'inline-flex h-8 items-center gap-1.5 rounded-full bg-muted px-3 text-[12px] text-muted-foreground',
+          className,
+        )}
+      >
+        <MicOff className="size-3.5 shrink-0" aria-hidden />
+        Voice recording needs Chrome, Edge or Safari
+      </p>
+    );
+  }
 
   return (
     <>

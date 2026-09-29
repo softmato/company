@@ -8,8 +8,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
  * Chrome and Edge stream the audio to Google's recogniser and hand back text,
  * so it costs nothing and needs no server of ours — but it needs a network,
  * and Firefox does not implement it at all. `useVoiceSupported` is how the
- * form hides the button where it cannot work, rather than offering it and
- * failing.
+ * form swaps the button, where it cannot work, for a note naming the browsers
+ * that can — rather than offering it and failing.
  *
  * `en-IN` rather than `en-US`: the people speaking to this form mostly have a
  * South Asian accent, and the Indian English model hears it noticeably better.
@@ -44,12 +44,15 @@ function recognitionCtor(): RecognitionCtor | undefined {
 
 const noSubscribe = () => () => {};
 
-/** False on the server, so the button is only ever added after hydration. */
-export function useVoiceSupported(): boolean {
+/**
+ * Null on the server — the answer is only known in the browser, so neither
+ * the button nor the "use another browser" note is in the server HTML.
+ */
+export function useVoiceSupported(): boolean | null {
   return useSyncExternalStore(
     noSubscribe,
     () => Boolean(recognitionCtor() && navigator.mediaDevices),
-    () => false,
+    () => null,
   );
 }
 
