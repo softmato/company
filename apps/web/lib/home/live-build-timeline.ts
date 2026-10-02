@@ -52,7 +52,8 @@ export function timeline(at: number) {
     if (had >= 0) tabs.splice(had, 1);
     tabs.push(s.file);
     // The folders of this half of the build stay open; the other half's close.
-    if (side(running) === side(layer)) folders(path).forEach((f) => open.add(f));
+    if (side(running) === side(layer))
+      folders(path).forEach((f) => open.add(f));
   });
 
   const term = past.flatMap((s) => s.term ?? []);

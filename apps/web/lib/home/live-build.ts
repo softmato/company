@@ -371,7 +371,10 @@ export type Scene = (typeof SCENES)[number]['scene'];
  * The developer's cursor path over each region as it is built, as fractions
  * of the region's box — along the parts in the order they are written.
  */
-export const CURSOR_PATH: Record<Region, readonly (readonly [number, number])[]> = {
+export const CURSOR_PATH: Record<
+  Region,
+  readonly (readonly [number, number])[]
+> = {
   header: [
     [0.12, 0.5],
     [0.45, 0.5],

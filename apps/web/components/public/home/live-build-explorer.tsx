@@ -108,7 +108,10 @@ export function LiveBuildExplorer({
               : 'text-white/60',
           )}
         >
-          <FileItem icon={glyphFor(node.name)} gitStatus={status.get(node.path)}>
+          <FileItem
+            icon={glyphFor(node.name)}
+            gitStatus={status.get(node.path)}
+          >
             {node.name}
           </FileItem>
         </button>

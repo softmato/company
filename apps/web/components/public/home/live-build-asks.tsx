@@ -1,6 +1,11 @@
 'use client';
 
-import { Check, MessageSquarePlus, MousePointerClick, Undo2 } from 'lucide-react';
+import {
+  Check,
+  MessageSquarePlus,
+  MousePointerClick,
+  Undo2,
+} from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { ASKS, type Tweak } from '@/lib/home/live-build-asks';
@@ -74,7 +79,8 @@ export function LiveBuildAsks({
       </div>
       <p className="flex items-center gap-1.5 text-center text-[12.5px] text-slate-500">
         <MousePointerClick className="size-3.5 shrink-0" aria-hidden />
-        All of it is live: open a file, a tab, a request or any part of the site.
+        All of it is live: open a file, a tab, a request or any part of the
+        site.
       </p>
     </div>
   );

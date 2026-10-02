@@ -3,10 +3,7 @@
 import * as React from 'react';
 import type { RegexEngine, ThemedToken } from 'shiki';
 
-import {
-  useIsInView,
-  type UseIsInViewOptions,
-} from '@/hooks/use-is-in-view';
+import { useIsInView, type UseIsInViewOptions } from '@/hooks/use-is-in-view';
 
 /*
  * Adapted from animate-ui's CodeBlock. The original re-ran Shiki over the
@@ -172,7 +169,9 @@ function CodeBlock({
     let live = true;
     tokenize(code, lang, themeName)
       .then((t) => live && setTokens(t))
-      .catch((e) => console.error(`Language "${lang}" could not be loaded.`, e));
+      .catch((e) =>
+        console.error(`Language "${lang}" could not be loaded.`, e),
+      );
     return () => {
       live = false;
     };

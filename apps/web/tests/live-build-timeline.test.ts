@@ -9,12 +9,7 @@ import { describe, expect, test } from 'vitest';
 
 import { ASKS } from '@/lib/home/live-build-asks';
 import { FILES, TREE, type TreeNode } from '@/lib/home/live-build-code';
-import {
-  indexOf,
-  LAST,
-  STEPS,
-  timeline,
-} from '@/lib/home/live-build-timeline';
+import { indexOf, LAST, STEPS, timeline } from '@/lib/home/live-build-timeline';
 
 const leaves = (nodes: TreeNode[]): string[] =>
   nodes.flatMap((n) => (n.children ? leaves(n.children) : [n.path]));

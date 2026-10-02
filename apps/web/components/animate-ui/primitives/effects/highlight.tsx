@@ -295,7 +295,9 @@ function Highlight<T extends React.ElementType = 'div'>({
                   },
                 }}
                 transition={transition}
-                style={{ position: 'absolute', zIndex: 0, ...style } as MotionStyle}
+                style={
+                  { position: 'absolute', zIndex: 0, ...style } as MotionStyle
+                }
                 className={cn(className, activeClassNameState)}
               />
             )}

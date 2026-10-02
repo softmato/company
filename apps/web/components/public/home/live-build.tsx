@@ -271,9 +271,7 @@ export function LiveBuild() {
         : {
             file: t.file,
             writing: !still && t.fileStep === shown,
-            duration: t.file
-              ? typingTime(t.file, STEPS[t.fileStep]!.ms)
-              : 0,
+            duration: t.file ? typingTime(t.file, STEPS[t.fileStep]!.ms) : 0,
             instance: `${cycle}-${t.file}`,
             reading: false,
           };
@@ -425,7 +423,9 @@ export function LiveBuild() {
                   }}
                   className={cn(
                     'build-inspect mx-auto h-full bg-white transition-[max-width,box-shadow] duration-500 ease-out',
-                    paused ? 'editor-scroll overflow-y-auto' : 'overflow-hidden',
+                    paused
+                      ? 'editor-scroll overflow-y-auto'
+                      : 'overflow-hidden',
                     device !== 'desktop' &&
                       'shadow-[0_0_0_1px_rgba(15,23,42,0.08),0_24px_50px_-24px_rgba(15,23,42,0.35)]',
                   )}

@@ -129,7 +129,13 @@ export function LiveBuildChat({
  * The dev-tools badge docked in the preview: "Powered by softmato" + a log.
  * It steps aside while the network panel is open.
  */
-export function LiveBuildBadge({ log, hidden }: { log: string; hidden: boolean }) {
+export function LiveBuildBadge({
+  log,
+  hidden,
+}: {
+  log: string;
+  hidden: boolean;
+}) {
   const shown = useBuild().at('devtools') && !hidden;
 
   return (

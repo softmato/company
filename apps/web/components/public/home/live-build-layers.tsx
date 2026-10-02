@@ -106,7 +106,10 @@ export function LiveBuildLayers({
             )}
           >
             {paused ? (
-              <Play className="size-3.5 translate-x-px fill-current" aria-hidden />
+              <Play
+                className="size-3.5 translate-x-px fill-current"
+                aria-hidden
+              />
             ) : (
               <Pause className="size-3.5 fill-current" aria-hidden />
             )}

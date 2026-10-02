@@ -236,7 +236,9 @@ export function LiveBuildEditor({
             {path?.split('/').map((part, i, all) => (
               <span key={i} className="flex items-center gap-1">
                 <ChevronRight className="size-3" />
-                <span className={i === all.length - 1 ? 'text-white/75' : undefined}>
+                <span
+                  className={i === all.length - 1 ? 'text-white/75' : undefined}
+                >
                   {part}
                 </span>
               </span>

@@ -11,7 +11,10 @@ import {
 } from 'motion/react';
 
 import { getStrictContext } from '@/lib/get-strict-context';
-import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
+import {
+  Slot,
+  type WithAsChild,
+} from '@/components/animate-ui/primitives/animate/slot';
 
 type CursorContextType = {
   cursorPos: { x: number; y: number };
