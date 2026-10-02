@@ -35,8 +35,15 @@ INTENT_QR scan fails in eSewa and every bank app tried ("internal server error")
 it adds `26-11 = 15` and a `62-10` token that issuer scanners reject. DYNAMIC_QR
 (same endpoint, same fields) scanned and paid — NPR 1, trace `1296830344`,
 status `success`, `totalTransactionAmount: "1.00"` (2026-09-21). An unknown
-`qrType` is a 400 "Invalid QR type". Deep links still use the same payload and
-are not yet tried on a phone.
+`qrType` is a 400 "Invalid QR type". Deep links use the same payload.
+
+**On Android a plain deep link opens nothing.** Tried on a phone (2026-10-02,
+Everest Bank from a Chrome Custom Tab): the browser lowercases the scheme
+(`EVBLNPKA` → `evblnpka`) and Android matches schemes case-sensitively, so no
+app answered and the page showed the missing-app error. Android now gets a
+Chrome `intent:` URL — exact scheme plus the bank's `packageName`, the doc's
+own `setPackage` snippet — built in `bankApps()`. iOS keeps the plain link.
+Not yet re-tried on a phone.
 
 **No scan signal.** Scanning our DYNAMIC_QR in eSewa (2026-09-21) sent nothing on
 the WebSocket and left the status at `timeout` — Fonepay only signals the payment

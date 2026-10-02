@@ -79,7 +79,13 @@ describe('FonepayProviderAdapter', () => {
             {
               bankName: 'Laxmi',
               bankIcon: 'rel/icon.png',
+              packageName: 'com.lxblnpka.app',
               intentScheme: 'LXBLNPKA://payment/',
+            },
+            {
+              bankName: 'Odd',
+              packageName: 'com.odd;S.browser_fallback_url=x',
+              intentScheme: 'ODDXNPKA://payment',
             },
           ],
         },
@@ -119,9 +125,17 @@ describe('FonepayProviderAdapter', () => {
       providerRef: sent.referenceLabel,
       qrPayload: 'QR 1',
       socketUrl: 'wss://ws',
-      // Relative icon dropped; scheme's trailing slash normalised.
+      // Relative icon dropped; scheme's trailing slash normalised. Android's
+      // link keeps the scheme's case and names the package; a package that
+      // could break out of the intent URL leaves only the plain link.
       bankApps: [
-        { name: 'Laxmi', deeplink: 'LXBLNPKA://payment/?qrPayload=QR%201' },
+        {
+          name: 'Laxmi',
+          deeplink: 'LXBLNPKA://payment/?qrPayload=QR%201',
+          intent:
+            'intent://payment/?qrPayload=QR%201#Intent;scheme=LXBLNPKA;package=com.lxblnpka.app;end',
+        },
+        { name: 'Odd', deeplink: 'ODDXNPKA://payment/?qrPayload=QR%201' },
       ],
     });
     expect(

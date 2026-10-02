@@ -282,6 +282,7 @@ function storedInitiate(transaction: Transaction): InitiateResult {
         (app): app is BankApp =>
           typeof app?.name === 'string' &&
           typeof app?.deeplink === 'string' &&
+          (app.intent === undefined || typeof app.intent === 'string') &&
           (app.icon === undefined || typeof app.icon === 'string'),
       )
     : [];

@@ -12,7 +12,13 @@
  * not open.
  */
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useTransition } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from 'react';
 
 import { checkPayment } from '@/app/(checkout)/checkout/[sessionId]/check-payment';
 import { ProviderMark } from '@/components/brand/provider-mark';
@@ -47,6 +53,8 @@ const BUSY = new Set<keyof typeof NOTES>(['waiting', 'checking', 'paid']);
  */
 const POLL_MS = 3000;
 
+const never = () => () => {};
+
 export function FonepayQr({
   sessionId,
   qrSvg,
@@ -58,6 +66,13 @@ export function FonepayQr({
   const [checking, startCheck] = useTransition();
   const router = useRouter();
   const busy = useRef(false);
+  // Android opens banks by `intent:` link (see `BankApp.intent`). Read after
+  // hydration: the server renders the plain links.
+  const android = useSyncExternalStore(
+    never,
+    () => /android/i.test(navigator.userAgent),
+    () => false,
+  );
 
   /** `quiet` for the background checks: only an outcome changes the note. */
   async function check(quiet: boolean): Promise<void> {
@@ -101,6 +116,8 @@ export function FonepayQr({
 
   /** A page still visible moments after the tap means no app took the link. */
   function openApp(): void {
+    // A bank tried before this one may have left its "not available" note.
+    setNote('waiting');
     setTimeout(() => {
       if (document.visibilityState === 'visible') setNote('noApp');
     }, 2500);
@@ -137,7 +154,7 @@ export function FonepayQr({
               {shown.map((app) => (
                 <li key={app.deeplink}>
                   <a
-                    href={app.deeplink}
+                    href={android && app.intent ? app.intent : app.deeplink}
                     onClick={openApp}
                     className="flex items-center gap-3 bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-surface"
                   >

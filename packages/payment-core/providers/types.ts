@@ -56,6 +56,12 @@ export interface FormPost {
 export interface BankApp {
   name: string;
   deeplink: string;
+  /**
+   * Android: the same link as a Chrome `intent:` URL. A plain `deeplink`
+   * reaches no app there — the browser lowercases its scheme and Android
+   * matches schemes case-sensitively.
+   */
+  intent?: string;
   icon?: string;
 }
 

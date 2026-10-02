@@ -78,6 +78,7 @@ interface BankReply {
   bankDetails?: {
     bankName?: unknown;
     bankIcon?: unknown;
+    packageName?: unknown;
     intentScheme?: unknown;
   }[];
 }
@@ -214,22 +215,48 @@ export class FonepayProviderAdapter implements ProviderAdapter {
   }
 }
 
+/** `EVBLNPKA://payment` → scheme and the rest; nothing that could break out of an intent URL. */
+const INTENT_SCHEME = /^([A-Za-z][A-Za-z0-9+.-]*):\/\/([\w./-]*)$/;
+const ANDROID_PACKAGE = /^[A-Za-z]\w*(\.[A-Za-z]\w*)+$/;
+
 /**
  * The deep link is the doc's `<scheme>://payment/?qrPayload=<qr>`. Schemes
  * arrive with and without a trailing slash, so it is normalised. Icons are
  * kept only when absolute: the dev gateway returns bare relative paths.
+ *
+ * On a phone (2026-10-02) the plain link opened no banking app: a browser
+ * lowercases the scheme, `EVBLNPKA` became `evblnpka`, and Android matches
+ * schemes case-sensitively. The doc's own Android snippet is
+ * `Intent(ACTION_VIEW, Uri.parse(link)).setPackage(packageName)`; Chrome's
+ * `intent:` URL is that same intent from a web page, scheme case intact and
+ * pinned to the bank's package so no other app can answer for the bank. A
+ * bank whose scheme or package is not plain keeps only the plain link.
  */
 function bankApps(reply: BankReply, qrPayload: string): BankApp[] {
   const apps: BankApp[] = [];
 
   for (const bank of reply.bankDetails ?? []) {
-    const { bankName: name, bankIcon: icon, intentScheme: scheme } = bank;
+    const {
+      bankName: name,
+      bankIcon: icon,
+      packageName: pkg,
+      intentScheme: scheme,
+    } = bank;
 
     if (typeof name !== 'string' || typeof scheme !== 'string') continue;
 
+    const base = scheme.replace(/\/+$/, '');
+    const query = `/?qrPayload=${encodeURIComponent(qrPayload)}`;
+    const parts = INTENT_SCHEME.exec(base);
+
     apps.push({
       name,
-      deeplink: `${scheme.replace(/\/+$/, '')}/?qrPayload=${encodeURIComponent(qrPayload)}`,
+      deeplink: `${base}${query}`,
+      ...(parts && typeof pkg === 'string' && ANDROID_PACKAGE.test(pkg)
+        ? {
+            intent: `intent://${parts[2]}${query}#Intent;scheme=${parts[1]};package=${pkg};end`,
+          }
+        : {}),
       ...(typeof icon === 'string' && /^https:\/\//.test(icon) ? { icon } : {}),
     });
   }
